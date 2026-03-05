@@ -11,6 +11,9 @@ venv/
 ENV/
 env/
 
+# Saved outputs 
+output/
+
 # ChromaDB vector database (too large, regenerated from source)
 .chroma_db_DT/
 .chroma_db_DT.backup*/
