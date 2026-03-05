@@ -78,3 +78,7 @@ temp/
 # Hugging Face Spaces specific
 flagged/
 gradio_cached_examples/
+
+# Evaluation results (generated, not source)
+eval_results/
+eval_review.csv
