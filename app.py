@@ -138,8 +138,8 @@ def build_favicon_head() -> str:
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
+        os.path.join(base_dir, "assets", "favicon.png"),
         os.path.join(base_dir, "assets", "bee_barb.png"),
-        os.path.join(base_dir, "assets", "favicon.ico"),
         os.path.join(base_dir, "assets", "icon.png"),
         os.path.join(base_dir, "assets", "icon.ico"),
     ]
