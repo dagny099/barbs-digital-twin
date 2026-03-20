@@ -1,0 +1,86 @@
+name: Deploy to Hugging Face Spaces
+
+# Triggers on every push to main.
+# Syncs the app code and input data to the HF Space repo.
+# The ChromaDB vector store is ephemeral on HF Spaces — see note at bottom.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Clone HF Space repo
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git clone https://dagny099:${HF_TOKEN}@huggingface.co/spaces/dagny099/my-digital-twin hf_space
+
+      - name: Stage files for deployment
+        run: |
+          # ── Core app ──────────────────────────────────────────────────────
+          cp app.py utils.py ingest.py requirements.txt hf_space/
+
+          # ── Embedding scripts ─────────────────────────────────────────────
+          cp embed_biosketch.py \
+             embed_resume.py \
+             embed_publications.py \
+             embed_project_summaries.py \
+             embed_jekyll.py \
+             embed_mkdocs.py \
+             hf_space/
+
+          # ── Static assets (images, etc.) ──────────────────────────────────
+          cp -r assets hf_space/
+
+          # ── Input data ────────────────────────────────────────────────────
+          # Only the files the embed scripts actually need.
+          # Intentionally excludes inputs/OLD/ and inputs/insights-bhs/.
+          mkdir -p hf_space/inputs
+          cp inputs/barbara-hidalgo-sotelo-biosketch.md hf_space/inputs/
+          cp inputs/barbara-publications.md hf_space/inputs/
+          cp inputs/publications.md hf_space/inputs/
+          cp "inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt" hf_space/inputs/
+          cp -r inputs/project-summaries hf_space/inputs/
+
+          # ── README.md is intentionally NOT copied ─────────────────────────
+          # The HF Space README must keep its yaml frontmatter
+          # (sdk: gradio, app_file: app.py, etc.) intact.
+          # Edit it directly on HuggingFace if needed.
+
+      - name: Commit and push to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd hf_space
+          git add -A
+
+          # Only commit if there are actual changes
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+          else
+            git commit -m "Deploy from GitHub ${GITHUB_SHA::7}"
+            git push https://dagny099:${HF_TOKEN}@huggingface.co/spaces/dagny099/my-digital-twin main
+          fi
+
+# ── IMPORTANT: ChromaDB on HF Spaces ─────────────────────────────────────────
+# The .chroma_db_DT/ directory is ephemeral — it is wiped when the Space
+# container restarts (e.g. after this deploy).  You have two options:
+#
+#   Option A (recommended): Add startup ingestion to app.py.
+#     At the top of app.py, before gr.Blocks() launches, check:
+#       if not os.path.exists(".chroma_db_DT") or collection is empty:
+#           subprocess.run(["python", "ingest.py", "--all"], check=True)
+#
+#   Option B: Manually run `ingest.py --all` via the HF Space terminal
+#     after each deploy (not automated, but works for low-traffic spaces).

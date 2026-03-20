@@ -1,4 +1,5 @@
 import os
+import subprocess
 from openai import OpenAI
 import gradio as gr
 import uuid
@@ -82,6 +83,13 @@ size, olap = 500, 50
 
 chroma_client = chromadb.PersistentClient(path=".chroma_db_DT")
 collection = chroma_client.get_or_create_collection(name="barb-twin")
+
+# Startup ingestion: if the knowledge base is empty (e.g. fresh HF Spaces container
+# after a deploy), run ingest.py --all to rebuild the vector store before serving.
+if collection.count() == 0:
+    print("Knowledge base is empty — running ingest.py --all ...")
+    subprocess.run(["python", "ingest.py", "--all"], check=True)
+    print("Ingestion complete.")
 
 #If there are already existing items, delete 'em
 # if collection.get()['ids']:
@@ -202,19 +210,19 @@ def build_favicon_head() -> str:
 FAVICON_HEAD = build_favicon_head()
 
 custom_css = """
-/* Explore accordion: category label spacing */
+/* ── Explore accordion: category label spacing ─────────────────── */
 .sidebar-category {
     margin-top: 10px !important;
     margin-bottom: 4px !important;
     font-size: 13px !important;
 }
-/* Compact example buttons */
+/* ── Explore Topics question buttons ───────────────────────────── */
 .sidebar-btn {
     width: 100% !important;
     text-align: left !important;
     padding: 5px 10px 5px 14px !important;
     border-radius: 6px !important;
-    font-size: 12.5px !important;
+    font-size: 14.5px !important;
     line-height: 1.35 !important;
     margin-bottom: 2px !important;
     white-space: normal !important;
@@ -232,7 +240,45 @@ custom_css = """
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
 }
-/* Category colors */
+/* ── Bold text — extra heavy so it reads clearly ───────────────── */
+.chatbot .prose strong, .chatbot .prose b {
+    font-weight: 900 !important;
+    color: #111111 !important;
+}
+/* ── Chatbot area — warm cream background ──────────────────────── */
+.chatbot,
+.chatbot .bubble-wrap,
+.chatbot .message-wrap {
+    background-color: #FFFBF0 !important;
+    border-radius: 8px !important;
+}
+/* ── Query text bar — thick dark outline ───────────────────────── */
+.chatinterface textarea,
+.chatinterface input[type="text"] {
+    border: 2.5px solid #222222 !important;
+    border-radius: 8px !important;
+}
+.chatinterface textarea:focus,
+.chatinterface input[type="text"]:focus {
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12) !important;
+    outline: none !important;
+}
+/* ── Explore Topics accordion — tri-color gradient matching buttons */
+#explore-accordion {
+    background: linear-gradient(
+        135deg,
+        rgba(227, 242, 253, 0.45) 0%,
+        rgba(224, 242, 241, 0.45) 50%,
+        rgba(243, 229, 245, 0.45) 100%
+    ) !important;
+    border-radius: 8px !important;
+}
+/* ── Hide Gradio footer (Use via API · Built with Gradio · Settings) */
+footer {
+    display: none !important;
+}
+/* ── Category button colors ────────────────────────────────────── */
 .btn-professional {
     background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
     color: #1565C0 !important;
@@ -428,14 +474,14 @@ CSS_CLASS = {
 }
 
 if __name__ == "__main__":
-    with gr.Blocks(css=custom_css, theme=gr.themes.Citrus()) as demo:
+    with gr.Blocks() as demo:
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
             placeholder="Chat with a digital version of Barbara Hidalgo-Sotelo or just say Hola!",
             height=600,
             autoscroll=True,
-            render_markdown=True
+            render_markdown=True,
         )
         chat = gr.ChatInterface(
             fn=respond_ai,
@@ -459,8 +505,10 @@ if __name__ == "__main__":
                             btn.click(lambda q=q: q, outputs=chat.textbox)
 
     demo.launch(
+#        theme=gr.themes.Citrus(),
         head=FAVICON_HEAD + ga_head,
         server_name="0.0.0.0",
         server_port=7865,
         show_error=True,
+        css=custom_css, 
     )
