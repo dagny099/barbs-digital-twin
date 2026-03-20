@@ -9,6 +9,49 @@ import requests
 import random
 import base64
 
+#------ EXAMPLE PROMPTS -------
+# Full question sets for different visitor personas (also useful for evaluation testing)
+
+RECRUITER_PROMPTS = [
+    "What led you from cognitive science to AI engineering?",
+    "Can you explain how RAG works in simple terms?",
+    "What's a project you built that you're really proud of?",
+    "How do you approach collaborating with non-technical stakeholders?",
+    "What kinds of problems get you most excited to solve?",
+    "Tell me about your background in knowledge graphs.",
+    "What's your working style like on a team?",
+    "What are you hoping to work on next in your career?",
+    "What's your superpower as an AI consultant?",
+    "Why did you transition from academia to industry?",
+]
+
+FRIENDLY_PROMPTS = [
+    "What are you working on these days that's lighting you up?",
+    "How did you get into beekeeping, and does it influence your work?",
+    "What's the most surprising thing you've learned about yourself lately?",
+    "Do you still run? How does that fit into your routine now?",
+    "What's your favorite sci-fi book and why does it resonate with you?",
+    "How has your Toastmasters experience shaped how you communicate about AI?",
+    "What's something you're learning right now just for fun?",
+    "How do you think about the connection between cognition and AI?",
+    "What's a recent win you're proud of, big or small?",
+    "If you could work on any problem tomorrow, what would it be?",
+]
+
+# Curated subset shown in the UI: mix of professional and personal to demonstrate range
+# 3 professional (💼), 3 bridge (🔗), 3 personal (💭) - balanced for visual clarity
+CURATED_EXAMPLES = [
+    "💼 What led you from cognitive science to AI engineering?",
+    "💼 Can you explain how RAG works in simple terms?",
+    "💼 What kinds of problems get you most excited to solve?",
+    "🔗 What's a project you built that you're really proud of?",
+    "🔗 How do you think about the connection between cognition and AI?",
+    "🔗 What are you hoping to work on next in your career?",
+    "💭 What are you working on these days that's lighting you up?",
+    "💭 How did you get into beekeeping, and does it influence your work?",
+    "💭 What's something you're learning right now just for fun?",
+]
+
 #------ SETUP -------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -158,6 +201,53 @@ def build_favicon_head() -> str:
 
 FAVICON_HEAD = build_favicon_head()
 
+# Custom CSS for example button styling
+custom_css = """
+/* Make examples container taller to show all questions without scrolling */
+.examples {
+    max-height: 600px !important;
+    min-height: 400px !important;
+}
+
+/* Style example buttons with category colors */
+.examples button {
+    border-radius: 8px !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    transition: all 0.2s ease !important;
+    font-size: 14px !important;
+}
+
+/* Professional questions - soft blue (briefcase icon) */
+.examples button:nth-child(1),
+.examples button:nth-child(2),
+.examples button:nth-child(3) {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
+    color: #1565C0 !important;
+}
+
+/* Bridge questions - soft teal (link icon) */
+.examples button:nth-child(4),
+.examples button:nth-child(5),
+.examples button:nth-child(6) {
+    background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%) !important;
+    color: #00695C !important;
+}
+
+/* Personal questions - soft purple/pink (thought bubble icon) */
+.examples button:nth-child(7),
+.examples button:nth-child(8),
+.examples button:nth-child(9) {
+    background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%) !important;
+    color: #6A1B9A !important;
+}
+
+/* Hover effects */
+.examples button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+"""
+
 def yes(message, history):
     return "yes"
 
@@ -169,7 +259,7 @@ def vote(data: gr.LikeData):
 
 
 #------ DATA INPUT ----
-with open("barbara-hidalgo-sotelo-biosketch.md", 'r', encoding='utf-8') as f:
+with open("inputs/barbara-hidalgo-sotelo-biosketch.md", 'r', encoding='utf-8') as f:
     barb_bio = f.read()
 
 documents = [
@@ -378,8 +468,8 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             title="Barbara's Digital Twin 🙋🏽‍♀️",
-            description = "This app uses RAG architecture that's a WIP; more info to come soon",
-            examples=["What are your interests?", "Tell me about your education", "What different kinds of professional roles have you had?", "What did you study in grad school?"],
+            description = "Ask about professional background, technical projects, or personal interests",
+            examples=CURATED_EXAMPLES,
             )
   
     demo.launch(
@@ -388,6 +478,6 @@ if __name__ == "__main__":
         server_port=7860,
         show_error=True,
         theme=gr.themes.Citrus(),       # Theme Options: Soft | Glass | Ocean | Citrus | Monochrome | Origin | Default
-        # css=custom_css,               # Maybe customize more things later
+        css=custom_css,                 # Custom styling for example buttons
         # share=True,
     )
