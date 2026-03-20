@@ -2,3 +2,5 @@ gradio
 openai
 chromadb
 requests
+trafilatura
+pdfplumber

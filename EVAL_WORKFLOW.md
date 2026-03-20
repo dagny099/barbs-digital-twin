@@ -4,15 +4,35 @@ This document describes the simple, transparent evaluation system for the Digita
 
 ## Overview
 
-The evaluation system helps you systematically assess the quality of your Digital Twin's responses across five key dimensions:
+The evaluation system uses **91 seed questions** across **8 categories** organized around two complementary perspectives:
 
-1. **Biographical questions** (20 questions) - Tests accuracy on personal background, education, career
-2. **Project-specific questions** (20 questions) - Tests knowledge of technical projects and work
-3. **Technical deep-dive questions** (10 questions) - Tests technical skills, tools, methodologies
-4. **Personality/behavior questions** (10 questions) - Tests if responses maintain Barbara's voice and style
-5. **Tool-usage scenarios** (5 questions) - Tests if tools (notification, dice) are called appropriately
+### Coverage perspective — "Does the system know X?"
 
-**Total: 65 seed questions** covering the full scope of the Digital Twin's capabilities.
+Tests whether the knowledge base contains the right information and retrieves it correctly. Useful for catching regressions after knowledge base changes (re-embedding, chunking tweaks, new sources).
+
+| Category | Count | What It Tests |
+|----------|-------|---------------|
+| `bio` | 19 | Personal background, education, career history |
+| `projects` | 20 | Technical projects, work experience, accomplishments |
+| `technical` | 10 | Skills, tools, methodologies, frameworks |
+| `personality` | 10 | Voice consistency, tone, Barbara's style |
+| `tool` | 5 | Notification and dice tool calling |
+| `publication` | 8 | Academic research, papers, citations |
+
+### Visitor perspective — "Would a real person get a satisfying response?"
+
+Tests whether the system serves its actual audience well. These questions mirror the `RECRUITER_PROMPTS` and `FRIENDLY_PROMPTS` constants in `app.py` — the same questions shown as UI example prompts to visitors.
+
+| Category | Count | Visitor Persona | What It Tests |
+|----------|-------|-----------------|---------------|
+| `recruiter` | 10 | Hiring managers, recruiters, collaborators | Career narrative, technical credibility, fit |
+| `friendly` | 10 | Old colleagues, friends, curious visitors | Personality authenticity, personal interests |
+
+**Total: 92 seed questions** covering both retrieval coverage and visitor experience.
+
+### Why both perspectives matter
+
+Coverage questions tell you *what broke* — they point to specific data sources or categories with gaps. Visitor questions tell you *how well it works* — they surface quality issues invisible to coverage tests, like generic tone or poor narrative coherence. Run coverage tests after every knowledge base change; run visitor tests when evaluating the overall user experience.
 
 ---
 
@@ -35,8 +55,10 @@ The evaluation system helps you systematically assess the quality of your Digita
 
 **Example row**:
 ```csv
-bio,Where were you born?,Austin Texas in 1981,Should mention Austin and 1981
+bio,Where did you grow up?,Austin Texas after returning from Japan as a toddler,Should mention Austin and/or Japan early childhood
 ```
+
+**Keeping in sync with app.py**: The `recruiter` and `friendly` categories in this CSV mirror `RECRUITER_PROMPTS` and `FRIENDLY_PROMPTS` in `app.py`. If you add or edit questions in either place, update the other too.
 
 ---
 
@@ -53,6 +75,8 @@ bio,Where were you born?,Austin Texas in 1981,Should mention Austin and 1981
    - Calls GPT-4.1-mini for response
    - Saves question, response, retrieved chunks, and metadata
 3. Saves all results to timestamped JSON file in `eval_results/`
+
+**Note on system prompt**: `run_evals.py` uses a simplified version of the system prompt (not the full prompt from `app.py`). Coverage category results are reliable. Visitor category (`recruiter`/`friendly`) results may be slightly more conservative than what real visitors experience — use them as a floor, not a ceiling.
 
 **Usage**:
 ```bash
@@ -277,9 +301,11 @@ Compare scores week-over-week to see improvements.
 - If many questions get 0 chunks, your sources may not cover those topics
 
 **Accuracy**:
-- Biographical questions: Should be 90%+ accurate (authoritative source)
-- Project questions: 80%+ (depends on README quality)
-- Technical questions: 70%+ (may require inference)
+- `bio`: 90%+ (biosketch is authoritative)
+- `publication`: 85%+ (publications doc is authoritative)
+- `projects`: 80%+ (depends on project-summary PDF coverage)
+- `technical`: 70%+ (may require inference across sources)
+- `recruiter`/`friendly`: Grade on *quality* (coherence, specificity, tone) not just factual accuracy
 
 **Personality**:
 - Should maintain consistent voice across all categories
@@ -300,8 +326,12 @@ Compare scores week-over-week to see improvements.
 - **Fix**: Rephrase questions to be more specific, or improve chunking strategy
 
 **Issue**: Responses don't sound like Barbara
-- **Diagnosis**: System prompt not strong enough
-- **Fix**: Strengthen personality guidelines in system prompt (app.py:245-262)
+- **Diagnosis**: System prompt not strong enough, or visitor questions retrieving wrong context
+- **Fix**: Strengthen personality guidelines in system prompt (`app.py`); check what chunks are retrieved for `recruiter`/`friendly` questions
+
+**Issue**: `recruiter`/`friendly` responses are generic or vague
+- **Diagnosis**: Relevant personal context isn't being retrieved, or system prompt personality isn't grounding the response
+- **Fix**: Check that biosketch is embedded; consider adding more personal narrative to biosketch sections that cover career story and interests
 
 **Issue**: Correct info in chunks, but wrong response
 - **Diagnosis**: LLM not following instructions or context
@@ -321,6 +351,16 @@ Compare scores week-over-week to see improvements.
 - Be specific and clear
 - Cover edge cases (ambiguous queries, multi-part questions)
 - Test both breadth (many topics) and depth (detailed follow-ups)
+
+**For visitor categories** (`recruiter`/`friendly`):
+- Use `expected_info` to describe the *qualities* of a good response, not just facts
+  - e.g., "Should feel personal and specific, not generic; should mention at least one real project by name"
+- Use `notes` to flag questions where the knowledge base may not have strong backing
+- If you add questions to `RECRUITER_PROMPTS` or `FRIENDLY_PROMPTS` in `app.py`, add matching rows here
+
+**For new data source categories**:
+- When you add a new knowledge source (e.g., blog posts, talks), add a new category name
+- No code changes needed — `run_evals.py` reads categories directly from the CSV
 
 ### Testing after code changes:
 
@@ -364,16 +404,17 @@ Create a simple spreadsheet:
 
 ## Cost Estimates
 
-**Per full evaluation run (65 questions)**:
-- Embeddings: 65 queries × ~10 tokens = ~$0.0001
+**Per full evaluation run (92 questions)**:
+- Embeddings: 92 queries × ~10 tokens = ~$0.0001
 - Retrievals: Free (local ChromaDB)
-- Completions: 65 × ~500 tokens = ~$0.15
-- **Total: ~$0.15 per run**
+- Completions: 92 × ~500 tokens = ~$0.21
+- **Total: ~$0.21 per run**
 
 **Recommended cadence**:
-- Weekly full runs: ~$0.60/month
-- After major changes: Ad-hoc
-- Quick tests (--limit 10): ~$0.02 each
+- Weekly full runs: ~$0.85/month
+- After knowledge base changes: Full coverage categories only (~$0.13)
+- After prompt/personality changes: Visitor categories only (~$0.05)
+- Quick smoke test (--limit 10): ~$0.02 each
 
 ---
 

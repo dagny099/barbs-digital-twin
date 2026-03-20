@@ -10,12 +10,14 @@ This digital twin serves as an intelligent interface to explore Barbara's profes
 
 ## Features
 
-- **Multi-Source Knowledge Base**: Integrates biographical information, GitHub project READMEs, and MkDocs documentation
+- **Multi-Source Knowledge Base**: Integrates biographical sketch, resume, publications, project summaries, MkDocs documentation, and the live website
 - **Semantic Search & RAG**: ChromaDB vector store with OpenAI embeddings for intelligent context retrieval
+- **Section-Aware Ingestion**: Each data source is parsed into named sections, giving the LLM precise provenance for every retrieved chunk
 - **Conversational Interface**: Gradio ChatInterface for natural conversations
 - **Tool Integration**: Function calling capabilities (notifications via Pushover, interactive features)
 - **First-Person Perspective**: Responds as Barbara, maintaining her voice and personality
 - **Persistent Memory**: ChromaDB enables incremental knowledge base updates without reprocessing
+- **Ingestion Manager**: Single `ingest.py` script orchestrates all data sources with an interactive status-first menu
 
 ## Tech Stack
 
@@ -203,96 +205,128 @@ The `:nth-child(N)` numbers must match the position of each question in the list
 
 ```
 digital-twin/
-├── app.py                          # Main Gradio application
-├── embed_readmes.py                # Script to embed GitHub READMEs
-├── embed_mkdocs.py                 # Script to embed MkDocs sites
-├── requirements.txt                # Python dependencies
-├── barbara-hidalgo-sotelo-biosketch.md  # Biographical source (authoritative)
-├── .chroma_db_DT/                  # ChromaDB vector store (gitignored)
-├── READMEs/                        # GitHub project README files
-│   ├── fitness-dashboard_README.md
-│   ├── beehive-tracker_README.md
-│   └── ...
-├── RESUME-EXPLORER/                # Additional project documentation
-├── .venv/                          # Virtual environment (gitignored)
-└── README.md                       # This file
+├── app.py                              # Main Gradio application
+├── ingest.py                           # Master ingestion manager (start here)
+├── embed_biosketch.py                  # Embed biographical sketch
+├── embed_resume.py                     # Embed resume with section parsing
+├── embed_publications.py               # Embed academic publications
+├── embed_project_summaries.py          # Embed one-page project summary PDFs
+├── embed_mkdocs.py                     # Embed MkDocs documentation sites
+├── embed_jekyll.py                     # Embed Jekyll website via sitemap
+├── utils.py                            # Shared text processing utilities
+├── verify_collection.py                # Inspect ChromaDB contents
+├── clear_collection.py                 # Wipe ChromaDB collection
+├── requirements.txt                    # Python dependencies
+├── inputs/
+│   ├── barbara-hidalgo-sotelo-biosketch.md   # Biographical source (authoritative)
+│   ├── barbara-publications.md               # Academic publications + URLs
+│   ├── Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt
+│   ├── publications.md                       # Source Jekyll page for publications
+│   ├── READMEs/                              # GitHub project README files (archived)
+│   └── project-summaries/                    # One-page PDF summaries (20 projects)
+├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
+├── .venv/                              # Virtual environment (gitignored)
+└── README.md                           # This file
 ```
+
+## Knowledge Base Management
+
+### Ingestion Manager (`ingest.py`)
+
+The recommended way to manage all data sources. Run it with no arguments for an interactive menu that shows current DB status before asking you to do anything:
+
+```bash
+python ingest.py
+```
+
+The menu displays a live status table — chunk counts per source, so you can see at a glance what's embedded and what isn't:
+
+```
+  #   Source                 Description                                Status
+  1   biosketch ⭐            inputs/barbara-hidalgo-sotelo-...          ✅  42 chunks
+  2   resume                 inputs/Hidalgo-Sotelo_Barbara_...           ✅  31 chunks
+  3   publications           inputs/barbara-publications.md             ✅  12 chunks
+  4   project-summaries      inputs/project-summaries/ (20 PDFs)        ✅  98 chunks
+  5   jekyll                 https://barbhs.com (via sitemap)           ✅  210 chunks
+  6   mkdocs                 8 sites at docs.barbhs.com                 ✅  963 chunks
+```
+
+Select a source by number → choose "Embed", "Force re-embed", or "Dry run".
+
+**Non-interactive flags** (for scripting or CI/CD):
+```bash
+python ingest.py --status                          # Show DB status and exit
+python ingest.py --all                             # Embed all sources
+python ingest.py --all --force                     # Force re-embed everything
+python ingest.py --source biosketch                # Embed one source
+python ingest.py --source biosketch --force        # Force re-embed one source
+python ingest.py --source project-summaries --dry-run  # Preview without embedding
+```
+
+**Source keys**: `biosketch`, `resume`, `publications`, `project-summaries`, `jekyll`, `mkdocs`
+
+### Checking DB Contents
+
+```bash
+python ingest.py --status                          # Quick chunk counts per source
+python verify_collection.py                        # Detailed stats + sample chunks
+python verify_collection.py --show-sources         # Per-source breakdown
+python verify_collection.py --show-sections        # All unique section names
+```
+
+### Wiping the DB
+
+```bash
+python clear_collection.py                         # Interactive confirmation required
+```
+
+---
 
 ## Data Sources
 
-The digital twin's knowledge base uses **section-aware metadata** to track document structure and improve retrieval accuracy.
+The knowledge base uses **section-aware metadata** so the LLM knows exactly where each retrieved chunk came from within a document.
 
 ### Metadata Schema
-Each chunk includes:
 ```python
 {
-    'source': 'source-type:identifier',  # e.g., 'resume:2026.txt', 'biosketch:barbara.md'
-    'section': 'Section Name' or None,   # e.g., 'Professional Experience', 'Education'
+    'source': 'source-type:identifier',  # e.g., 'resume:2026.txt', 'publication:barbara-publications.md'
+    'section': 'Section Name' or None,   # e.g., 'Professional Experience', 'Published Papers'
     'chunk_index': 0                     # position within section (resets per section)
 }
 ```
 
 ### 1. Biographical Sketch (Authoritative) ⭐
-- **File**: `barbara-hidalgo-sotelo-biosketch.md`
-- **Priority**: Highest - source of truth for identity, background, values, personality
-- **Sections**: 18 sections (Personal Information, Family, Education, Professional Career, etc.)
-- **Chunks**: ~52 chunks with section metadata
-- **Parsing**: Markdown headers (## level 2)
+- **File**: `inputs/barbara-hidalgo-sotelo-biosketch.md`
+- **Priority**: Highest — source of truth for identity, background, values, personality
+- **Parsing**: Markdown `##` headers → named sections
+- **Wins over**: all other sources in any conflict
 
 ### 2. Resume
-- **File**: `Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt`
-- **Sections**: 8 sections (Summary, Core Strengths, Professional Experience, Education, etc.)
-- **Chunks**: ~20 chunks with section metadata
-- **Parsing**: Text delimiter (`======`)
+- **File**: `inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt`
+- **Parsing**: `======` delimiters → named sections (Summary, Experience, Education, etc.)
 
-### 3. GitHub Project READMEs
-- **Folder**: `READMEs/`
-- **Count**: 39 repositories
-- **Chunks**: ~700 chunks (no section metadata yet)
-- **Content**: Technical project descriptions, implementations, usage guides
-- **Future**: Will add section parsing by numbered headers (# 1., # 2., etc.)
+### 3. Publications
+- **File**: `inputs/barbara-publications.md`
+- **Content**: Academic papers and conference posters with absolute PDF URLs
+- **Parsing**: Markdown `##` headers → Overview, Research Focus, Published Papers, Conference Posters
+- **Note**: URLs point to `barbhs.com/assets/docs/`. Full-text ingestion planned for a future version.
 
-### 4. MkDocs Documentation Sites
-- **Sites**: 8 documentation sites hosted at docs.barbhs.com
-- **Chunks**: ~8,600 chunks with section metadata (using page titles)
-- **Content**: Detailed project documentation, user guides, technical deep-dives
-- **Examples**: fitness-dashboard, beehive-tracker, chronoscope, convoscope
+### 4. Project Summaries
+- **Folder**: `inputs/project-summaries/` (20 one-page PDFs)
+- **Content**: Curated one-pagers following a consistent template: What it is / Who it's for / What it does / How it works
+- **Parsing**: Template-aware section detection (fuzzy prefix matching on known section labels)
+- **Special**: Each document also gets a synthetic "overview" chunk combining the title + What it is + Who it's for, optimized for portfolio-style queries
+- **Metadata extras**: `project_name`, `tech_stack` (comma-joined list of detected technologies)
 
-### Total Collection Stats
-- **Total chunks**: ~9,400
-- **With sections**: 92.5% (biosketch, resume, MkDocs)
-- **Without sections**: 7.5% (READMEs)
+### 5. Jekyll Website
+- **URL**: `https://barbhs.com` (fetched live via sitemap.xml)
+- **Tool**: `trafilatura` for main-content extraction (strips nav/footer automatically)
+- **Parsing**: Page title used as section name; each page is one document
 
-### Adding New Knowledge
-
-All embedding is now handled by dedicated scripts with section-aware parsing:
-
-**Initial setup:**
-```bash
-python embed_biosketch.py      # Authoritative source first
-python embed_resume.py         # Resume with sections
-python embed_readmes.py        # Project READMEs
-python embed_mkdocs.py         # Documentation sites
-```
-
-**Re-embed after updates:**
-```bash
-python embed_biosketch.py --force-reembed
-python embed_resume.py --force-reembed
-python embed_readmes.py        # Skips already-embedded files
-python embed_mkdocs.py         # Skips already-embedded pages
-```
-
-**Test parsing without embedding:**
-```bash
-python embed_resume.py --dry-run
-python embed_biosketch.py --dry-run
-```
-
-**Verify collection:**
-```bash
-python verify_collection.py --show-sources --show-sections
-```
+### 6. MkDocs Documentation Sites
+- **Sites**: 8 sites at `docs.barbhs.com`
+- **Fetched via**: `search_index.json` endpoint (pre-extracted clean text, no HTML parsing)
+- **Content**: Detailed project docs, user guides, architecture notes
 
 ## Shared Utilities (utils.py)
 
@@ -305,7 +339,7 @@ The project now uses a centralized `utils.py` module to eliminate code duplicati
 - **`parse_markdown_sections()`**: Parse markdown files by headers (e.g., `##`)
 - **`build_metadata()`**: Construct standardized metadata dicts
 
-All ingestion scripts (`app.py`, `embed_biosketch.py`, `embed_resume.py`, `embed_readmes.py`, `embed_mkdocs.py`) import from `utils.py` to ensure consistency.
+All ingestion scripts import from `utils.py` to ensure consistent chunking behavior across all sources.
 
 ## Chunking Strategy
 
@@ -331,7 +365,8 @@ The app is deployed on Hugging Face Spaces. To deploy your own:
 2. Add these files to your Space:
    - `app.py`
    - `requirements.txt`
-   - `barbara-hidalgo-sotelo-biosketch.md` (and other data sources)
+   - `inputs/` folder (all data sources)
+   - Pre-built `.chroma_db_DT/` (recommended — avoids cold-start re-embedding)
 3. Set Secrets in Space settings:
    - `OPENAI_API_KEY`
    - `PUSHOVER_USER` (optional)
@@ -339,6 +374,37 @@ The app is deployed on Hugging Face Spaces. To deploy your own:
 4. Push to deploy
 
 **Note**: The ChromaDB database (`.chroma_db_DT/`) will be recreated on first run. For faster startup, you can include the pre-built database in your deployment.
+
+## Evaluation
+
+The project includes an offline evaluation harness for systematically testing response quality. See `EVAL_QUICKSTART.md` for the 5-minute getting started guide and `EVAL_WORKFLOW.md` for full documentation.
+
+### Two-axis question design
+
+**92 seed questions** in `eval_questions.csv` organized around two perspectives:
+
+| Type | Categories | Purpose |
+|------|------------|---------|
+| **Coverage** | `bio`, `projects`, `technical`, `personality`, `tool`, `publication` | Does the system retrieve and answer correctly? Run after knowledge base changes. |
+| **Visitor** | `recruiter`, `friendly` | Does the system satisfy real visitors? Mirrors `RECRUITER_PROMPTS` / `FRIENDLY_PROMPTS` in `app.py`. |
+
+### Quick commands
+
+```bash
+# Full evaluation (~$0.21, ~5 min)
+python run_evals.py
+
+# Coverage only — fast regression check after re-embedding
+python run_evals.py --category bio
+python run_evals.py --category publication
+
+# Visitor experience check after prompt changes
+python run_evals.py --category recruiter
+python run_evals.py --category friendly
+
+# Analyze and export for manual grading
+python analyze_evals.py --export
+```
 
 ## Roadmap
 
@@ -350,7 +416,7 @@ The app is deployed on Hugging Face Spaces. To deploy your own:
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries
 - [ ] **Automated updates**: GitHub Actions to re-embed on repo changes
-- [ ] **Evaluation suite**: Automated testing of response quality and accuracy
+- [x] **Evaluation suite**: 91-question offline eval harness across 8 categories (see `EVAL_QUICKSTART.md`)
 
 ## Key Design Decisions
 

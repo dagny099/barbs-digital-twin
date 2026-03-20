@@ -20,7 +20,7 @@ USAGE:
 
 import chromadb
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 
 # ── CONFIG ──────────────────────────────────────────────────────
 CHROMA_PATH = ".chroma_db_DT"
@@ -71,36 +71,34 @@ def main():
     print("=" * 80)
     print(f"Total chunks: {total_chunks}")
 
-    # Count by source
+    # Count by source — group by type prefix (derived from "type:identifier" convention)
     sources = [m.get("source", "unknown") for m in all_data["metadatas"]]
-    source_counts = Counter(sources)
 
-    # Group by source type
-    source_types = {
-        "biosketch": 0,
-        "resume": 0,
-        "github-readme": 0,
-        "mkdocs": 0,
-        "other": 0
-    }
+    by_type = defaultdict(list)
+    for source in sources:
+        type_key = source.split(":")[0]
+        by_type[type_key].append(source)
 
-    for source, count in source_counts.items():
-        if source.startswith("biosketch:"):
-            source_types["biosketch"] += count
-        elif source.startswith("resume:"):
-            source_types["resume"] += count
-        elif source.startswith("github-readme:"):
-            source_types["github-readme"] += count
-        elif source.startswith("mkdocs:"):
-            source_types["mkdocs"] += count
-        else:
-            source_types["other"] += count
+    MAX_SUB = 5   # max sub-sources shown per type before truncating
 
     print("\nChunks by source type:")
-    for source_type, count in sorted(source_types.items()):
-        if count > 0:
-            percentage = (count / total_chunks) * 100
-            print(f"  {source_type:<20} {count:>5} chunks ({percentage:>5.1f}%)")
+    for type_key in sorted(by_type.keys()):
+        type_sources   = by_type[type_key]
+        type_count     = len(type_sources)
+        type_pct       = (type_count / total_chunks) * 100
+        sub_counts     = Counter(type_sources)
+        unique_sub     = len(sub_counts)
+
+        print(f"  {type_key:<22} {type_count:>5} chunks ({type_pct:>5.1f}%)"
+              f"  [{unique_sub} source{'s' if unique_sub != 1 else ''}]")
+
+        # Show sub-source breakdown — truncate long lists
+        for src, cnt in sorted(sub_counts.items(), key=lambda x: -x[1])[:MAX_SUB]:
+            identifier = src.split(":", 1)[1] if ":" in src else src
+            print(f"    ↳ {identifier:<48} {cnt:>3} chunks")
+        if unique_sub > MAX_SUB:
+            print(f"    ↳ … and {unique_sub - MAX_SUB} more"
+                  f"  (use --show-sources for full list)")
 
     # Section metadata
     sections = [m.get("section") for m in all_data["metadatas"]]

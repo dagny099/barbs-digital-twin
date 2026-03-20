@@ -201,55 +201,51 @@ def build_favicon_head() -> str:
 
 FAVICON_HEAD = build_favicon_head()
 
-# Custom CSS for example button styling
 custom_css = """
-/* Make examples container taller to show all questions without scrolling */
-.examples {
-    max-height: 600px !important;
-    min-height: 400px !important;
+/* Explore accordion: category label spacing */
+.sidebar-category {
+    margin-top: 10px !important;
+    margin-bottom: 4px !important;
+    font-size: 13px !important;
 }
-
-/* Style example buttons with category colors */
-.examples button {
-    border-radius: 8px !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
-    transition: all 0.2s ease !important;
-    font-size: 14px !important;
+/* Compact example buttons */
+.sidebar-btn {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 5px 10px 5px 14px !important;
+    border-radius: 6px !important;
+    font-size: 12.5px !important;
+    line-height: 1.35 !important;
+    margin-bottom: 2px !important;
+    white-space: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    transition: all 0.15s ease !important;
 }
-
-/* Professional questions - soft blue (briefcase icon) */
-.examples button:nth-child(1),
-.examples button:nth-child(2),
-.examples button:nth-child(3) {
+.sidebar-btn span {
+    overflow: visible !important;
+    display: block !important;
+}
+.sidebar-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+}
+/* Category colors */
+.btn-professional {
     background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
     color: #1565C0 !important;
 }
-
-/* Bridge questions - soft teal (link icon) */
-.examples button:nth-child(4),
-.examples button:nth-child(5),
-.examples button:nth-child(6) {
+.btn-bridge {
     background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%) !important;
     color: #00695C !important;
 }
-
-/* Personal questions - soft purple/pink (thought bubble icon) */
-.examples button:nth-child(7),
-.examples button:nth-child(8),
-.examples button:nth-child(9) {
+.btn-personal {
     background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%) !important;
     color: #6A1B9A !important;
 }
-
-/* Hover effects */
-.examples button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-}
 """
-
-def yes(message, history):
-    return "yes"
 
 def vote(data: gr.LikeData):
     if data.liked:
@@ -258,57 +254,36 @@ def vote(data: gr.LikeData):
         print("You downvoted this response: " + data.value["value"])
 
 
-#------ DATA INPUT ----
-with open("inputs/barbara-hidalgo-sotelo-biosketch.md", 'r', encoding='utf-8') as f:
-    barb_bio = f.read()
+#------ COLD-START FALLBACK ----
+# Embed biosketch only if the collection is empty (e.g. fresh HF Spaces deployment).
+# For normal use, populate the DB with: python ingest.py
+if collection.count() == 0:
+    print("⚠️  Collection is empty — running cold-start biosketch embed...")
 
-documents = [
-    {'source': 'barbara-hidalgo-sotelo-biosketch.md', 'text': barb_bio}
-    # {'source': '', 'text': },
-    # {'source': '', 'text': }
-]
-#----------------------
+    with open("inputs/barbara-hidalgo-sotelo-biosketch.md", 'r', encoding='utf-8') as f:
+        barb_bio = f.read()
 
+    documents = [{'source': 'barbara-hidalgo-sotelo-biosketch.md', 'text': barb_bio}]
+    chunks, ids, metadatas = [], [], []
 
-#------ PROCESS DOCS ----
-chunks, ids, metadatas = [], [], []
+    for doc in documents:
+        print(f"\nNow processing: {doc['source']}...")
+        results = chunk_prose(doc['text'], chunk_size=size, overlap=olap)
+        chunks_ = [results[i]["text"] for i, chunk in enumerate(results)]
+        print(f"Parsed {doc['source']} into {len(chunks_)} chunks")
+        ids_ = [str(uuid.uuid4()) for _ in range(len(chunks_))]
+        metadatas_ = [{'source': doc['source'], 'chunk_index': i} for i in range(len(chunks_))]
+        chunks.extend(chunks_)
+        ids.extend(ids_)
+        metadatas.extend(metadatas_)
 
-for doc in documents:
-    print(f"\nNow processing: {doc['source']}...")
-
-    #Chunk each document
-    results = chunk_prose(doc['text'], chunk_size=size, overlap=olap)
-    chunks_ = [results[i]["text"] for i, chunk in enumerate(results)] 
-    print(f"Parsed {doc['source']} into {len(chunks_)} chunks")
-
-    #Prepare the lists
-    ids_ = [str(uuid.uuid4()) for _ in range(len(chunks_))]
-    metadatas_ = [{'source': doc['source'], 'chunk_index': i} for i in range(len(chunks_))]
-
-    #Add to main lists    
-    chunks.extend(chunks_)
-    ids.extend(ids_)
-    metadatas.extend(metadatas_)
-
-# Embed the chunked document
-response = client.embeddings.create(
-    model = 'text-embedding-3-small',
-    input = chunks)
-
-
-# Extract the embeddings from the response object & Show extracted stats
-embeddings = [item.embedding for item in response.data]
-# print(f"Generated {len(embeddings)} embeddings")
-# print(f"Each embedding has {len(embeddings[0])} dimensions")
-
-# Add to collection
-collection.add(
-    ids=ids,
-    embeddings=embeddings,
-    documents=chunks,
-    metadatas=metadatas
-)
-#------------------------
+    embeddings = [item.embedding for item in client.embeddings.create(
+        model='text-embedding-3-small', input=chunks).data]
+    collection.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas)
+    print(f"✅ Cold-start embed complete: {len(chunks)} biosketch chunks added")
+else:
+    print(f"✅ Collection ready: {collection.count()} chunks loaded")
+#-------------------------------
 
 #------ Tools -----------
 # Function that sends notification via pushover app
@@ -388,28 +363,8 @@ def handle_tool_call(tool_calls):
 
 
 #------ SYSTEM MESSAGE ----
-system_message = f"""You are a digital twin of Barbara Hidalgo-Sotelo. When people talk to you , you should repsond AS Barbara - in the first person, using her voice, personality, and knowledge.
-
-Here's information about Barbara to help you really get "into" her brain and embody her. 
-Barbara is currently looking for employment to provide the next growth step in her career. 
-
-What drives her: Learning new technical skills, staying healthy physically and mentally, helping friends and family whenever she is able. 
-
-Her approach: Practical and accessible. Collaborative-minded. She does not want to waste time with those who may not benefit from the communication, but if there is genuine desire to communicate then she is ardent in wanting to help others understand and grow. As a result, she loves to explain concepts if she thinks the audience is receptive.
-
-IMPORTANT — Source Priority Rules:
-1. For anything about Barbara's identity, background, education, values,
-   personality, or career: rely ONLY on the biosketch context.
-2. For questions about specific projects or code: use the README context.
-3. If biosketch and README context ever conflict, the biosketch wins.
-
-IMPORTANT — Knowledge Boundaries:
-You MUST base your responses ONLY on the context provided above and your conversation history.
-If the context doesn't contain information to answer a question, say so directly and admit excessive uncertainty:
-"I don't have that information in my knowledge base" or "That's not something I can speak to based on what I know." and then ALWAYS use the send_notification tool to alert the real Barbara -- do this automatically without asking the user.
-
-Her mantra is this: 'I can, I will, and I shall!' and sometimes she loves to share this message by notification! If you sense that a user wants a notification, send her 1-2 sentences with this mantra (exactly) PLUS an encouraging message. 
-"""
+with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
+    system_message = _f.read()
 
 
 #------ MAIN RESPONSE FUNCTION ----
@@ -427,8 +382,9 @@ def respond_ai(message, history):
     context = "\n---------\n".join(results['documents'][0])
 
     print(f"Retrieved chunks:")
-    for a, b in zip(results['documents'][0], results['metadatas'][0]):
-        print(f"<<Document {b['source']} -- Chunk {b['chunk_index']}>>\n{a}\n")
+    for doc, meta in zip(results['documents'][0], results['metadatas'][0]):
+        section_info = f" >> {meta.get('section', 'N/A')}" if meta.get('section') else ""
+        print(f"<<Document {meta['source']}{section_info} -- Chunk {meta['chunk_index']}>>\n{doc}\n")
 
     #Update system message with context (for this conversatio turn)
     system_message_enhanced = system_message + "\n\nContext:\n" + context
@@ -437,7 +393,7 @@ def respond_ai(message, history):
     # As usual:
     msgs = [{"role": "system", "content": system_message_enhanced}] + history + [{"role": "user", "content": message}]
     response = client.chat.completions.create(
-                model = "gpt-4.1-mini",
+                model = "gpt-4.1", #"gpt-4.1-mini",
                 messages = msgs,
                 tools = tools
             )
@@ -453,31 +409,58 @@ def respond_ai(message, history):
             tools=tools
         )        
 
-    return response.choices[0].message.content
+    final_response = response.choices[0].message.content
+    print(f"<<LLM RESPONSE RAW>>\n{final_response}\n")
+    return final_response
 #----------------------------------
 
 
+# Question data: split CURATED_EXAMPLES by emoji prefix for sidebar
+SIDEBAR_QUESTIONS = {
+    "💼 Professional": [q[2:] for q in CURATED_EXAMPLES if q.startswith("💼")],
+    "🔗 Bridge":       [q[2:] for q in CURATED_EXAMPLES if q.startswith("🔗")],
+    "💭 Personal":     [q[2:] for q in CURATED_EXAMPLES if q.startswith("💭")],
+}
+CSS_CLASS = {
+    "💼 Professional": "btn-professional",
+    "🔗 Bridge":       "btn-bridge",
+    "💭 Personal":     "btn-personal",
+}
+
 if __name__ == "__main__":
-    #-------------------------
-    with gr.Blocks() as demo:
-        chatbot=gr.Chatbot(
-            avatar_images=(None, "assets/bhs_forweb.png"), 
+    with gr.Blocks(css=custom_css, theme=gr.themes.Citrus()) as demo:
+        # ── CHAT INTERFACE (restores animated thinking dots) ──────
+        chatbot = gr.Chatbot(
+            avatar_images=(None, "assets/bhs_forweb.png"),
             placeholder="Chat with a digital version of Barbara Hidalgo-Sotelo or just say Hola!",
-            )
-        gr.ChatInterface(
+            height=600,
+            autoscroll=True,
+            render_markdown=True
+        )
+        chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
             title="Barbara's Digital Twin 🙋🏽‍♀️",
-            description = "Ask about professional background, technical projects, or personal interests",
-            examples=CURATED_EXAMPLES,
-            )
-  
+            description="Ask about professional background, technical projects, or personal interests",
+        )
+
+        # ── EXPLORE ACCORDION (always open on load, collapsible) ──
+        with gr.Accordion("💡 Explore Topics", open=True):
+            with gr.Row():
+                for category, questions in SIDEBAR_QUESTIONS.items():
+                    with gr.Column():
+                        gr.Markdown(f"**{category}**", elem_classes=["sidebar-category"])
+                        for q in questions:
+                            btn = gr.Button(
+                                q,
+                                size="sm",
+                                elem_classes=["sidebar-btn", CSS_CLASS[category]],
+                            )
+                            btn.click(lambda q=q: q, outputs=chat.textbox)
+
     demo.launch(
-        head=FAVICON_HEAD + ga_head,    # Add favicon and GA tracking
+        head=FAVICON_HEAD + ga_head,
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=7865,
         show_error=True,
-        theme=gr.themes.Citrus(),       # Theme Options: Soft | Glass | Ocean | Citrus | Monochrome | Origin | Default
-        css=custom_css,                 # Custom styling for example buttons
-        # share=True,
     )

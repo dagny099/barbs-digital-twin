@@ -491,3 +491,56 @@ def build_metadata(
     }
     metadata.update(extra_fields)
     return metadata
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CHROMADB HELPERS
+# ═══════════════════════════════════════════════════════════════════
+
+def delete_chunks_by_source(collection, source_prefix: str) -> None:
+    """
+    Delete all chunks whose 'source' metadata field starts with source_prefix.
+
+    Used by embed scripts to wipe an existing source before force re-embedding.
+
+    Args:
+        collection:    ChromaDB collection object
+        source_prefix: Prefix to match (e.g. 'biosketch:', 'project-summary:')
+    """
+    try:
+        all_data = collection.get(include=["metadatas"])
+        matching_ids = [
+            id_ for id_, meta in zip(all_data["ids"], all_data["metadatas"])
+            if meta.get("source", "").startswith(source_prefix)
+        ]
+        if matching_ids:
+            print(f"   🗑️  Deleting {len(matching_ids)} existing chunks from {source_prefix}...")
+            collection.delete(ids=matching_ids)
+            print(f"   ✅ Deleted successfully")
+        else:
+            print(f"   ℹ️  No existing chunks found for {source_prefix}")
+    except Exception as e:
+        print(f"   ⚠️  Warning: Could not delete existing chunks: {e}")
+
+
+def section_already_embedded(collection, source: str, section: str) -> bool:
+    """
+    Check if a specific (source, section) pair is already in the collection.
+
+    Used by embed scripts for per-section idempotency checks.
+
+    Args:
+        collection: ChromaDB collection object
+        source:     Full source string (e.g. 'biosketch:barbara-hidalgo-sotelo-biosketch.md')
+        section:    Section name (e.g. 'Education')
+
+    Returns:
+        True if at least one chunk with this source+section exists, False otherwise.
+    """
+    try:
+        results = collection.get(
+            where={"$and": [{"source": source}, {"section": section}]}
+        )
+        return len(results["ids"]) > 0
+    except Exception:
+        return False

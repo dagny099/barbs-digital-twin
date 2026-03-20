@@ -235,6 +235,13 @@ Note: ChromaDB is persistent. No need to restart `app.py` - changes are immediat
 
 ## Known Issues & TODOs
 
+### Gradio Constraints (DO NOT VIOLATE)
+
+- **`gr.Chatbot` must NOT include `type="messages"` as a kwarg** — causes a runtime error. Omit the parameter entirely.
+- **`gr.Chatbot` must NOT include `show_copy_button=True`** — also causes a runtime error. Omit entirely.
+- **History format is messages-style dicts despite omitting `type="messages"`**: This Gradio version uses `{"role": ..., "content": ...}` format internally regardless. History must always be stored and returned as `[{"role": "user", "content": ...}, {"role": "assistant", "content": ...}, ...]`. Do NOT use tuple format `[[user, bot], ...]`.
+- **`respond_ai` already expects this dict format**, so no conversion is needed between `chat_fn` and `respond_ai`.
+
 ### From Code Comments
 
 1. **Line 310 (app.py)**: Add print statements to see what tools are being called (debugging)

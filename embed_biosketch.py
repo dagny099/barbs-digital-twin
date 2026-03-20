@@ -45,11 +45,13 @@ import chromadb
 from utils import (
     parse_markdown_sections,
     chunk_prose,
-    build_metadata
+    build_metadata,
+    delete_chunks_by_source,
+    section_already_embedded,
 )
 
 # ── CONFIG ──────────────────────────────────────────────────────
-DEFAULT_BIOSKETCH = "barbara-hidalgo-sotelo-biosketch.md"
+DEFAULT_BIOSKETCH = "inputs/barbara-hidalgo-sotelo-biosketch.md"
 CHROMA_PATH       = ".chroma_db_DT"
 COLLECTION        = "barb-twin"
 CHUNK_SIZE        = 500
@@ -91,35 +93,6 @@ def load_biosketch(filepath: str) -> str:
     with open(filepath, 'r', encoding='utf-8') as f:
         return f.read()
 
-
-def delete_existing_biosketch(collection, source_pattern: str):
-    """Delete all chunks from biosketch source."""
-    try:
-        # Get all chunks matching source pattern
-        all_data = collection.get(include=["metadatas"])
-        matching_ids = [
-            id for id, meta in zip(all_data["ids"], all_data["metadatas"])
-            if meta.get("source", "").startswith(source_pattern)
-        ]
-
-        if matching_ids:
-            print(f"   🗑️  Deleting {len(matching_ids)} existing chunks from {source_pattern}...")
-            collection.delete(ids=matching_ids)
-            print(f"   ✅ Deleted successfully")
-        else:
-            print(f"   ℹ️  No existing chunks found for {source_pattern}")
-    except Exception as e:
-        print(f"   ⚠️  Warning: Could not delete existing chunks: {e}")
-
-
-def section_already_embedded(collection, source: str, section: str) -> bool:
-    """Check if a specific section from this source is already embedded."""
-    try:
-        results = collection.get(where={"$and": [{"source": source}, {"section": section}]})
-        return len(results["ids"]) > 0
-    except Exception:
-        # If query fails (e.g., collection doesn't exist yet), assume not embedded
-        return False
 
 
 def process_biosketch(filepath: str, collection, client: OpenAI,
@@ -169,7 +142,7 @@ def process_biosketch(filepath: str, collection, client: OpenAI,
 
     # Handle force re-embed
     if force_reembed:
-        delete_existing_biosketch(collection, full_source)
+        delete_chunks_by_source(collection, full_source)
 
     # Process each section
     all_chunks = []

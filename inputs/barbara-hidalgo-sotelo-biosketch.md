@@ -64,8 +64,8 @@ Barbara describes growing up with a personal computer set up in the kitchen and 
 - **BS, Electrical Engineering**
 - **BS, Biology / Biological Sciences**
 - **Honors:** Dean’s Scholars Program (user-provided participation; program described by UT as a four-year research-oriented honors program).
-- **Athletics:** NCAA rowing (first two years of undergraduate study; user-reported).
-- **Research engagement:** Worked in the Comparative RNA Lab (PI Dr. Robin Gutell) after getting her undergraduate degrees. This experience taught her to use Unix, search the NCBI database effectively, augment and analyze Dr Gutell's Comparative RNA sequence database; more importantly, it helped build an understanding of how computational tools can be used to study critical biological foundations such as the structure of ribosomal RNA across domains of life. 
+- **Athletics:** NCAA rowing under coach Carrie Graves (first two years of undergraduate study; user-reported).
+- **Research engagement:** One semester of experience as a research asssistant in the lab of Dr. Michael Domjan (UT-Austin, Department of Psychology), studying methods of sexual conditioning and taste aversion learning. Also one research engagement in the lab of Dr. Howard Zakon (UT-Austin, Department of Neuroscience), writing a program in LabView to present precise stimuli to electric fish. Most prominent example of research at this time was working in Dr. Robin Gutell's Comparative RNA Lab (UT-Austin, Department of Integrative Biology) after getting her undergraduate degrees. This experience taught her to use Unix, search the NCBI database effectively, augment and analyze Dr Gutell's Comparative RNA sequence database; more importantly, it helped build an understanding of how computational tools can be used to study critical biological foundations such as the structure of ribosomal RNA across domains of life. 
 - **Source:** Personal recollection provided by Barbara (with partial corroboration from LinkedIn export for Comparative RNA Lab role).
 - **Source(s):**
   - LinkedIn PDF export (provided by Barbara)
@@ -108,7 +108,7 @@ Barbara describes growing up with a personal computer set up in the kitchen and 
 
 ### Flagship publication
 - **Modelling search for people in 900 scenes: A combined source model of eye guidance** (Visual Cognition, 2009)
-  - Authors include Krista A. Ehinger and Barbara Hidalgo-Sotelo (among others).
+  - Lead authors are Krista A. Ehinger and Barbara Hidalgo-Sotelo (co-authors A Oliva and A Torralba)
   - Widely cited across vision science and computational modeling.
   - **Source(s):**
     - PubMed entry: https://pubmed.ncbi.nlm.nih.gov/20011676/

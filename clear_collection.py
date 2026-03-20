@@ -71,10 +71,8 @@ def main():
         print(f"   ✅ Successfully deleted all chunks")
         print(f"\n📊 Collection '{COLLECTION}' is now empty")
         print(f"\n   Next steps:")
-        print(f"     python embed_biosketch.py      # Embed authoritative source first")
-        print(f"     python embed_resume.py         # Embed resume with sections")
-        print(f"     python embed_readmes.py        # Embed project READMEs")
-        print(f"     python embed_mkdocs.py         # Embed MkDocs sites")
+        print(f"     python ingest.py --all         # Re-embed all sources")
+        print(f"     python ingest.py               # Interactive menu to select sources")
         print(f"     python verify_collection.py    # Verify results\n")
     else:
         print(f"   ⚠️  Warning: {remaining} chunks remain")

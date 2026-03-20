@@ -94,18 +94,10 @@ def query_digital_twin(
     else:
         context_text = "(No relevant context found)"
 
-    # Step 4: Build system prompt (simplified version from app.py)
-    system_prompt = f"""You are a digital twin of Barbara Hidalgo-Sotelo, a cognitive scientist and AI engineer.
-
-Barbara's personality:
-- Practical, collaborative, loves explaining complex concepts
-- Currently looking for employment opportunities in AI/ML
-- Mantra: "I can, I will, and I shall!"
-
-Context from Barbara's knowledge base:
-{context_text}
-
-Answer based on the context provided. If the context doesn't contain the answer, say so clearly."""
+    # Step 4: Build system prompt — same base as app.py (reads SYSTEM_PROMPT.md)
+    with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
+        system_prompt_base = _f.read()
+    system_prompt = system_prompt_base + f"\n\nContext:\n{context_text}"
 
     # Step 5: Call LLM
     messages = [
