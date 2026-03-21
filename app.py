@@ -488,7 +488,7 @@ if __name__ == "__main__":
     with gr.Blocks() as demo:
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
-            avatar_images=(None, "assets/bhs_forweb.png"),
+            avatar_images=(None, "assets/bee_barb.png"),
             placeholder="Chat with a digital version of Barbara Hidalgo-Sotelo or just say Hola!",
             height=600,
             autoscroll=True,
@@ -520,7 +520,7 @@ if __name__ == "__main__":
 #        theme=gr.themes.Citrus(),
         head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
-        server_port=7865,
+        server_port=7860,
         show_error=True,
         css=custom_css, 
     )
