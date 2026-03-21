@@ -226,7 +226,8 @@ def build_favicon_head() -> str:
                     raw = f.read()
                 b64 = base64.b64encode(raw).decode("ascii")
                 mime = "image/png" if path.lower().endswith(".png") else "image/x-icon"
-                return f'<link rel="icon" type="{mime}" href="data:{mime};base64,{b64}">'
+                return (f'<link rel="icon" type="{mime}" href="data:{mime};base64,{b64}">'
+                        f'<link rel="shortcut icon" type="{mime}" href="data:{mime};base64,{b64}">')
         except Exception:
             # If anything goes wrong, silently fall back to no favicon rather than crashing the app
             pass
@@ -582,7 +583,7 @@ def _build_title_html() -> str:
     )
 
 if __name__ == "__main__":
-    with gr.Blocks() as demo:
+    with gr.Blocks(title="Barbara's Digital Twin") as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
 
