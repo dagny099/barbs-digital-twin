@@ -29,7 +29,7 @@ jobs:
       - name: Stage files for deployment
         run: |
           # ── Core app ──────────────────────────────────────────────────────
-          cp app.py utils.py ingest.py requirements.txt SYSTEM_PROMPT.md hf_space/
+          cp app.py utils.py ingest.py db_sync.py requirements.txt SYSTEM_PROMPT.md hf_space/
 
           # ── Embedding scripts ─────────────────────────────────────────────
           cp embed_biosketch.py \

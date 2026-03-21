@@ -99,14 +99,21 @@ gtag('config', 'G-489875302');
 # FOR CHUNKING, TEXT PROCESSING & STORING EMBEDDINGS:
 size, olap = 500, 50
 
+# Startup: restore DB from HF Hub if the directory is missing entirely.
+# Must happen before ChromaDB opens the path, or the pull would conflict.
+if not os.path.exists(".chroma_db_DT"):
+    from db_sync import pull_db
+    pull_db()
+
 chroma_client = chromadb.PersistentClient(path=".chroma_db_DT")
 collection = chroma_client.get_or_create_collection(name="barb-twin")
 
-# Startup ingestion: if the knowledge base is empty (e.g. fresh HF Spaces container
-# after a deploy), run ingest.py --all to rebuild the vector store before serving.
+# If still empty (pull failed or very first run), build from scratch then cache.
 if collection.count() == 0:
     print("Knowledge base is empty — running ingest.py --all ...")
     subprocess.run(["python", "ingest.py", "--all"], check=True)
+    from db_sync import push_db
+    push_db()
     print("Ingestion complete.")
 
 #If there are already existing items, delete 'em

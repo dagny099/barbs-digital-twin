@@ -337,6 +337,10 @@ def cli_mode(args):
         print(f"\n⚠️  {errors} source(s) had errors.")
         sys.exit(1)
 
+    if not args.dry_run:
+        from db_sync import push_db
+        push_db()
+
 
 # ── ARGUMENT PARSING ──────────────────────────────────────────────────────
 
