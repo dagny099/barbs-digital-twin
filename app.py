@@ -553,26 +553,39 @@ if __name__ == "__main__":
                             )
                             btn.click(lambda q=q: q, outputs=chat.textbox)
 
-    # On HF Spaces the reverse proxy terminates SSL and forwards HTTP internally.
+    # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
     # Gradio sees scheme=http and generates absolute http:// URLs for theme.css
-    # and /config, which browsers block as mixed content. This ASGI middleware
-    # forces scheme=https so Gradio generates correct HTTPS URLs.
+    # and /config, which browsers block as mixed content on the HTTPS page.
+    # Fix: ASGI middleware that forces scheme=https (root cause) + CSP response
+    # header that tells the browser to upgrade any remaining http:// requests.
     if os.getenv("SPACE_ID"):
+        from starlette.types import ASGIApp, Receive, Scope, Send
+
         class _ForceHTTPS:
-            """ASGI wrapper that rewrites the scheme to https."""
-            def __init__(self, app):
-                self._app = app
-            async def __call__(self, scope, receive, send):
+            """ASGI middleware: rewrite scheme to https + add CSP header."""
+            def __init__(self, app: ASGIApp):
+                self.app = app
+
+            async def __call__(self, scope: Scope, receive: Receive, send: Send):
                 if scope["type"] in ("http", "websocket"):
                     scope["scheme"] = "https"
-                await self._app(scope, receive, send)
-            def __getattr__(self, name):
-                return getattr(self._app, name)
-        demo.app = _ForceHTTPS(demo.app)
+                    # Also inject CSP header to upgrade any URLs we missed
+                    async def _send(message):
+                        if message["type"] == "http.response.start":
+                            headers = list(message.get("headers", []))
+                            headers.append(
+                                (b"content-security-policy",
+                                 b"upgrade-insecure-requests"))
+                            message["headers"] = headers
+                        await send(message)
+                    await self.app(scope, receive, _send)
+                else:
+                    await self.app(scope, receive, send)
+
+        demo.app.add_middleware(_ForceHTTPS)
 
     demo.launch(
 #        theme=gr.themes.Citrus(),
-        root_path="/",
         head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
         server_port=7860,
