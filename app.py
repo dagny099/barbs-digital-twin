@@ -303,6 +303,35 @@ div[role="log"][aria-label="chatbot conversation"] {
         rgba(45, 32, 10, 0.6) 100%
     ) !important;
 }
+/* ── Title header with circular headshot ──────────────────────── */
+.title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-bottom: 4px !important;
+}
+.title-row img {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid #B2E8EE !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+    flex-shrink: 0 !important;
+}
+.title-row h1 {
+    margin: 0 !important;
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+}
+.title-subtitle {
+    margin: 0 0 8px 0 !important;
+    color: #666 !important;
+    font-size: 0.95rem !important;
+}
+.dark .title-subtitle {
+    color: #aaa !important;
+}
 /* ── Hide Gradio footer (Use via API · Built with Gradio · Settings) */
 footer {
     display: none !important;
@@ -535,8 +564,28 @@ CSS_CLASS = {
     "💭 Personal":     "btn-personal",
 }
 
+def _build_title_html() -> str:
+    """Build HTML header with circular headshot + title."""
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "assets", "bhs_forweb.png")
+    try:
+        with open(img_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        img_tag = f'<img src="data:image/png;base64,{b64}" alt="Barbara">'
+    except FileNotFoundError:
+        img_tag = ""
+    return (
+        f'<div class="title-row">{img_tag}'
+        '<h1>Barbara\'s Digital Twin 🙋🏽‍♀️</h1></div>'
+        '<p class="title-subtitle">'
+        'Ask about my professional background, technical projects, or personal interests</p>'
+    )
+
 if __name__ == "__main__":
     with gr.Blocks() as demo:
+        # ── TITLE with circular headshot ──────────────────────────
+        gr.HTML(_build_title_html())
+
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
@@ -548,8 +597,6 @@ if __name__ == "__main__":
         chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
-            title='<img src="file=assets/bhs_forweb.png" alt="Barbara" class="hero-avatar">Barbara\'s Digital Twin',
-            description="Ask about my professional background, technical projects, or personal interests",
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
         )
 
