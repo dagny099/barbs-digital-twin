@@ -66,10 +66,6 @@ pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
 # Fix Gradio's label[for=FORM_ELEMENT] accessibility bug
-upgrade_insecure_head = """
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-"""
-
 fix_label_head = """
 <script>
 (function() {
@@ -557,12 +553,29 @@ if __name__ == "__main__":
                             )
                             btn.click(lambda q=q: q, outputs=chat.textbox)
 
+    # On HF Spaces the reverse proxy terminates SSL and forwards HTTP internally.
+    # Gradio sees scheme=http and generates absolute http:// URLs for theme.css
+    # and /config, which browsers block as mixed content. This ASGI middleware
+    # forces scheme=https so Gradio generates correct HTTPS URLs.
+    if os.getenv("SPACE_ID"):
+        class _ForceHTTPS:
+            """ASGI wrapper that rewrites the scheme to https."""
+            def __init__(self, app):
+                self._app = app
+            async def __call__(self, scope, receive, send):
+                if scope["type"] in ("http", "websocket"):
+                    scope["scheme"] = "https"
+                await self._app(scope, receive, send)
+            def __getattr__(self, name):
+                return getattr(self._app, name)
+        demo.app = _ForceHTTPS(demo.app)
+
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path="/",
-        head=FAVICON_HEAD + ga_head + fix_label_head + upgrade_insecure_head,
+        head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
         server_port=7860,
         show_error=True,
-        css=custom_css, 
+        css=custom_css,
     )
