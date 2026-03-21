@@ -268,70 +268,76 @@ custom_css = """
 /* ── Bold text — extra heavy so it reads clearly ───────────────── */
 .chatbot .prose strong, .chatbot .prose b {
     font-weight: 900 !important;
-    color: #111111 !important;
+    color: #1B2D3A !important;
 }
 .dark .chatbot .prose strong, .dark .chatbot .prose b {
-    color: #f0ede6 !important;
+    color: #D0E8F0 !important;
 }
-/* ── Chatbot area — warm cream background (light) / dark-adaptive ─ */
+/* ── Chatbot area — pale steel blue (light) / deep steel blue (dark) */
+/* Light: same hue family as barbhs.com hero, quieter/softer register  */
+/* Dark:  deep version of that same hero — feels like the same "room"  */
 div[role="log"][aria-label="chatbot conversation"] {
-    background-color: #FFFBF0 !important;
+    background-color: #EEF4F7 !important;
     border-radius: 8px !important;
 }
 .dark div[role="log"][aria-label="chatbot conversation"] {
-    background-color: #1e1b14 !important;
+    background-color: #1B2D3A !important;
 }
-/* ── Sidebar buttons in dark mode ──────────────────────────────── */
-.dark .btn-professional {
-    background: linear-gradient(135deg, #1a2f42 0%, #1e3a52 100%) !important;
-    color: #90CAF9 !important;
-    border: 1px solid rgba(144,202,249,0.25) !important;
-}
-.dark .btn-bridge {
-    background: linear-gradient(135deg, #0f2622 0%, #13302c 100%) !important;
-    color: #80CBC4 !important;
-    border: 1px solid rgba(128,203,196,0.25) !important;
-}
-.dark .btn-personal {
-    background: linear-gradient(135deg, #251535 0%, #2d1a40 100%) !important;
-    color: #CE93D8 !important;
-    border: 1px solid rgba(206,147,216,0.25) !important;
+/* ── Explore Topics accordion — tri-color gradient (light mode) ──── */
+/* Teal · Steel Blue · Warm Amber — mirrors button palette            */
+#explore-accordion {
+    background: linear-gradient(
+        135deg,
+        rgba(224, 245, 248, 0.5) 0%,
+        rgba(229, 237, 243, 0.5) 50%,
+        rgba(254, 243, 226, 0.5) 100%
+    ) !important;
+    border-radius: 8px !important;
 }
 /* ── Explore accordion dark mode ───────────────────────────────── */
 .dark #explore-accordion {
     background: linear-gradient(
         135deg,
-        rgba(26,47,66,0.5) 0%,
-        rgba(15,38,34,0.5) 50%,
-        rgba(37,21,53,0.5) 100%
+        rgba(10, 32, 40, 0.6) 0%,
+        rgba(27, 45, 58, 0.6) 50%,
+        rgba(45, 32, 10, 0.6) 100%
     ) !important;
-}
-/* ── Explore Topics accordion — tri-color gradient matching buttons */
-#explore-accordion {
-    background: linear-gradient(
-        135deg,
-        rgba(227, 242, 253, 0.45) 0%,
-        rgba(224, 242, 241, 0.45) 50%,
-        rgba(243, 229, 245, 0.45) 100%
-    ) !important;
-    border-radius: 8px !important;
 }
 /* ── Hide Gradio footer (Use via API · Built with Gradio · Settings) */
 footer {
     display: none !important;
 }
-/* ── Category button colors ────────────────────────────────────── */
+/* ── Category button colors (light mode) ───────────────────────── */
+/* Professional: teal — matches barbhs.com CTA button accent         */
 .btn-professional {
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
-    color: #1565C0 !important;
+    background: linear-gradient(135deg, #E0F5F8 0%, #B2E8EE 100%) !important;
+    color: #0E7A8A !important;
 }
+/* Bridge: steel blue — matches barbhs.com hero background           */
 .btn-bridge {
-    background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%) !important;
-    color: #00695C !important;
+    background: linear-gradient(135deg, #E5EDF3 0%, #C4D9E8 100%) !important;
+    color: #3B5978 !important;
 }
+/* Personal: warm amber — complements the cool blues, adds warmth    */
 .btn-personal {
-    background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%) !important;
-    color: #6A1B9A !important;
+    background: linear-gradient(135deg, #FEF3E2 0%, #FDDBA1 100%) !important;
+    color: #8B5E00 !important;
+}
+/* ── Sidebar buttons in dark mode ──────────────────────────────── */
+.dark .btn-professional {
+    background: linear-gradient(135deg, #0a2028 0%, #0e2e38 100%) !important;
+    color: #4DD0E1 !important;
+    border: 1px solid rgba(77,208,225,0.25) !important;
+}
+.dark .btn-bridge {
+    background: linear-gradient(135deg, #1B2D3A 0%, #213547 100%) !important;
+    color: #90B8D4 !important;
+    border: 1px solid rgba(144,184,212,0.25) !important;
+}
+.dark .btn-personal {
+    background: linear-gradient(135deg, #2d1f0a 0%, #3a2810 100%) !important;
+    color: #FFCC80 !important;
+    border: 1px solid rgba(255,204,128,0.25) !important;
 }
 """
 
