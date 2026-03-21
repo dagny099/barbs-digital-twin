@@ -270,10 +270,41 @@ custom_css = """
     font-weight: 900 !important;
     color: #111111 !important;
 }
-/* ── Chatbot area — warm cream background ──────────────────────── */
+.dark .chatbot .prose strong, .dark .chatbot .prose b {
+    color: #f0ede6 !important;
+}
+/* ── Chatbot area — warm cream background (light) / dark-adaptive ─ */
 div[role="log"][aria-label="chatbot conversation"] {
     background-color: #FFFBF0 !important;
     border-radius: 8px !important;
+}
+.dark div[role="log"][aria-label="chatbot conversation"] {
+    background-color: #1e1b14 !important;
+}
+/* ── Sidebar buttons in dark mode ──────────────────────────────── */
+.dark .btn-professional {
+    background: linear-gradient(135deg, #1a2f42 0%, #1e3a52 100%) !important;
+    color: #90CAF9 !important;
+    border: 1px solid rgba(144,202,249,0.25) !important;
+}
+.dark .btn-bridge {
+    background: linear-gradient(135deg, #0f2622 0%, #13302c 100%) !important;
+    color: #80CBC4 !important;
+    border: 1px solid rgba(128,203,196,0.25) !important;
+}
+.dark .btn-personal {
+    background: linear-gradient(135deg, #251535 0%, #2d1a40 100%) !important;
+    color: #CE93D8 !important;
+    border: 1px solid rgba(206,147,216,0.25) !important;
+}
+/* ── Explore accordion dark mode ───────────────────────────────── */
+.dark #explore-accordion {
+    background: linear-gradient(
+        135deg,
+        rgba(26,47,66,0.5) 0%,
+        rgba(15,38,34,0.5) 50%,
+        rgba(37,21,53,0.5) 100%
+    ) !important;
 }
 /* ── Explore Topics accordion — tri-color gradient matching buttons */
 #explore-accordion {
@@ -490,7 +521,7 @@ if __name__ == "__main__":
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bee_barb.png"),
             placeholder="Chat with a digital version of Barbara Hidalgo-Sotelo or just say Hola!",
-            height=600,
+            height=420,
             autoscroll=True,
             render_markdown=True,
         )
