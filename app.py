@@ -66,6 +66,10 @@ pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
 # Fix Gradio's label[for=FORM_ELEMENT] accessibility bug
+upgrade_insecure_head = """
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+"""
+
 fix_label_head = """
 <script>
 (function() {
@@ -556,7 +560,7 @@ if __name__ == "__main__":
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path="/",
-        head=FAVICON_HEAD + ga_head + fix_label_head,
+        head=FAVICON_HEAD + ga_head + fix_label_head + upgrade_insecure_head,
         server_name="0.0.0.0",
         server_port=7860,
         show_error=True,
