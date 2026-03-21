@@ -65,7 +65,25 @@ pushover_user = os.getenv("PUSHOVER_USER")
 pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
-# Google Analytics tracking code                                                                                                                    
+# Fix Gradio's label[for=FORM_ELEMENT] accessibility bug
+fix_label_head = """
+<script>
+(function() {
+    function patchLabels() {
+        document.querySelectorAll('label[for="FORM_ELEMENT"]').forEach(function(el) {
+            el.removeAttribute('for');
+        });
+    }
+    document.addEventListener('DOMContentLoaded', patchLabels);
+    var obs = new MutationObserver(patchLabels);
+    document.addEventListener('DOMContentLoaded', function() {
+        obs.observe(document.body, { childList: true, subtree: true });
+    });
+})();
+</script>
+"""
+
+# Google Analytics tracking code
 ga_head = """
 <!-- Google tag (gtag.js) -->                                                                                                                       
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-489875302">
@@ -246,23 +264,9 @@ custom_css = """
     color: #111111 !important;
 }
 /* ── Chatbot area — warm cream background ──────────────────────── */
-.chatbot,
-.chatbot .bubble-wrap,
-.chatbot .message-wrap {
+div[role="log"][aria-label="chatbot conversation"] {
     background-color: #FFFBF0 !important;
     border-radius: 8px !important;
-}
-/* ── Query text bar — thick dark outline ───────────────────────── */
-.chatinterface textarea,
-.chatinterface input[type="text"] {
-    border: 2.5px solid #222222 !important;
-    border-radius: 8px !important;
-}
-.chatinterface textarea:focus,
-.chatinterface input[type="text"]:focus {
-    border-color: #000000 !important;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12) !important;
-    outline: none !important;
 }
 /* ── Explore Topics accordion — tri-color gradient matching buttons */
 #explore-accordion {
@@ -487,11 +491,12 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             title="Barbara's Digital Twin 🙋🏽‍♀️",
-            description="Ask about professional background, technical projects, or personal interests",
+            description="Ask about my professional background, technical projects, or personal interests",
+            textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
         )
 
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
-        with gr.Accordion("💡 Explore Topics", open=True):
+        with gr.Accordion("💡 Explore Topics", open=True, elem_id="explore-accordion"):
             with gr.Row():
                 for category, questions in SIDEBAR_QUESTIONS.items():
                     with gr.Column():
@@ -506,7 +511,7 @@ if __name__ == "__main__":
 
     demo.launch(
 #        theme=gr.themes.Citrus(),
-        head=FAVICON_HEAD + ga_head,
+        head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
         server_port=7865,
         show_error=True,
