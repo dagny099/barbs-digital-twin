@@ -538,7 +538,7 @@ if __name__ == "__main__":
         chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
-            title="Barbara's Digital Twin 🙋🏽‍♀️",
+            title='Barbara\'s Digital Twin <img src="file=assets/bhs_forweb.png" alt="avatar" style="height:1.4em;vertical-align:middle;border-radius:50%;margin-left:0.2em">',
             description="Ask about my professional background, technical projects, or personal interests",
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
         )
