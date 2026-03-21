@@ -311,6 +311,20 @@ div[role="log"][aria-label="chatbot conversation"] {
 footer {
     display: none !important;
 }
+/* ── Hide the "Chatbot" label in the top-left corner ───────────── */
+.chatbot label, .chatbot .label-wrap {
+    display: none !important;
+}
+/* ── Hero avatar above the title ───────────────────────────────── */
+.hero-avatar {
+    display: block;
+    margin: 0 auto 8px auto;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}
 /* ── Category button colors (light mode) ───────────────────────── */
 /* Professional: teal — matches barbhs.com CTA button accent         */
 .btn-professional {
@@ -530,15 +544,15 @@ if __name__ == "__main__":
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="Chat with a digital version of Barbara Hidalgo-Sotelo or just say Hola!",
-            height=420,
+            placeholder="<h3 style='text-align:center;color:#3B5978;margin-bottom:4px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#5a7a94;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
+            height=350,
             autoscroll=True,
             render_markdown=True,
         )
         chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
-            title="Barbara's Digital Twin 🙋🏽‍♀️",
+            title='<img src="file=assets/bhs_forweb.png" alt="Barbara" class="hero-avatar">Barbara\'s Digital Twin',
             description="Ask about my professional background, technical projects, or personal interests",
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
         )
