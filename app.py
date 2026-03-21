@@ -568,38 +568,20 @@ if __name__ == "__main__":
                             btn.click(lambda q=q: q, outputs=chat.textbox)
 
     # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
-    # Gradio sees scheme=http and generates absolute http:// URLs for theme.css
-    # and /config, which browsers block as mixed content on the HTTPS page.
-    # Fix: ASGI middleware that forces scheme=https (root cause) + CSP response
-    # header that tells the browser to upgrade any remaining http:// requests.
-    if os.getenv("SPACE_ID"):
-        from starlette.types import ASGIApp, Receive, Scope, Send
-
-        class _ForceHTTPS:
-            """ASGI middleware: rewrite scheme to https + add CSP header."""
-            def __init__(self, app: ASGIApp):
-                self.app = app
-
-            async def __call__(self, scope: Scope, receive: Receive, send: Send):
-                if scope["type"] in ("http", "websocket"):
-                    scope["scheme"] = "https"
-                    # Also inject CSP header to upgrade any URLs we missed
-                    async def _send(message):
-                        if message["type"] == "http.response.start":
-                            headers = list(message.get("headers", []))
-                            headers.append(
-                                (b"content-security-policy",
-                                 b"upgrade-insecure-requests"))
-                            message["headers"] = headers
-                        await send(message)
-                    await self.app(scope, receive, _send)
-                else:
-                    await self.app(scope, receive, send)
-
-        demo.app.add_middleware(_ForceHTTPS)
+    # Gradio uses root_path to construct absolute URLs for theme.css, /config, etc.
+    # Without the full https:// URL, Gradio generates http:// URLs which browsers
+    # block as mixed content. Fix per gradio-app/gradio#9381: set root_path to
+    # the full HTTPS URL so Gradio generates correct resource URLs.
+    space_id = os.getenv("SPACE_ID")
+    if space_id:
+        custom_domain = os.getenv("CUSTOM_DOMAIN", "twin.barbhs.com")
+        root = f"https://{custom_domain}"
+    else:
+        root = ""
 
     demo.launch(
 #        theme=gr.themes.Citrus(),
+        root_path=root,
         head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
         server_port=7860,
