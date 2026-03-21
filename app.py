@@ -66,10 +66,6 @@ pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
 # Fix Gradio's label[for=FORM_ELEMENT] accessibility bug
-upgrade_insecure_head = """
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-"""
-
 fix_label_head = """
 <script>
 (function() {
@@ -571,12 +567,42 @@ if __name__ == "__main__":
                             )
                             btn.click(lambda q=q: q, outputs=chat.textbox)
 
+    # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
+    # Gradio sees scheme=http and generates absolute http:// URLs for theme.css
+    # and /config, which browsers block as mixed content on the HTTPS page.
+    # Fix: ASGI middleware that forces scheme=https (root cause) + CSP response
+    # header that tells the browser to upgrade any remaining http:// requests.
+    if os.getenv("SPACE_ID"):
+        from starlette.types import ASGIApp, Receive, Scope, Send
+
+        class _ForceHTTPS:
+            """ASGI middleware: rewrite scheme to https + add CSP header."""
+            def __init__(self, app: ASGIApp):
+                self.app = app
+
+            async def __call__(self, scope: Scope, receive: Receive, send: Send):
+                if scope["type"] in ("http", "websocket"):
+                    scope["scheme"] = "https"
+                    # Also inject CSP header to upgrade any URLs we missed
+                    async def _send(message):
+                        if message["type"] == "http.response.start":
+                            headers = list(message.get("headers", []))
+                            headers.append(
+                                (b"content-security-policy",
+                                 b"upgrade-insecure-requests"))
+                            message["headers"] = headers
+                        await send(message)
+                    await self.app(scope, receive, _send)
+                else:
+                    await self.app(scope, receive, send)
+
+        demo.app.add_middleware(_ForceHTTPS)
+
     demo.launch(
 #        theme=gr.themes.Citrus(),
-        root_path="/",
-        head=FAVICON_HEAD + ga_head + fix_label_head + upgrade_insecure_head,
+        head=FAVICON_HEAD + ga_head + fix_label_head,
         server_name="0.0.0.0",
         server_port=7860,
         show_error=True,
-        css=custom_css, 
+        css=custom_css,
     )
