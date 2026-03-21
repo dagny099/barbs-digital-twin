@@ -576,14 +576,16 @@ def _build_title_html() -> str:
     except FileNotFoundError:
         img_tag = ""
     return (
-        f'<div class="title-row">{img_tag}'
-        '<h1>Barbara\'s Digital Twin 🙋🏽‍♀️</h1></div>'
+        '<div class="title-row">'
+        '<h1>Barbara\'s Digital Twin</h1>'
+        f'{img_tag}</div>'
         '<p class="title-subtitle">'
         'Ask about my professional background, technical projects, or personal interests</p>'
     )
 
 if __name__ == "__main__":
-    with gr.Blocks(title="Barbara's Digital Twin") as demo:
+    with gr.Blocks(title="Barbara's Digital Twin",
+                   favicon_path="assets/favicon.png") as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
 
