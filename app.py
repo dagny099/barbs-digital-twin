@@ -670,7 +670,7 @@ if __name__ == "__main__":
             placeholder="<h3 style='text-align:center;color:#1a1f2e;margin-bottom:6px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#444;font-size:1.05rem;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
             height="70vh",
             min_height=320,
-            max_height=800,
+            max_height=725,
             autoscroll=True,
             render_markdown=True,
         )
