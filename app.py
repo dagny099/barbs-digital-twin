@@ -356,6 +356,49 @@ footer {
 .chatbot label, .chatbot .label-wrap {
     display: none !important;
 }
+/* ── Dark mode: invert black SVG icons → white ──────────────────── */
+/* brightness(0) crushes all pixels to black; invert(1) flips to white */
+/* Works for any monochrome Material Icon embedded as an <img> tag    */
+.dark .examples .example img {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.82 !important;
+}
+.dark .sidebar-category img {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.75 !important;
+}
+/* ── "Get in touch" CTA — link-styled button below input ────────── */
+.contact-cta-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #3B7A8C !important;
+    font-size: 0.84rem !important;
+    font-weight: 400 !important;
+    padding: 0 0 10px 0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+    width: auto !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+    text-decoration-color: rgba(59,122,140,0.4) !important;
+    transition: color 0.15s ease !important;
+}
+.contact-cta-btn:hover {
+    color: #1B5F6F !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    text-decoration-color: rgba(27,95,111,0.7) !important;
+}
+.dark .contact-cta-btn {
+    color: #7EC8D8 !important;
+    text-decoration-color: rgba(126,200,216,0.4) !important;
+}
+.dark .contact-cta-btn:hover {
+    color: #A8DDE8 !important;
+    text-decoration-color: rgba(168,221,232,0.7) !important;
+}
 /* ── Hero avatar above the title ───────────────────────────────── */
 .hero-avatar {
     display: block;
@@ -645,6 +688,7 @@ if __name__ == "__main__":
             #cache_mode='eager'
         )
         
+        # ── "GET IN TOUCH" CTA — fills textbox with contact trigger ──
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
         with gr.Accordion("Explore Topics", open=False, elem_id="explore-accordion"):
             with gr.Row():
@@ -663,6 +707,15 @@ if __name__ == "__main__":
                                 elem_classes=["sidebar-btn", CSS_CLASS[category]],
                             )
                             btn.click(lambda q=q: q, outputs=chat.textbox)
+
+        contact_btn = gr.Button(
+            "📬 Want to reach Barbara directly? Get in touch →",
+            elem_classes=["contact-cta-btn"],
+        )
+        contact_btn.click(
+            fn=lambda: "I'd like to get in touch with Barbara",
+            outputs=chat.textbox,
+        )
 
     # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
     # Gradio uses root_path to construct absolute URLs for theme.css, /config, etc.
