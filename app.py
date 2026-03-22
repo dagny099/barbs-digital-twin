@@ -85,6 +85,29 @@ fix_label_head = """
 </script>
 """
 
+# Responsive chatbot height: 52% of viewport, clamped between 260px and 680px.
+# Uses MutationObserver so it fires after Gradio's React re-renders (which would
+# otherwise re-apply a fixed inline height and beat pure CSS !important rules).
+responsive_height_head = """
+<script>
+(function() {
+    function setChatHeight() {
+        var el = document.querySelector('div[role="log"][aria-label="chatbot conversation"]');
+        if (!el) return;
+        var h = Math.round(Math.max(260, Math.min(680, window.innerHeight * 0.52)));
+        el.style.setProperty('height', h + 'px', 'important');
+        el.style.setProperty('overflow-y', 'auto', 'important');
+    }
+    var obs = new MutationObserver(setChatHeight);
+    document.addEventListener('DOMContentLoaded', function() {
+        setChatHeight();
+        obs.observe(document.body, { childList: true, subtree: true });
+    });
+    window.addEventListener('resize', setChatHeight);
+})();
+</script>
+"""
+
 # Google Analytics tracking code
 ga_head = """
 <!-- Google tag (gtag.js) -->
@@ -259,12 +282,52 @@ custom_css = """
 /* ── Chatbot area — pale steel blue (light) / deep steel blue (dark) */
 /* Light: same hue family as barbhs.com hero, quieter/softer register  */
 /* Dark:  deep version of that same hero — feels like the same "room"  */
+/* Height uses viewport units so it adapts across screen sizes          */
 div[role="log"][aria-label="chatbot conversation"] {
     background-color: #EEF4F7 !important;
     border-radius: 8px !important;
+    height: 52vh !important;
+    min-height: 260px !important;
+    max-height: 680px !important;
 }
 .dark div[role="log"][aria-label="chatbot conversation"] {
     background-color: #1B2D3A !important;
+}
+/* ── Example question buttons ───────────────────────────────────── */
+/* Center text, match app font, add a soft steel-blue tint           */
+.examples button {
+    text-align: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #EEF4F7 0%, #DAE8F0 100%) !important;
+    border: 1px solid #B2C8D8 !important;
+    border-radius: 8px !important;
+    color: #3B5978 !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    padding: 12px 14px !important;
+    white-space: normal !important;
+    height: auto !important;
+    min-height: 56px !important;
+    transition: all 0.15s ease !important;
+}
+.examples button span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+.examples button:hover {
+    background: linear-gradient(135deg, #DAE8F0 0%, #C4D9E8 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+}
+.dark .examples button {
+    background: linear-gradient(135deg, #1B2D3A 0%, #213547 100%) !important;
+    border: 1px solid rgba(144,184,212,0.3) !important;
+    color: #90B8D4 !important;
+}
+.dark .examples button:hover {
+    background: linear-gradient(135deg, #213547 0%, #2a4560 100%) !important;
 }
 /* ── Explore Topics accordion — tri-color gradient (light mode) ──── */
 /* Teal · Steel Blue · Warm Amber — mirrors button palette            */
@@ -574,7 +637,7 @@ if __name__ == "__main__":
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
             placeholder="<h3 style='text-align:center;color:#3B5978;margin-bottom:4px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#5a7a94;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
-            height=350,
+            height=500,   # fallback; JS overrides this with 52vh clamped to [260, 680]
             autoscroll=True,
             render_markdown=True,
         )
@@ -582,12 +645,12 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
-            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
-            #example_icons=[],
-            cache_examples=True,
-            cache_mode='eager'
+            examples=["🔧\nWhat problems does Barbara solve?", "🌱\nWalk me through a project", "💡\nHow was this digital twin built?", "🔮\nWhat does 'making meaning from messy data' actually mean?"],
+            #example_icons=["🔧","" 🌱","💡", "🔮"],  
+            #cache_examples=True,
+            #cache_mode='eager'
         )
-
+        
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
         with gr.Accordion("💡 Explore Topics", open=True, elem_id="explore-accordion"):
             with gr.Row():
@@ -617,9 +680,9 @@ if __name__ == "__main__":
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path=root,
-        head=FAVICON_HEAD + ga_head + fix_label_head,
+        head=FAVICON_HEAD + ga_head + fix_label_head + responsive_height_head,
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=7864,
         show_error=True,
         css=custom_css,
     )

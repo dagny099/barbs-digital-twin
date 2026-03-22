@@ -32,12 +32,10 @@ jobs:
           cp app.py utils.py ingest.py db_sync.py requirements.txt SYSTEM_PROMPT.md hf_space/
 
           # ── Embedding scripts ─────────────────────────────────────────────
-          cp embed_biosketch.py \
-             embed_resume.py \
-             embed_publications.py \
+          # embed_kb_doc.py handles all kb_*.md files (replaces the old per-source scripts).
+          cp embed_kb_doc.py \
              embed_project_summaries.py \
              embed_jekyll.py \
-             embed_mkdocs.py \
              hf_space/
 
           # ── Static assets (images, etc.) ──────────────────────────────────
@@ -45,12 +43,14 @@ jobs:
 
           # ── Input data ────────────────────────────────────────────────────
           # Only the files the embed scripts actually need.
-          # Intentionally excludes inputs/OLD/ and inputs/insights-bhs/.
+          # Intentionally excludes inputs/OLD/ (retired sources).
           mkdir -p hf_space/inputs
-          cp inputs/barbara-hidalgo-sotelo-biosketch.md hf_space/inputs/
-          cp inputs/barbara-publications.md hf_space/inputs/
-          cp inputs/publications.md hf_space/inputs/
-          cp "inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt" hf_space/inputs/
+          cp inputs/kb_biosketch.md hf_space/inputs/
+          cp inputs/kb_philosophy-and-approach.md hf_space/inputs/
+          cp inputs/kb_professional_positioning.md hf_space/inputs/
+          cp inputs/kb_projects.md hf_space/inputs/
+          cp inputs/kb_career_narrative.md hf_space/inputs/
+          cp inputs/kb_publications.md hf_space/inputs/
           cp -r inputs/project-summaries hf_space/inputs/
 
           # ── README.md is intentionally NOT copied ─────────────────────────
