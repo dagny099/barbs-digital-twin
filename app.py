@@ -53,6 +53,8 @@ CURATED_EXAMPLES = [
     "💭 What's something you're learning right now just for fun?",
 ]
 
+N_CHUNKS_RETRIEVE = 8
+
 #------ SETUP -------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -85,14 +87,14 @@ fix_label_head = """
 
 # Google Analytics tracking code
 ga_head = """
-<!-- Google tag (gtag.js) -->                                                                                                                       
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-489875302">
-</script>                                                               
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8QPFV58YYL"></script>
 <script>
-window.dataLayer = window.dataLayer || [];                                                                                                        
-function gtag(){dataLayer.push(arguments);}                                                                                                       
-gtag('js', new Date());                                                                                                                           
-gtag('config', 'G-489875302');                                                                                                                    
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-8QPFV58YYL');
 </script>
 """
 
@@ -205,58 +207,15 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
     return chunks
 #----------------------
 
-def build_favicon_head() -> str:
-    """
-    Deployment-proof favicon:
-    - Reads a local icon from ./assets/
-    - Embeds it as a base64 data URI in the <head>, so it works on Gradio share links,
-      reverse proxies, and most static hosting setups without extra routing.
-    """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.join(base_dir, "assets", "favicon.png"),
-        os.path.join(base_dir, "assets", "bee_barb.png"),
-        os.path.join(base_dir, "assets", "icon.png"),
-        os.path.join(base_dir, "assets", "icon.ico"),
-    ]
-    for path in candidates:
-        try:
-            if os.path.exists(path):
-                with open(path, "rb") as f:
-                    raw = f.read()
-                b64 = base64.b64encode(raw).decode("ascii")
-                mime = "image/png" if path.lower().endswith(".png") else "image/x-icon"
-                data_uri = f"data:{mime};base64,{b64}"
-                return (
-                    f'<link rel="icon" type="{mime}" href="{data_uri}">'
-                    f'<link rel="shortcut icon" type="{mime}" href="{data_uri}">'
-                    '<script>'
-                    'document.addEventListener("DOMContentLoaded", function() {'
-                    '  var uri = "' + data_uri + '";'
-                    '  function setFav() {'
-                    '    document.querySelectorAll("link[rel*=icon]").forEach(function(el) {'
-                    '      el.href = uri;'
-                    '    });'
-                    '  }'
-                    '  setFav();'
-                    '  new MutationObserver(function(m) {'
-                    '    m.forEach(function(mut) {'
-                    '      mut.addedNodes.forEach(function(n) {'
-                    '        if (n.tagName === "LINK" && n.rel && n.rel.includes("icon")) {'
-                    '          n.href = uri;'
-                    '        }'
-                    '      });'
-                    '    });'
-                    '  }).observe(document.head, {childList: true});'
-                    '});'
-                    '</script>'
-                )
-        except Exception:
-            # If anything goes wrong, silently fall back to no favicon rather than crashing the app
-            pass
-    return ""
-
-FAVICON_HEAD = build_favicon_head()
+# Emoji favicon — works in all modern browsers, no image file required.
+# The SVG <text> trick renders the emoji at full size as a data URI.
+FAVICON_HEAD = (
+    '<link rel="icon" href="data:image/svg+xml,'
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+    "<text y='.9em' font-size='90'>🙋🏽‍♀️</text>"
+    "</svg>"
+    '">'
+)
 
 custom_css = """
 /* ── Explore accordion: category label spacing ─────────────────── */
@@ -537,7 +496,7 @@ def respond_ai(message, history):
     query_embedded = response.data[0].embedding    
     results = collection.query(
         query_embeddings=[query_embedded],
-        n_results=3)
+        n_results= N_CHUNKS_RETRIEVE)
 
     #Stich retreieved chunks together to create the context for the response
     context = "\n---------\n".join(results['documents'][0])
@@ -623,6 +582,10 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
+            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
+            #example_icons=[],
+            cache_examples=True,
+            cache_mode='eager'
         )
 
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
