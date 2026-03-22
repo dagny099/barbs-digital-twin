@@ -682,7 +682,7 @@ if __name__ == "__main__":
         root_path=root,
         head=FAVICON_HEAD + ga_head + fix_label_head + responsive_height_head,
         server_name="0.0.0.0",
-        server_port=7864,
+        server_port=7860,
         show_error=True,
         css=custom_css,
     )
