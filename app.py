@@ -624,8 +624,6 @@ def _build_title_html() -> str:
         '<div class="title-row">'
         '<h1>Barbara\'s Digital Twin</h1>'
         f'{img_tag}</div>'
-        '<p class="title-subtitle">'
-        'Ask about my professional background, technical projects, or personal interests</p>'
     )
 
 if __name__ == "__main__":
@@ -645,8 +643,12 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
-            examples=["🔧\nWhat problems does Barbara solve?", "🌱\nWalk me through a project", "💡\nHow was this digital twin built?", "🔮\nWhat does 'making meaning from messy data' actually mean?"],
-            #example_icons=["🔧","" 🌱","💡", "🔮"],  
+            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
+            example_icons=["assets/psychology-icon.svg",
+                           "assets/communication-icon.svg",
+                           "assets/precision-icon.svg",
+                           "assets/diamond-shine.svg",
+                           ],  
             #cache_examples=True,
             #cache_mode='eager'
         )
@@ -682,7 +684,7 @@ if __name__ == "__main__":
         root_path=root,
         head=FAVICON_HEAD + ga_head + fix_label_head + responsive_height_head,
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=7865,
         show_error=True,
         css=custom_css,
     )
