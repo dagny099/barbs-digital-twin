@@ -144,7 +144,7 @@ python run_evals.py --category bio --category projects --category technical
 
 ### What to focus on by category:
 - **`bio` low accuracy** → biosketch may need updating or re-embedding
-- **`publication` low retrieval** → check that `embed_publications.py` was run
+- **`publication` low retrieval** → check that `kb-publications` source is embedded (`python ingest.py --source kb-publications`)
 - **`recruiter` low personality** → adjust system prompt in `app.py`
 - **`friendly` generic responses** → add more personal detail to biosketch
 

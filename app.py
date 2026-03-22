@@ -376,14 +376,14 @@ def vote(data: gr.LikeData):
 
 #------ COLD-START FALLBACK ----
 # Embed biosketch only if the collection is empty (e.g. fresh HF Spaces deployment).
-# For normal use, populate the DB with: python ingest.py
+# For normal use, populate the DB with: python ingest.py --all
 if collection.count() == 0:
     print("⚠️  Collection is empty — running cold-start biosketch embed...")
 
-    with open("inputs/barbara-hidalgo-sotelo-biosketch.md", 'r', encoding='utf-8') as f:
+    with open("inputs/kb_biosketch.md", 'r', encoding='utf-8') as f:
         barb_bio = f.read()
 
-    documents = [{'source': 'barbara-hidalgo-sotelo-biosketch.md', 'text': barb_bio}]
+    documents = [{'source': 'kb_biosketch.md', 'text': barb_bio}]
     chunks, ids, metadatas = [], [], []
 
     for doc in documents:

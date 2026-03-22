@@ -10,16 +10,17 @@ INTERACTIVE USAGE (default):
     python ingest.py
 
 NON-INTERACTIVE FLAGS:
-    python ingest.py --status              # Show DB status and exit
-    python ingest.py --all                 # Embed all sources (skip existing)
-    python ingest.py --all --force         # Force re-embed everything
-    python ingest.py --source biosketch    # Embed one source (skip existing)
-    python ingest.py --source biosketch --force   # Force re-embed one source
-    python ingest.py --dry-run             # Preview without embedding (all sources)
-    python ingest.py --source mkdocs --dry-run
+    python ingest.py --status                    # Show DB status and exit
+    python ingest.py --all                       # Embed all sources (skip existing)
+    python ingest.py --all --force               # Force re-embed everything
+    python ingest.py --source kb-biosketch       # Embed one source (skip existing)
+    python ingest.py --source kb-biosketch --force   # Force re-embed one source
+    python ingest.py --dry-run                   # Preview without embedding (all sources)
+    python ingest.py --source kb-projects --dry-run
 
 SOURCE KEYS:
-    biosketch, resume, publications, project-summaries, jekyll, mkdocs
+    kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career,
+    kb-publications, project-summaries, jekyll
 """
 
 import os
@@ -37,51 +38,95 @@ COLLECTION  = "barb-twin"
 # Each entry defines one data source and how to invoke its embed script.
 #
 # Fields:
-#   key            Unique identifier used in --source flag
-#   label          Human-readable name shown in the menu
-#   description    What the source contains
-#   script         Python script to run via subprocess
-#   base_args      Default CLI args always passed to the script
-#   force_arg      Flag name for force re-embed (None = not supported)
-#   dry_run_arg    Flag name for dry run (None = not supported)
-#   source_prefix  ChromaDB source string prefix for counting chunks
+#   key            Unique identifier used in --source flag and the menu
+#   label          Human-readable name shown in the status table
+#   description    Short description shown in the status table
+#   script         Python script invoked via subprocess
+#   base_args      CLI args always passed to the script
+#   force_arg      Flag for force re-embed (None = not supported)
+#   dry_run_arg    Flag for dry run        (None = not supported)
+#   source_prefix  ChromaDB metadata prefix used to count stored chunks
+#
+# KB documents (kb_*.md in inputs/) all share the same script and format.
+# The resume and old biosketch have been retired; their scripts are in archive/.
 #
 SOURCES = [
+
+    # ── Structured KB documents (all use embed_kb_doc.py) ───────────────────
+    # These six markdown files form the core of the knowledge base.
+    # Each is parsed by ## H2 headers into named sections before chunking.
     {
-        "key":           "biosketch",
-        "label":         "Biosketch  ⭐ authoritative",
-        "description":   "inputs/barbara-hidalgo-sotelo-biosketch.md",
-        "script":        "embed_biosketch.py",
-        "base_args":     ["--biosketch-file", "inputs/barbara-hidalgo-sotelo-biosketch.md"],
+        "key":           "kb-biosketch",
+        "label":         "KB: Biosketch  ⭐ authoritative",
+        "description":   "inputs/kb_biosketch.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_biosketch.md",
+                          "--source-type", "kb-biosketch"],
         "force_arg":     "--force-reembed",
         "dry_run_arg":   "--dry-run",
-        "source_prefix": "biosketch:",
+        "source_prefix": "kb-biosketch:",
     },
     {
-        "key":           "resume",
-        "label":         "Resume",
-        "description":   "inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt",
-        "script":        "embed_resume.py",
-        "base_args":     ["--resume-file",
-                          "inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt"],
+        "key":           "kb-philosophy",
+        "label":         "KB: Philosophy & Approach",
+        "description":   "inputs/kb_philosophy-and-approach.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_philosophy-and-approach.md",
+                          "--source-type", "kb-philosophy"],
         "force_arg":     "--force-reembed",
         "dry_run_arg":   "--dry-run",
-        "source_prefix": "resume:",
+        "source_prefix": "kb-philosophy:",
     },
     {
-        "key":           "publications",
-        "label":         "Publications",
-        "description":   "inputs/barbara-publications.md",
-        "script":        "embed_publications.py",
-        "base_args":     ["--publications-file", "inputs/barbara-publications.md"],
+        "key":           "kb-positioning",
+        "label":         "KB: Professional Positioning",
+        "description":   "inputs/kb_professional_positioning.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_professional_positioning.md",
+                          "--source-type", "kb-positioning"],
         "force_arg":     "--force-reembed",
         "dry_run_arg":   "--dry-run",
-        "source_prefix": "publication:",
+        "source_prefix": "kb-positioning:",
     },
+    {
+        "key":           "kb-projects",
+        "label":         "KB: Project Portfolio",
+        "description":   "inputs/kb_projects.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_projects.md",
+                          "--source-type", "kb-projects"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-projects:",
+    },
+    {
+        "key":           "kb-career",
+        "label":         "KB: Career Narrative",
+        "description":   "inputs/kb_career_narrative.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_career_narrative.md",
+                          "--source-type", "kb-career"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-career:",
+    },
+    {
+        "key":           "kb-publications",
+        "label":         "KB: Publications & Research",
+        "description":   "inputs/kb_publications.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_publications.md",
+                          "--source-type", "kb-publications"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-publications:",
+    },
+
+    # ── Other sources ────────────────────────────────────────────────────────
     {
         "key":           "project-summaries",
-        "label":         "Project Summaries",
-        "description":   "inputs/project-summaries/ (20 one-page PDFs)",
+        "label":         "Project Summaries (PDFs)",
+        "description":   "inputs/project-summaries/ (one-page PDFs)",
         "script":        "embed_project_summaries.py",
         "base_args":     [],
         "force_arg":     "--force-reembed",
@@ -98,16 +143,6 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "jekyll:",
     },
-    # {
-    #     "key":           "mkdocs",
-    #     "label":         "MkDocs Sites",
-    #     "description":   "8 sites at docs.barbhs.com (via search index)",
-    #     "script":        "embed_mkdocs.py",
-    #     "base_args":     [],
-    #     "force_arg":     None,   # embed_mkdocs.py does not support --force-reembed
-    #     "dry_run_arg":   None,   # embed_mkdocs.py does not support --dry-run
-    #     "source_prefix": "mkdocs:",
-    # },
 ]
 
 SOURCE_BY_KEY = {s["key"]: s for s in SOURCES}
@@ -189,7 +224,7 @@ def print_status_table(status: dict):
 
 def print_menu():
     print("  Commands:")
-    print("    [1–6]   Select a source to embed")
+    print(f"    [1–{len(SOURCES)}]   Select a source to embed")
     print("    a       Embed all sources (skip already-embedded)")
     print("    r       Refresh status")
     print("    q       Quit")
@@ -306,7 +341,7 @@ def interactive_mode():
             run_source(source, force=force, dry_run=dry_run)
 
         else:
-            print(f"  Invalid input — enter a number 1–{len(SOURCES)}, 'a', 'r', or 'q'")
+            print(f"  Invalid input — enter a number 1–{len(SOURCES)}, 'a' (all), 'r' (refresh), or 'q' (quit)")
 
 
 def cli_mode(args):
@@ -354,11 +389,12 @@ Examples:
   python ingest.py --status                     # Show DB status and exit
   python ingest.py --all                        # Embed all sources
   python ingest.py --all --force                # Force re-embed everything
-  python ingest.py --source biosketch           # Embed one source
-  python ingest.py --source publications --force
+  python ingest.py --source kb-biosketch           # Embed one source
+  python ingest.py --source kb-publications --force
   python ingest.py --source project-summaries --dry-run
 
-Source keys: biosketch, resume, publications, project-summaries, jekyll, mkdocs
+Source keys: kb-biosketch, kb-philosophy, kb-positioning, kb-projects,
+             kb-career, kb-publications, project-summaries, jekyll
         """
     )
     parser.add_argument('--status',  action='store_true',

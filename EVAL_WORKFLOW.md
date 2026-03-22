@@ -104,7 +104,7 @@ python run_evals.py --questions my_questions.csv
   "retrieved_chunks": [
     {
       "text": "Born 1981, Austin, Texas...",
-      "source": "biosketch:barbara-hidalgo-sotelo-biosketch.md",
+      "source": "kb-biosketch:kb_biosketch.md",
       "section": "Personal Information",
       "chunk_index": 0
     }

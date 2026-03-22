@@ -2,16 +2,17 @@
 utils.py
 ========
 Shared utilities for text chunking and section parsing across all
-ingestion scripts (app.py, embed_resume.py, embed_biosketch.py,
-embed_readmes.py, embed_mkdocs.py).
+ingestion scripts (embed_kb_doc.py, embed_project_summaries.py,
+embed_jekyll.py, embed_mkdocs.py) and app.py.
 
 This module provides:
 - Text chunking with paragraph-level boundaries
-- Section parsing for TXT (delimiter-based) and Markdown (header-based)
+- Section parsing for Markdown (##-header-based) and TXT (delimiter-based)
 - Standardized metadata construction for ChromaDB storage
+- ChromaDB helpers for idempotent re-embedding
 
 Usage:
-    from utils import chunk_prose, parse_sections_by_delimiter, build_metadata
+    from utils import chunk_prose, parse_markdown_sections, build_metadata
 """
 
 import re
@@ -531,7 +532,7 @@ def section_already_embedded(collection, source: str, section: str) -> bool:
 
     Args:
         collection: ChromaDB collection object
-        source:     Full source string (e.g. 'biosketch:barbara-hidalgo-sotelo-biosketch.md')
+        source:     Full source string (e.g. 'kb-biosketch:kb_biosketch.md')
         section:    Section name (e.g. 'Education')
 
     Returns:

@@ -10,7 +10,7 @@ This digital twin serves as an intelligent interface to explore Barbara's profes
 
 ## Features
 
-- **Multi-Source Knowledge Base**: Integrates biographical sketch, resume, publications, project summaries, MkDocs documentation, and the live website
+- **Multi-Source Knowledge Base**: Six structured KB documents (biosketch, philosophy, positioning, projects, career narrative, publications) plus one-page project PDFs and the live website
 - **Semantic Search & RAG**: ChromaDB vector store with OpenAI embeddings for intelligent context retrieval
 - **Section-Aware Ingestion**: Each data source is parsed into named sections, giving the LLM precise provenance for every retrieved chunk
 - **Conversational Interface**: Gradio ChatInterface for natural conversations
@@ -207,23 +207,30 @@ The `:nth-child(N)` numbers must match the position of each question in the list
 digital-twin/
 ├── app.py                              # Main Gradio application
 ├── ingest.py                           # Master ingestion manager (start here)
-├── embed_biosketch.py                  # Embed biographical sketch
-├── embed_resume.py                     # Embed resume with section parsing
-├── embed_publications.py               # Embed academic publications
+├── embed_kb_doc.py                     # Generic: embed any inputs/kb_*.md document
 ├── embed_project_summaries.py          # Embed one-page project summary PDFs
-├── embed_mkdocs.py                     # Embed MkDocs documentation sites
 ├── embed_jekyll.py                     # Embed Jekyll website via sitemap
 ├── utils.py                            # Shared text processing utilities
 ├── verify_collection.py                # Inspect ChromaDB contents
 ├── clear_collection.py                 # Wipe ChromaDB collection
 ├── requirements.txt                    # Python dependencies
+├── SYSTEM_PROMPT.md                    # LLM system prompt (loaded by app.py)
 ├── inputs/
-│   ├── barbara-hidalgo-sotelo-biosketch.md   # Biographical source (authoritative)
-│   ├── barbara-publications.md               # Academic publications + URLs
+│   ├── kb_biosketch.md                 # Biographical sketch  ⭐ authoritative
+│   ├── kb_philosophy-and-approach.md   # Working philosophy and meaning-making
+│   ├── kb_professional_positioning.md  # Positioning, differentiators, value prop
+│   ├── kb_projects.md                  # Project portfolio registry
+│   ├── kb_career_narrative.md          # Career story and trajectory
+│   ├── kb_publications.md             # Research papers and academic work
+│   └── project-summaries/             # One-page PDF summaries (20 projects)
+├── archive/                            # Retired embed scripts (kept for reference)
+│   ├── embed_biosketch.py             # Replaced by embed_kb_doc.py
+│   ├── embed_resume.py                # Resume retired from KB (V2)
+│   └── embed_publications.py          # Replaced by embed_kb_doc.py
+├── inputs/OLD/                         # Retired source documents
 │   ├── Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt
-│   ├── publications.md                       # Source Jekyll page for publications
-│   ├── READMEs/                              # GitHub project README files (archived)
-│   └── project-summaries/                    # One-page PDF summaries (20 projects)
+│   ├── barbara-hidalgo-sotelo-biosketch.md
+│   └── (GitHub READMEs and other retired sources)
 ├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
 ├── .venv/                              # Virtual environment (gitignored)
 └── README.md                           # This file
@@ -242,28 +249,30 @@ python ingest.py
 The menu displays a live status table — chunk counts per source, so you can see at a glance what's embedded and what isn't:
 
 ```
-  #   Source                 Description                                Status
-  1   biosketch ⭐            inputs/barbara-hidalgo-sotelo-...          ✅  42 chunks
-  2   resume                 inputs/Hidalgo-Sotelo_Barbara_...           ✅  31 chunks
-  3   publications           inputs/barbara-publications.md             ✅  12 chunks
-  4   project-summaries      inputs/project-summaries/ (20 PDFs)        ✅  98 chunks
-  5   jekyll                 https://barbhs.com (via sitemap)           ✅  210 chunks
-  6   mkdocs                 8 sites at docs.barbhs.com                 ✅  963 chunks
+  #   Source                     Description                            Status
+  1   KB: Biosketch ⭐            inputs/kb_biosketch.md               ✅  42 chunks
+  2   KB: Philosophy & Approach  inputs/kb_philosophy-and-appro...     ✅  31 chunks
+  3   KB: Professional Pos...    inputs/kb_professional_positio...      ✅  28 chunks
+  4   KB: Project Portfolio      inputs/kb_projects.md                 ✅  65 chunks
+  5   KB: Career Narrative       inputs/kb_career_narrative.md         ✅  44 chunks
+  6   KB: Publications & Res...  inputs/kb_publications.md             ✅  18 chunks
+  7   Project Summaries (PDFs)   inputs/project-summaries/ (one...     ✅  98 chunks
+  8   Jekyll Website             https://barbhs.com (via sitemap)      ✅  210 chunks
 ```
 
 Select a source by number → choose "Embed", "Force re-embed", or "Dry run".
 
 **Non-interactive flags** (for scripting or CI/CD):
 ```bash
-python ingest.py --status                          # Show DB status and exit
-python ingest.py --all                             # Embed all sources
-python ingest.py --all --force                     # Force re-embed everything
-python ingest.py --source biosketch                # Embed one source
-python ingest.py --source biosketch --force        # Force re-embed one source
+python ingest.py --status                              # Show DB status and exit
+python ingest.py --all                                 # Embed all sources
+python ingest.py --all --force                         # Force re-embed everything
+python ingest.py --source kb-biosketch                 # Embed one source
+python ingest.py --source kb-biosketch --force         # Force re-embed one source
 python ingest.py --source project-summaries --dry-run  # Preview without embedding
 ```
 
-**Source keys**: `biosketch`, `resume`, `publications`, `project-summaries`, `jekyll`, `mkdocs`
+**Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-projects`, `kb-career`, `kb-publications`, `project-summaries`, `jekyll`
 
 ### Checking DB Contents
 
@@ -289,48 +298,63 @@ The knowledge base uses **section-aware metadata** so the LLM knows exactly wher
 ### Metadata Schema
 ```python
 {
-    'source': 'source-type:identifier',  # e.g., 'resume:2026.txt', 'publication:barbara-publications.md'
+    'source': 'source-type:identifier',  # e.g., 'kb-biosketch:kb_biosketch.md'
     'section': 'Section Name' or None,   # e.g., 'Professional Experience', 'Published Papers'
     'chunk_index': 0                     # position within section (resets per section)
 }
 ```
 
-### 1. Biographical Sketch (Authoritative) ⭐
-- **File**: `inputs/barbara-hidalgo-sotelo-biosketch.md`
+### 1. KB: Biosketch (Authoritative) ⭐
+- **File**: `inputs/kb_biosketch.md`
+- **Source key**: `kb-biosketch`
 - **Priority**: Highest — source of truth for identity, background, values, personality
-- **Parsing**: Markdown `##` headers → named sections
+- **Parsing**: Markdown `##` headers → named sections (all handled by `embed_kb_doc.py`)
 - **Wins over**: all other sources in any conflict
 
-### 2. Resume
-- **File**: `inputs/Hidalgo-Sotelo_Barbara_RESUME_AI-Engineering_2026.txt`
-- **Parsing**: `======` delimiters → named sections (Summary, Experience, Education, etc.)
+### 2. KB: Philosophy & Approach
+- **File**: `inputs/kb_philosophy-and-approach.md`
+- **Source key**: `kb-philosophy`
+- **Content**: How Barbara thinks about data, meaning-making, her father's influence, and what good work looks like
 
-### 3. Publications
-- **File**: `inputs/barbara-publications.md`
-- **Content**: Academic papers and conference posters with absolute PDF URLs
-- **Parsing**: Markdown `##` headers → Overview, Research Focus, Published Papers, Conference Posters
-- **Note**: URLs point to `barbhs.com/assets/docs/`. Full-text ingestion planned for a future version.
+### 3. KB: Professional Positioning
+- **File**: `inputs/kb_professional_positioning.md`
+- **Source key**: `kb-positioning`
+- **Content**: What sets Barbara apart, the cognitive science angle, the knowledge engineering angle, the four problems she solves
 
-### 4. Project Summaries
-- **Folder**: `inputs/project-summaries/` (20 one-page PDFs)
+### 4. KB: Project Portfolio
+- **File**: `inputs/kb_projects.md`
+- **Source key**: `kb-projects`
+- **Content**: Registry of all major projects with tech stack, deployment status, and cross-project connections
+
+### 5. KB: Career Narrative
+- **File**: `inputs/kb_career_narrative.md`
+- **Source key**: `kb-career`
+- **Content**: Career arc told as a story — five chapters from MIT through independent GenAI work
+
+### 6. KB: Publications & Research
+- **File**: `inputs/kb_publications.md`
+- **Source key**: `kb-publications`
+- **Content**: Academic papers, conference posters, and dissertation with PDF links
+
+> All six KB documents above use `embed_kb_doc.py` — the same parsing logic (`##` headers → sections → `chunk_prose`).
+
+### 7. Project Summaries
+- **Folder**: `inputs/project-summaries/` (one-page PDFs)
+- **Source key**: `project-summaries`
 - **Content**: Curated one-pagers following a consistent template: What it is / Who it's for / What it does / How it works
 - **Parsing**: Template-aware section detection (fuzzy prefix matching on known section labels)
 - **Special**: Each document also gets a synthetic "overview" chunk combining the title + What it is + Who it's for, optimized for portfolio-style queries
 - **Metadata extras**: `project_name`, `tech_stack` (comma-joined list of detected technologies)
 
-### 5. Jekyll Website
+### 8. Jekyll Website
 - **URL**: `https://barbhs.com` (fetched live via sitemap.xml)
+- **Source key**: `jekyll`
 - **Tool**: `trafilatura` for main-content extraction (strips nav/footer automatically)
 - **Parsing**: Page title used as section name; each page is one document
 
-### 6. MkDocs Documentation Sites
-- **Sites**: 8 sites at `docs.barbhs.com`
-- **Fetched via**: `search_index.json` endpoint (pre-extracted clean text, no HTML parsing)
-- **Content**: Detailed project docs, user guides, architecture notes
-
 ## Shared Utilities (utils.py)
 
-The project now uses a centralized `utils.py` module to eliminate code duplication:
+The project uses a centralized `utils.py` module to eliminate code duplication:
 
 ### Core Functions
 - **`chunk_prose()`**: Paragraph-aware text chunking with overlap
@@ -338,6 +362,8 @@ The project now uses a centralized `utils.py` module to eliminate code duplicati
 - **`parse_sections_by_delimiter()`**: Parse TXT files by delimiter (e.g., `======`)
 - **`parse_markdown_sections()`**: Parse markdown files by headers (e.g., `##`)
 - **`build_metadata()`**: Construct standardized metadata dicts
+- **`delete_chunks_by_source()`**: Wipe all chunks for a given source prefix (used by `--force-reembed`)
+- **`section_already_embedded()`**: Per-section idempotency check (skip if already stored)
 
 All ingestion scripts import from `utils.py` to ensure consistent chunking behavior across all sources.
 
