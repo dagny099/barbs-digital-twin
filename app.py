@@ -11,55 +11,37 @@ import random
 import base64
 
 #------ EXAMPLE PROMPTS -------
-# Full question sets for different visitor personas (also useful for evaluation testing)
-
-RECRUITER_PROMPTS = [
-    "What led you from cognitive science to AI engineering?",
-    "Can you explain how RAG works in simple terms?",
-    "What's a project you built that you're really proud of?",
-    "How do you approach collaborating with non-technical stakeholders?",
-    "What kinds of problems get you most excited to solve?",
-    "Tell me about your background in knowledge graphs.",
-    "What's your working style like on a team?",
-    "What are you hoping to work on next in your career?",
-    "What's your superpower as an AI consultant?",
-    "Why did you transition from academia to industry?",
-]
-
-FRIENDLY_PROMPTS = [
-    "What are you working on these days that's lighting you up?",
-    "How did you get into beekeeping, and does it influence your work?",
-    "What's the most surprising thing you've learned about yourself lately?",
-    "Do you still run? How does that fit into your routine now?",
-    "What's your favorite sci-fi book and why does it resonate with you?",
-    "How has your Toastmasters experience shaped how you communicate about AI?",
-    "What's something you're learning right now just for fun?",
-    "How do you think about the connection between cognition and AI?",
-    "What's a recent win you're proud of, big or small?",
-    "If you could work on any problem tomorrow, what would it be?",
-]
-
-# Curated subset shown in the UI: mix of professional and personal to demonstrate range
-# 3 professional (💼), 3 bridge (🔗), 3 personal (💭) - balanced for visual clarity
-CURATED_EXAMPLES = [
-    "💼 What led you from cognitive science to AI engineering?",
-    "💼 Can you explain how RAG works in simple terms?",
-    "💼 What kinds of problems get you most excited to solve?",
-    "🔗 What's a project you built that you're really proud of?",
-    "🔗 How do you think about the connection between cognition and AI?",
-    "🔗 What are you hoping to work on next in your career?",
-    "💭 What are you working on these days that's lighting you up?",
-    "💭 How did you get into beekeeping, and does it influence your work?",
-    "💭 What's something you're learning right now just for fun?",
-]
+# Curated questions shown in the Explore Topics accordion, grouped by category.
+CURATED_EXAMPLES = {
+    "Professional": [
+        "What led you from cognitive science to AI engineering?",
+        "Can you explain how RAG works in simple terms?",
+        "What kinds of problems get you most excited to solve?",
+    ],
+    "Bridge": [
+        "What's a project you built that you're really proud of?",
+        "How do you think about the connection between cognition and AI?",
+        "What are you hoping to work on next in your career?",
+    ],
+    "Personal": [
+        "What are you working on these days that's lighting you up?",
+        "How did you get into beekeeping, and does it influence your work?",
+        "What's something you're learning right now just for fun?",
+    ],
+}
 
 N_CHUNKS_RETRIEVE = 8
 
 #------ SETUP -------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 if OPENAI_API_KEY is None:
     raise Exception("API key is missing")
+
+# Model used for all LLM completions. Override via env to switch without code changes.
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
+
+# Local server port. HF Spaces ignores this and always uses 7860.
+SERVER_PORT = int(os.getenv("PORT", 7860))
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -67,46 +49,14 @@ pushover_user = os.getenv("PUSHOVER_USER")
 pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
-# Fix Gradio's label[for=FORM_ELEMENT] accessibility bug
-fix_label_head = """
-<script>
-(function() {
-    function patchLabels() {
-        document.querySelectorAll('label[for="FORM_ELEMENT"]').forEach(function(el) {
-            el.removeAttribute('for');
-        });
-    }
-    document.addEventListener('DOMContentLoaded', patchLabels);
-    var obs = new MutationObserver(patchLabels);
-    document.addEventListener('DOMContentLoaded', function() {
-        obs.observe(document.body, { childList: true, subtree: true });
-    });
-})();
-</script>
-"""
 
-# Responsive chatbot height: 52% of viewport, clamped between 260px and 680px.
-# Uses MutationObserver so it fires after Gradio's React re-renders (which would
-# otherwise re-apply a fixed inline height and beat pure CSS !important rules).
-responsive_height_head = """
-<script>
-(function() {
-    function setChatHeight() {
-        var el = document.querySelector('div[role="log"][aria-label="chatbot conversation"]');
-        if (!el) return;
-        var h = Math.round(Math.max(260, Math.min(680, window.innerHeight * 0.52)));
-        el.style.setProperty('height', h + 'px', 'important');
-        el.style.setProperty('overflow-y', 'auto', 'important');
-    }
-    var obs = new MutationObserver(setChatHeight);
-    document.addEventListener('DOMContentLoaded', function() {
-        setChatHeight();
-        obs.observe(document.body, { childList: true, subtree: true });
-    });
-    window.addEventListener('resize', setChatHeight);
-})();
-</script>
-"""
+# IBM Plex Sans — modern, science-forward, friendly. Loaded from Google Fonts.
+font_head = (
+    '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">'
+)
+
 
 # Google Analytics tracking code
 ga_head = """
@@ -230,15 +180,10 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
     return chunks
 #----------------------
 
-# Emoji favicon — works in all modern browsers, no image file required.
-# The SVG <text> trick renders the emoji at full size as a data URI.
-FAVICON_HEAD = (
-    '<link rel="icon" href="data:image/svg+xml,'
-    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
-    "<text y='.9em' font-size='90'>🙋🏽‍♀️</text>"
-    "</svg>"
-    '">'
-)
+# My favicon (local png)
+with open("assets/bee_barb.png", "rb") as f:
+      b64 = base64.b64encode(f.read()).decode()
+FAVICON_HEAD = f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
 
 custom_css = """
 /* ── Explore accordion: category label spacing ─────────────────── */
@@ -286,22 +231,40 @@ custom_css = """
 div[role="log"][aria-label="chatbot conversation"] {
     background-color: #EEF4F7 !important;
     border-radius: 8px !important;
-    height: 52vh !important;
-    min-height: 260px !important;
-    max-height: 680px !important;
 }
 .dark div[role="log"][aria-label="chatbot conversation"] {
     background-color: #1B2D3A !important;
 }
+/* ── Global font ────────────────────────────────────────────────── */
+* { font-family: 'IBM Plex Sans', sans-serif !important; }
+
 /* ── Example question buttons ───────────────────────────────────── */
-/* Center text, match app font, add a soft steel-blue tint           */
+/* The real inner wrapper that controls icon/text alignment           */
+.example-content {
+    align-items: center !important;
+}
+.examples .example {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+.examples .example img {
+    width: 24px !important;
+    height: 24px !important;
+    display: block !important;
+    margin: 0 auto 8px auto !important;
+    opacity: 0.75 !important;
+}
+/* Center text, near-black to match icon color                       */
 .examples button {
     text-align: center !important;
     justify-content: center !important;
+    flex-direction: column !important;
+    align-items: center !important;
     background: linear-gradient(135deg, #EEF4F7 0%, #DAE8F0 100%) !important;
     border: 1px solid #B2C8D8 !important;
     border-radius: 8px !important;
-    color: #3B5978 !important;
+    color: #1a1f2e !important;
     font-size: 0.92rem !important;
     font-weight: 500 !important;
     line-height: 1.4 !important;
@@ -328,6 +291,13 @@ div[role="log"][aria-label="chatbot conversation"] {
 }
 .dark .examples button:hover {
     background: linear-gradient(135deg, #213547 0%, #2a4560 100%) !important;
+}
+/* ── Explore Topics accordion label — bold and prominent ────────── */
+#explore-accordion .label-wrap span,
+#explore-accordion > div:first-child span {
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.01em !important;
 }
 /* ── Explore Topics accordion — tri-color gradient (light mode) ──── */
 /* Teal · Steel Blue · Warm Amber — mirrors button palette            */
@@ -576,38 +546,56 @@ def respond_ai(message, history):
     # As usual:
     msgs = [{"role": "system", "content": system_message_enhanced}] + history + [{"role": "user", "content": message}]
     response = client.chat.completions.create(
-                model = "gpt-4.1", #"gpt-4.1-mini",
+                model = LLM_MODEL,
                 messages = msgs,
                 tools = tools
             )
 
     while response.choices[0].message.tool_calls:
         tool_result = handle_tool_call(response.choices[0].message.tool_calls)
-        msgs.append(response.choices[0].message) #i dont get why this   
+        msgs.append(response.choices[0].message) #i dont get why this
         msgs.extend(tool_result)
 
         response = client.chat.completions.create(
-            model='gpt-4.1-mini',
-            messages = msgs,
+            model=LLM_MODEL,
+            messages=msgs,
             tools=tools
-        )        
+        )
 
-    final_response = response.choices[0].message.content
-    print(f"<<LLM RESPONSE RAW>>\n{final_response}\n")
-    return final_response
+    # Stream the final answer — Gradio detects the generator and renders live.
+    # msgs ends with the last user message (+ any tool results). Do NOT append
+    # the non-streaming response; let the stream regenerate from the same context.
+    stream = client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=msgs,
+        stream=True
+    )
+    collected = ""
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            collected += delta
+            yield collected
+    print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
 #----------------------------------
 
 
-# Question data: split CURATED_EXAMPLES by emoji prefix for sidebar
-SIDEBAR_QUESTIONS = {
-    "💼 Professional": [q[2:] for q in CURATED_EXAMPLES if q.startswith("💼")],
-    "🔗 Bridge":       [q[2:] for q in CURATED_EXAMPLES if q.startswith("🔗")],
-    "💭 Personal":     [q[2:] for q in CURATED_EXAMPLES if q.startswith("💭")],
-}
 CSS_CLASS = {
-    "💼 Professional": "btn-professional",
-    "🔗 Bridge":       "btn-bridge",
-    "💭 Personal":     "btn-personal",
+    "Professional": "btn-professional",
+    "Bridge":       "btn-bridge",
+    "Personal":     "btn-personal",
+}
+
+def _svg_b64(filename: str) -> str:
+    """Return a base64 data URI for a local SVG asset."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", filename)
+    with open(path, "rb") as f:
+        return "data:image/svg+xml;base64," + base64.b64encode(f.read()).decode()
+
+CATEGORY_ICONS = {
+    "Professional": _svg_b64("business-center.svg"),
+    "Bridge":       _svg_b64("schema.svg"),
+    "Personal":     _svg_b64("self-improvement.svg"),
 }
 
 def _build_title_html() -> str:
@@ -624,6 +612,8 @@ def _build_title_html() -> str:
         '<div class="title-row">'
         '<h1>Barbara\'s Digital Twin</h1>'
         f'{img_tag}</div>'
+        '<p class="title-subtitle">'
+        'Ask about my professional background, technical projects, or personal interests</p>'
     )
 
 if __name__ == "__main__":
@@ -634,8 +624,10 @@ if __name__ == "__main__":
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="<h3 style='text-align:center;color:#3B5978;margin-bottom:4px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#5a7a94;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
-            height=500,   # fallback; JS overrides this with 52vh clamped to [260, 680]
+            placeholder="<h3 style='text-align:center;color:#1a1f2e;margin-bottom:6px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#444;font-size:1.05rem;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
+            height="70vh",
+            min_height=320,
+            max_height=800,
             autoscroll=True,
             render_markdown=True,
         )
@@ -644,21 +636,26 @@ if __name__ == "__main__":
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
             examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
-            example_icons=["assets/psychology-icon.svg",
+            example_icons=["assets/want-shine.svg",
                            "assets/communication-icon.svg",
                            "assets/precision-icon.svg",
-                           "assets/diamond-shine.svg",
+                           "assets/psychology-icon.svg",
                            ],  
             #cache_examples=True,
             #cache_mode='eager'
         )
         
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
-        with gr.Accordion("💡 Explore Topics", open=True, elem_id="explore-accordion"):
+        with gr.Accordion("Explore Topics", open=False, elem_id="explore-accordion"):
             with gr.Row():
-                for category, questions in SIDEBAR_QUESTIONS.items():
+                for category, questions in CURATED_EXAMPLES.items():
                     with gr.Column():
-                        gr.Markdown(f"**{category}**", elem_classes=["sidebar-category"])
+                        gr.HTML(
+                            f'<div class="sidebar-category" style="display:flex;flex-direction:column;align-items:center;text-align:center;">'
+                            f'<img src="{CATEGORY_ICONS[category]}" width="24" height="24" '
+                            f'style="opacity:0.7;margin-bottom:4px;">'
+                            f'<strong>{category}</strong></div>'
+                        )
                         for q in questions:
                             btn = gr.Button(
                                 q,
@@ -682,9 +679,9 @@ if __name__ == "__main__":
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path=root,
-        head=FAVICON_HEAD + ga_head + fix_label_head + responsive_height_head,
+        head=FAVICON_HEAD + ga_head + font_head,
         server_name="0.0.0.0",
-        server_port=7865,
+        server_port=SERVER_PORT,
         show_error=True,
         css=custom_css,
     )
