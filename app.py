@@ -180,10 +180,9 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
     return chunks
 #----------------------
 
-# My favicon (local png)
-with open("assets/bee_barb.png", "rb") as f:
-      b64 = base64.b64encode(f.read()).decode()
-FAVICON_HEAD = f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
+# Favicon is set via gr.Blocks(favicon_path=...) — injecting a <link> tag via
+# head= is unreliable in Gradio 6.x because Gradio's own default favicon <link>
+# is written later in the <head> and browsers use the last one they find.
 
 custom_css = """
 /* ── Explore accordion: category label spacing ─────────────────── */
@@ -660,7 +659,7 @@ def _build_title_html() -> str:
     )
 
 if __name__ == "__main__":
-    with gr.Blocks(title="Barbara's Digital Twin") as demo:
+    with gr.Blocks(title="Barbara's Digital Twin", favicon_path="assets/bee_barb.png") as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
 
@@ -668,9 +667,9 @@ if __name__ == "__main__":
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
             placeholder="<h3 style='text-align:center;color:#1a1f2e;margin-bottom:6px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#444;font-size:1.05rem;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
-            height="70vh",
+            height="65vh",
             min_height=320,
-            max_height=725,
+            max_height=700,
             autoscroll=True,
             render_markdown=True,
         )
@@ -732,7 +731,7 @@ if __name__ == "__main__":
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path=root,
-        head=FAVICON_HEAD + ga_head + font_head,
+        head=ga_head + font_head,
         server_name="0.0.0.0",
         server_port=SERVER_PORT,
         show_error=True,
