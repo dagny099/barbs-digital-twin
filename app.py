@@ -41,7 +41,7 @@ if OPENAI_API_KEY is None:
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
 
 # Local server port. HF Spaces ignores this and always uses 7860.
-SERVER_PORT = int(os.getenv("PORT", 7860))
+SERVER_PORT = int(os.getenv("PORT", 7866))
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -180,9 +180,10 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
     return chunks
 #----------------------
 
-# Favicon is set via gr.Blocks(favicon_path=...) — injecting a <link> tag via
-# head= is unreliable in Gradio 6.x because Gradio's own default favicon <link>
-# is written later in the <head> and browsers use the last one they find.
+# My favicon (local png)
+with open("assets/bee_barb.png", "rb") as f:
+      b64 = base64.b64encode(f.read()).decode()
+FAVICON_HEAD = f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
 
 custom_css = """
 /* ── Explore accordion: category label spacing ─────────────────── */
@@ -659,7 +660,7 @@ def _build_title_html() -> str:
     )
 
 if __name__ == "__main__":
-    with gr.Blocks(title="Barbara's Digital Twin", favicon_path="assets/bee_barb.png") as demo:
+    with gr.Blocks(title="Barbara's Digital Twin") as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
 
@@ -731,7 +732,7 @@ if __name__ == "__main__":
     demo.launch(
 #        theme=gr.themes.Citrus(),
         root_path=root,
-        head=ga_head + font_head,
+        head=FAVICON_HEAD + ga_head + font_head,
         server_name="0.0.0.0",
         server_port=SERVER_PORT,
         show_error=True,
