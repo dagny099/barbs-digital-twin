@@ -41,7 +41,7 @@ if OPENAI_API_KEY is None:
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
 
 # Local server port. HF Spaces ignores this and always uses 7860.
-SERVER_PORT = int(os.getenv("PORT", 7866))
+SERVER_PORT = int(os.getenv("PORT", 7860))
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
