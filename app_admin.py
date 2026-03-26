@@ -27,6 +27,7 @@ import litellm
 import gradio as gr
 import chromadb
 import requests
+from featured_projects import select_project_for_walkthrough, get_diagram_path, enrich_message_for_walkthrough
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -329,7 +330,7 @@ def _card(value, label):
     )
 
 
-def format_metrics_html(ctx, active_config=None, query_cost=0.0):
+def format_metrics_html(ctx, active_config=None, query_cost=0.0, workflow="Standard"):
     n = len(ctx["documents"])
     sims = [l2_to_cosine_sim(d) for d in ctx["distances"]]
     avg_sim = sum(sims) / n if n else 0
@@ -343,6 +344,7 @@ def format_metrics_html(ctx, active_config=None, query_cost=0.0):
 
     return (
         '<div style="display:flex;gap:8px;margin:4px 0;flex-wrap:wrap;">'
+        + _card(workflow, "Workflow")
         + _card(str(n), "Chunks")
         + _card(f"{avg_sim:.2f}", "Avg sim")
         + _card(f"{ctx['retrieval_time_ms']:.0f}ms", "Retrieval")
@@ -411,7 +413,7 @@ def format_chunks_html(ctx):
     return header + "\n".join(cards)
 
 
-def format_metadata_json(ctx, active_config=None):
+def format_metadata_json(ctx, active_config=None, walkthrough_info=None):
     cfg = active_config or {}
     chunks = []
     for i, (doc, meta, dist) in enumerate(
@@ -426,6 +428,7 @@ def format_metadata_json(ctx, active_config=None):
             "char_count": len(doc),
         })
     return {
+        "walkthrough": walkthrough_info or {"triggered": False},
         "retrieval": {
             "n_results": ctx["n_results"],
             "retrieval_time_ms": round(ctx["retrieval_time_ms"], 1),
@@ -705,6 +708,7 @@ def _initial_metrics():
     model_short = LLM_MODEL.split("/")[-1] if "/" in LLM_MODEL else LLM_MODEL
     return (
         '<div style="display:flex;gap:8px;margin:4px 0;flex-wrap:wrap;">'
+        + _card("—", "Workflow")
         + _card("—", "Chunks") + _card("—", "Avg sim")
         + _card("—", "Retrieval") + _card(f"k={N_CHUNKS_RETRIEVE}", "Top-K")
         + _card("1.0", "Temp") + _card(model_short, "Model")
@@ -742,6 +746,23 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
         else system_message
     )
     use_tools = model_supports_tools(model)
+
+    # ── Walkthrough detection ──────────────────────────────────
+    project = select_project_for_walkthrough(message)
+    diagram_path = None
+    walkthrough_info = {"triggered": False}
+    workflow_label = "Standard"
+    if project:
+        enriched_message = enrich_message_for_walkthrough(message, project)
+        diagram_path = get_diagram_path(project)
+        walkthrough_info = {
+            "triggered": True,
+            "project_id": project["id"],
+            "project_title": project["title"],
+            "enriched_message": enriched_message,
+        }
+        workflow_label = "Walkthrough"
+        message = enriched_message
 
     # ── Retrieve ────────────────────────────────────────────────
     ctx = retrieve_with_context(message, n_results=k)
@@ -782,6 +803,8 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     # ── Console log ─────────────────────────────────────────────
     print(f"\n{'='*60}")
     print(f"ADMIN QUERY: {message}")
+    if project:
+        print(f"WORKFLOW: Walkthrough → {project['title']}")
     print(f"CONFIG: model={model}  k={k}  temp={temp}{tool_warning}")
     print(f"Retrieved {len(ctx['documents'])} chunks in {ctx['retrieval_time_ms']:.0f}ms")
     for i, (doc, meta, dist) in enumerate(
@@ -794,9 +817,9 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     # ── Stream the final answer ─────────────────────────────────
     active_config = {"top_k": k, "temperature": temp, "model": model}
-    metrics_val = format_metrics_html(ctx, active_config, query_cost=0.0)
+    metrics_val = format_metrics_html(ctx, active_config, query_cost=0.0, workflow=workflow_label)
     chunks_val = format_chunks_html(ctx)
-    metadata_val = format_metadata_json(ctx, active_config)
+    metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
     embed_val = EMBED_VIZ_PLACEHOLDER
 
     stream = litellm.completion(
@@ -815,11 +838,13 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     )
     session_tracker.log_stream(model, prompt_text, collected)
 
-    # Final yield with updated cost
+    # Final yield with updated cost (+ diagram if walkthrough)
     query_cost = session_tracker.calls[-1].cost_usd if session_tracker.calls else 0.0
-    metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost)
-    metadata_val = format_metadata_json(ctx, active_config)
-    yield collected, metrics_val, chunks_val, metadata_val, embed_val
+    metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost, workflow=workflow_label)
+    metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
+
+    chat_val = [collected, gr.FileData(path=diagram_path)] if diagram_path else collected
+    yield chat_val, metrics_val, chunks_val, metadata_val, embed_val
 
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")
 

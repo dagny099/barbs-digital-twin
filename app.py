@@ -9,6 +9,7 @@ import json
 import requests
 import random
 import base64
+from featured_projects import select_project_for_walkthrough, get_diagram_path, enrich_message_for_walkthrough
 
 #------ EXAMPLE PROMPTS -------
 # Curated questions shown in the Explore Topics accordion, grouped by category.
@@ -565,6 +566,16 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 #------ MAIN RESPONSE FUNCTION ----
 def respond_ai(message, history):
+    # ── Project walkthrough detection ────────────────────────────
+    # Enrich the message with project context so the LLM generates a
+    # natural walkthrough. RAG + LLM still run normally.
+    project = select_project_for_walkthrough(message)
+    diagram_path = None
+    if project:
+        message = enrich_message_for_walkthrough(message, project)
+        diagram_path = get_diagram_path(project)
+        print(f"WORKFLOW: Walkthrough → {project['title']}")
+
     # ----
     # RAG
     response = client.embeddings.create(model="text-embedding-3-small", 
@@ -619,6 +630,11 @@ def respond_ai(message, history):
         if delta:
             collected += delta
             yield collected
+
+    # Append diagram after streaming if this was a walkthrough
+    if diagram_path:
+        yield [collected, gr.FileData(path=diagram_path)]
+
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
 #----------------------------------
 
