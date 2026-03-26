@@ -566,23 +566,20 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 #------ MAIN RESPONSE FUNCTION ----
 def respond_ai(message, history):
-    # With multimodal=True, message is a dict {"text": ..., "files": [...]}
-    message_text = message["text"] if isinstance(message, dict) else message
-
     # ── Project walkthrough detection ────────────────────────────
     # Enrich the message with project context so the LLM generates a
     # natural walkthrough. RAG + LLM still run normally.
-    project = select_project_for_walkthrough(message_text)
+    project = select_project_for_walkthrough(message)
     diagram_path = None
     if project:
-        message_text = enrich_message_for_walkthrough(message_text, project)
+        message = enrich_message_for_walkthrough(message, project)
         diagram_path = get_diagram_path(project)
         print(f"WORKFLOW: Walkthrough → {project['title']}")
 
     # ----
     # RAG
     response = client.embeddings.create(model="text-embedding-3-small",
-                                        input=[message_text])
+                                        input=[message])
     query_embedded = response.data[0].embedding
     results = collection.query(
         query_embeddings=[query_embedded],
@@ -615,7 +612,7 @@ def respond_ai(message, history):
     clean_history = [_clean_content(m) for m in history]
 
     # As usual:
-    msgs = [{"role": "system", "content": system_message_enhanced}] + clean_history + [{"role": "user", "content": message_text}]
+    msgs = [{"role": "system", "content": system_message_enhanced}] + clean_history + [{"role": "user", "content": message}]
     response = client.chat.completions.create(
                 model = LLM_MODEL,
                 messages = msgs,
@@ -716,15 +713,9 @@ if __name__ == "__main__":
         )
         chat = gr.ChatInterface(
             fn=respond_ai,
-            multimodal=True,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
-            examples=[
-                {"text": "What problems does Barbara solve?", "files": []},
-                {"text": "Walk me through a project", "files": []},
-                {"text": "How was this digital twin built?", "files": []},
-                {"text": "What does 'making meaning from messy data' actually mean?", "files": []},
-            ],
+            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
             example_icons=["assets/want-shine.svg",
                            "assets/communication-icon.svg",
                            "assets/precision-icon.svg",
