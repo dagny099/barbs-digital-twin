@@ -16,6 +16,7 @@ Run locally:
 import os
 import json
 import time
+import base64
 import html as html_lib
 import random
 import subprocess
@@ -747,13 +748,16 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     )
     use_tools = model_supports_tools(model)
 
+    # With multimodal=True, message is a dict {"text": ..., "files": [...]}
+    message_text = message["text"] if isinstance(message, dict) else message
+
     # ── Walkthrough detection ──────────────────────────────────
-    project = select_project_for_walkthrough(message)
+    project = select_project_for_walkthrough(message_text)
     diagram_path = None
     walkthrough_info = {"triggered": False}
     workflow_label = "Standard"
     if project:
-        enriched_message = enrich_message_for_walkthrough(message, project)
+        enriched_message = enrich_message_for_walkthrough(message_text, project)
         diagram_path = get_diagram_path(project)
         walkthrough_info = {
             "triggered": True,
@@ -762,18 +766,33 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
             "enriched_message": enriched_message,
         }
         workflow_label = "Walkthrough"
-        message = enriched_message
+        message_text = enriched_message
 
     # ── Retrieve ────────────────────────────────────────────────
-    ctx = retrieve_with_context(message, n_results=k)
+    ctx = retrieve_with_context(message_text, n_results=k)
 
     # ── Build LLM messages ──────────────────────────────────────
     context = "\n---------\n".join(ctx["documents"])
     system_enhanced = active_prompt + "\n\nContext:\n" + context
+
+    # Sanitize history: Gradio multimodal stores assistant replies as
+    # {"text": ..., "files": [...]} or content lists with "file" entries.
+    # OpenAI/LiteLLM only accepts text/image_url content, so strip file entries.
+    def _clean_content(msg):
+        c = msg.get("content")
+        if isinstance(c, dict):
+            return {**msg, "content": c.get("text", "")}
+        if isinstance(c, list):
+            texts = [p.get("text", "") for p in c if p.get("type") == "text"]
+            return {**msg, "content": " ".join(texts)}
+        return msg
+
+    clean_history = [_clean_content(m) for m in history]
+
     msgs = (
         [{"role": "system", "content": system_enhanced}]
-        + history
-        + [{"role": "user", "content": message}]
+        + clean_history
+        + [{"role": "user", "content": message_text}]
     )
 
     # ── Tool handling loop (via LiteLLM) ────────────────────────
@@ -802,7 +821,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     # ── Console log ─────────────────────────────────────────────
     print(f"\n{'='*60}")
-    print(f"ADMIN QUERY: {message}")
+    print(f"ADMIN QUERY: {message_text}")
     if project:
         print(f"WORKFLOW: Walkthrough → {project['title']}")
     print(f"CONFIG: model={model}  k={k}  temp={temp}{tool_warning}")
@@ -843,11 +862,17 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost, workflow=workflow_label)
     metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
 
-    # Gradio 6 MultimodalPostprocess format: {"text": ..., "files": [path_str]}
-    chat_val = {"text": collected, "files": [diagram_path]} if diagram_path else collected
-    yield chat_val, metrics_val, chunks_val, metadata_val, embed_val
-
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")
+
+    if diagram_path:
+        with open(diagram_path, "rb") as _img:
+            _b64 = base64.b64encode(_img.read()).decode()
+        _ext = diagram_path.rsplit(".", 1)[-1].lower()
+        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px"
+        _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
+        collected += f"\n\n{_tag}"          # ← BOTTOM: comment out for TOP
+        # collected = f"{_tag}\n\n" + collected  # ← TOP:    uncomment for TOP
+    yield collected, metrics_val, chunks_val, metadata_val, embed_val
 
 
 # ═══════════════════════════════════════════════════════════════════

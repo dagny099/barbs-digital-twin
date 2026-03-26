@@ -166,6 +166,7 @@ def get_diagram_path(project: dict) -> str | None:
     """
     diagram_path = os.path.join(_DIAGRAM_DIR, project["diagram_filename"])
     if os.path.isfile(diagram_path):
+        print("THE EXISTING DIAGRAM PATH WAS FOUND")
         return diagram_path
     return None
 

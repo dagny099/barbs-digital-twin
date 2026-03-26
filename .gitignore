@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.playwright-mcp/
+.
 
 # Virtual environments
 .venv/
@@ -16,7 +18,7 @@ output/
 
 # ChromaDB vector database (too large, regenerated from source)
 .chroma_db_DT/
-.chroma_db_DT.backup*/
+.chroma_db_DT.bak/
 
 # Environment variables (contains API keys - NEVER commit)
 .env

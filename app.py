@@ -566,21 +566,24 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 #------ MAIN RESPONSE FUNCTION ----
 def respond_ai(message, history):
+    # With multimodal=True, message is a dict {"text": ..., "files": [...]}
+    message_text = message["text"] if isinstance(message, dict) else message
+
     # ── Project walkthrough detection ────────────────────────────
     # Enrich the message with project context so the LLM generates a
     # natural walkthrough. RAG + LLM still run normally.
-    project = select_project_for_walkthrough(message)
+    project = select_project_for_walkthrough(message_text)
     diagram_path = None
     if project:
-        message = enrich_message_for_walkthrough(message, project)
+        message_text = enrich_message_for_walkthrough(message_text, project)
         diagram_path = get_diagram_path(project)
         print(f"WORKFLOW: Walkthrough → {project['title']}")
 
     # ----
     # RAG
-    response = client.embeddings.create(model="text-embedding-3-small", 
-                                        input=[message])
-    query_embedded = response.data[0].embedding    
+    response = client.embeddings.create(model="text-embedding-3-small",
+                                        input=[message_text])
+    query_embedded = response.data[0].embedding
     results = collection.query(
         query_embeddings=[query_embedded],
         n_results= N_CHUNKS_RETRIEVE)
@@ -597,8 +600,22 @@ def respond_ai(message, history):
     system_message_enhanced = system_message + "\n\nContext:\n" + context
     # ----
 
+    # Sanitize history: Gradio multimodal stores assistant replies as
+    # {"text": ..., "files": [...]} or content lists with "file" entries.
+    # OpenAI only accepts text/image_url content, so strip file entries.
+    def _clean_content(msg):
+        c = msg.get("content")
+        if isinstance(c, dict):
+            return {**msg, "content": c.get("text", "")}
+        if isinstance(c, list):
+            texts = [p.get("text", "") for p in c if p.get("type") == "text"]
+            return {**msg, "content": " ".join(texts)}
+        return msg
+
+    clean_history = [_clean_content(m) for m in history]
+
     # As usual:
-    msgs = [{"role": "system", "content": system_message_enhanced}] + history + [{"role": "user", "content": message}]
+    msgs = [{"role": "system", "content": system_message_enhanced}] + clean_history + [{"role": "user", "content": message_text}]
     response = client.chat.completions.create(
                 model = LLM_MODEL,
                 messages = msgs,
@@ -631,12 +648,18 @@ def respond_ai(message, history):
             collected += delta
             yield collected
 
-    # Append diagram after streaming if this was a walkthrough.
-    # Gradio 6 MultimodalPostprocess format: {"text": ..., "files": [path_str]}
-    if diagram_path:
-        yield {"text": collected, "files": [diagram_path]}
-
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
+    print(f"<<FILES:>>\n{diagram_path}\n")
+
+    if diagram_path:
+        with open(diagram_path, "rb") as _img:
+            _b64 = base64.b64encode(_img.read()).decode()
+        _ext = diagram_path.rsplit(".", 1)[-1].lower()
+        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px"
+        _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
+        collected += f"\n\n{_tag}"          # ← BOTTOM: comment out for TOP
+        # collected = f"{_tag}\n\n" + collected  # ← TOP:    uncomment for TOP
+        yield collected
 #----------------------------------
 
 
@@ -693,6 +716,7 @@ if __name__ == "__main__":
         )
         chat = gr.ChatInterface(
             fn=respond_ai,
+            multimodal=True,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
             examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
