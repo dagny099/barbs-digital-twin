@@ -1,4 +1,4 @@
-gradio==6.9.0
+gradio  # HF Spaces pins this to 6.7.0; do not pin here
 openai
 chromadb
 requests
