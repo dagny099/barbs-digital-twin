@@ -719,7 +719,12 @@ if __name__ == "__main__":
             multimodal=True,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
-            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
+            examples=[
+                {"text": "What problems does Barbara solve?", "files": []},
+                {"text": "Walk me through a project", "files": []},
+                {"text": "How was this digital twin built?", "files": []},
+                {"text": "What does 'making meaning from messy data' actually mean?", "files": []},
+            ],
             example_icons=["assets/want-shine.svg",
                            "assets/communication-icon.svg",
                            "assets/precision-icon.svg",
