@@ -843,7 +843,8 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost, workflow=workflow_label)
     metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
 
-    chat_val = [collected, gr.FileData(path=diagram_path)] if diagram_path else collected
+    # Gradio 6 MultimodalPostprocess format: {"text": ..., "files": [path_str]}
+    chat_val = {"text": collected, "files": [diagram_path]} if diagram_path else collected
     yield chat_val, metrics_val, chunks_val, metadata_val, embed_val
 
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")

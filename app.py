@@ -631,9 +631,10 @@ def respond_ai(message, history):
             collected += delta
             yield collected
 
-    # Append diagram after streaming if this was a walkthrough
+    # Append diagram after streaming if this was a walkthrough.
+    # Gradio 6 MultimodalPostprocess format: {"text": ..., "files": [path_str]}
     if diagram_path:
-        yield [collected, gr.FileData(path=diagram_path)]
+        yield {"text": collected, "files": [diagram_path]}
 
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
 #----------------------------------
