@@ -652,10 +652,12 @@ def respond_ai(message, history):
         with open(diagram_path, "rb") as _img:
             _b64 = base64.b64encode(_img.read()).decode()
         _ext = diagram_path.rsplit(".", 1)[-1].lower()
-        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px"
-        _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
+        _file_url = f"/file={diagram_path}"   # static-served; absolute path works locally + HF Spaces
+        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer"
+        _img_tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}" alt="Project diagram"/>'
+        _tag = f'<a href="{_file_url}" target="_blank" rel="noopener noreferrer">{_img_tag}</a>'
         collected += f"\n\n{_tag}"          # ← BOTTOM: comment out for TOP
-        # collected = f"{_tag}\n\n" + collected  # ← TOP:    uncomment for TOP
+        # collected = f"<a href='{_file_url}' target='_blank' rel='noopener noreferrer'><img src='data:image/{_ext};base64,{_b64}' style='{_style}' alt='Project diagram'/></a>\n\n" + collected  # ← TOP
         yield collected
 #----------------------------------
 
@@ -697,6 +699,11 @@ def _build_title_html() -> str:
     )
 
 if __name__ == "__main__":
+    # Serve diagram assets as static files so diagrams are clickable (open full-size in new tab)
+    gr.set_static_paths(paths=[
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "project_diagrams")
+    ])
+
     with gr.Blocks(title="Barbara's Digital Twin") as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
