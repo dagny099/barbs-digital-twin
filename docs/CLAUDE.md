@@ -70,6 +70,7 @@ This file provides context about the Digital Twin project to help AI coding assi
 | `embed_jekyll.py` | Jekyll website ingestion via sitemap | ✅ Yes |
 | `db_sync.py` | Push/pull ChromaDB to/from HF Hub (used at cold-start) | ✅ Yes |
 | `utils.py` | Shared text processing utilities | ✅ Yes |
+| `chunk_inspector.py` | Audit chunk quality, simulate retrieval, run canonical query set — use after any re-ingest | ✅ Yes |
 | `clear_collection.py` | Helper to clear ChromaDB collection | ✅ Yes |
 | `verify_collection.py` | Helper to verify collection stats | ✅ Yes |
 | `SYSTEM_PROMPT.md` | LLM system prompt (loaded by app.py at startup) | ✅ Yes |
@@ -159,6 +160,11 @@ The system follows a **source priority hierarchy** (also encoded in `SYSTEM_PROM
 
 8. **Jekyll Website** — `https://barbhs.com` / key: `jekyll`
    - Fetched live via sitemap; `trafilatura` extracts clean text
+
+9. **Project Walkthroughs** — `featured_projects.py` / key: `project-walkthroughs`
+   - One chunk per featured project; embeds the `walkthrough_context` field alongside title, summary, and tags
+   - Enables normal RAG retrieval to surface walkthrough content without triggering walkthrough mode
+   - Script: `embed_walkthroughs.py`; source prefix: `project-walkthrough:`
 
 **Retired sources** (no longer ingested — moved to `inputs/OLD/`):
 - Old biosketch (`barbara-hidalgo-sotelo-biosketch.md`)

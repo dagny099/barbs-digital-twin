@@ -63,7 +63,7 @@ python ingest.py --source kb-projects --dry-run   # Preview without embedding
 ```
 
 **Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-projects`,
-`kb-career`, `kb-publications`, `project-summaries`, `jekyll`
+`kb-career`, `kb-publications`, `project-summaries`, `jekyll`, `project-walkthroughs`
 
 ### Verifying the DB
 
@@ -184,4 +184,16 @@ and full chunk text for every query.
 python ingest.py --source kb-biosketch --dry-run   # Preview section parsing
 python verify_collection.py --show-sources          # Per-source chunk counts
 python app_admin.py                                 # Semantic probe: "does the KB cover X?"
+```
+
+`chunk_inspector.py` is the most thorough local debugging tool. Run it after any re-ingest to
+catch chunk quality problems before they affect production:
+
+```bash
+python chunk_inspector.py                              # Full audit: size distribution, tiny chunk detection, per-source breakdown
+python chunk_inspector.py --tiny                       # Print full text of every chunk under 150 chars
+python chunk_inspector.py --source kb-projects         # Audit one source only
+python chunk_inspector.py --query "Resume Explorer architecture"  # Simulate retrieval for a query
+python chunk_inspector.py --canonical                  # Run 8 standard test queries and show retrieval stats
+python chunk_inspector.py --all-chunks --source kb-biosketch     # Dump every chunk in a source
 ```

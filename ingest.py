@@ -20,7 +20,7 @@ NON-INTERACTIVE FLAGS:
 
 SOURCE KEYS:
     kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career,
-    kb-publications, project-summaries, jekyll
+    kb-publications, project-summaries, jekyll, project-walkthroughs
 """
 
 import os
@@ -406,7 +406,8 @@ Examples:
   python ingest.py --source project-summaries --dry-run
 
 Source keys: kb-biosketch, kb-philosophy, kb-positioning, kb-projects,
-             kb-career, kb-publications, project-summaries, jekyll
+             kb-career, kb-publications, project-summaries, jekyll,
+             project-walkthroughs
         """
     )
     parser.add_argument('--status',  action='store_true',

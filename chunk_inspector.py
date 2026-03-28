@@ -35,7 +35,7 @@ load_dotenv(override=True)
 CHROMA_PATH      = ".chroma_db_DT"
 COLLECTION       = "barb-twin"
 MIN_CHUNK_CHARS  = 150    # chunks below this are flagged as problematic
-N_RETRIEVE       = 8      # matches app.py default
+N_RETRIEVE       = int(os.getenv("N_CHUNKS_RETRIEVE", 10))  # matches app.py default
 # ────────────────────────────────────────────────────────────────────────────
 
 

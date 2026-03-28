@@ -112,6 +112,7 @@ digital-twin/
 ├── embed_jekyll.py                     # Embed Jekyll website via sitemap
 ├── db_sync.py                          # Push/pull ChromaDB to/from HF Hub
 ├── utils.py                            # Shared text processing utilities
+├── chunk_inspector.py                  # Audit chunk quality and simulate retrieval
 ├── verify_collection.py                # Inspect ChromaDB contents
 ├── clear_collection.py                 # Wipe ChromaDB collection
 ├── requirements.txt                    # Python dependencies
@@ -252,6 +253,13 @@ The knowledge base uses **section-aware metadata** so the LLM knows exactly wher
 - **Source key**: `jekyll`
 - **Tool**: `trafilatura` for main-content extraction (strips nav/footer automatically)
 - **Parsing**: Page title used as section name; each page is one document
+
+### 9. Project Walkthroughs
+- **Source**: `featured_projects.py` (the `walkthrough_context` field of each featured project)
+- **Source key**: `project-walkthroughs`
+- **Script**: `embed_walkthroughs.py`
+- **Content**: One chunk per featured project — title + summary + walkthrough notes + tags — enabling normal RAG to surface this content without triggering walkthrough mode
+- **Metadata**: `project_name`, `section="walkthrough"`, `char_count`
 
 ## Shared Utilities (utils.py)
 

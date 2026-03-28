@@ -24,33 +24,27 @@ DESIGN DECISIONS:
 
 USAGE:
     python embed_walkthroughs.py
-
-    Or integrate into ingest.py --all by calling embed_walkthroughs()
-    from that script.
+    python embed_walkthroughs.py --force-reembed
+    python embed_walkthroughs.py --dry-run
 """
 
 import os
 import re
 import uuid
+import argparse
 import chromadb
+from dotenv import load_dotenv
 from openai import OpenAI
 from featured_projects import FEATURED_PROJECTS
+from utils import delete_chunks_by_source
 
+load_dotenv(override=True)
 
-# ── CONFIG (must match app.py) ───────────────────────────────────
-CHROMA_PATH  = ".chroma_db_DT"
-COLLECTION   = "barb-twin"
-# ─────────────────────────────────────────────────────────────────
-
-import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--force-reembed", action="store_true",
-                    help="Delete existing walkthrough chunks and re-embed all")
-parser.add_argument("--dry-run", action="store_true",
-                    help="Show what would be embedded without calling OpenAI")
-args = parser.parse_args()
-
+# ── CONFIG (must match app.py) ────────────────────────────────────────────
+CHROMA_PATH   = ".chroma_db_DT"
+COLLECTION    = "barb-twin"
+SOURCE_PREFIX = "project-walkthrough:"
+# ─────────────────────────────────────────────────────────────────────────
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
@@ -66,19 +60,29 @@ def _slugify(title: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
 
 
-def _existing_sources() -> set[str]:
+def _existing_sources() -> set:
     """Return the set of source values already in the collection."""
     all_meta = collection.get(include=["metadatas"])["metadatas"]
     return {m.get("source", "") for m in all_meta}
 
 
-def embed_walkthroughs() -> int:
+def embed_walkthroughs(force: bool = False, dry_run: bool = False) -> int:
     """
     Embed walkthrough contexts into ChromaDB.
 
-    Returns the number of new chunks added (0 if all already present).
+    Args:
+        force:   If True, delete existing walkthrough chunks first and re-embed all.
+        dry_run: If True, print what would be embedded without calling OpenAI.
+
+    Returns:
+        Number of new chunks added (0 if all already present or dry run).
     """
-    existing = _existing_sources()
+    if force:
+        print(f"  🗑  Force re-embed: deleting existing walkthrough chunks...")
+        delete_chunks_by_source(collection, SOURCE_PREFIX)
+        existing = set()
+    else:
+        existing = _existing_sources()
 
     chunks    = []
     ids       = []
@@ -88,7 +92,7 @@ def embed_walkthroughs() -> int:
         title   = project.get("title", "unknown")
         context = project.get("walkthrough_context", "").strip()
         slug    = _slugify(title)
-        source  = f"project-walkthrough:{slug}"
+        source  = f"{SOURCE_PREFIX}{slug}"
 
         if not context:
             print(f"  ⏭  {title} — no walkthrough_context, skipping")
@@ -125,6 +129,12 @@ def embed_walkthroughs() -> int:
         print("\n  Nothing new to embed.")
         return 0
 
+    if dry_run:
+        print(f"\n  [DRY RUN] Would embed {len(chunks)} walkthrough chunk(s):")
+        for meta in metadatas:
+            print(f"    • {meta['source']}  ({meta['char_count']} chars)")
+        return 0
+
     print(f"\n🔢 Embedding {len(chunks)} walkthrough chunks via OpenAI...")
     response   = client.embeddings.create(model="text-embedding-3-small", input=chunks)
     embeddings = [item.embedding for item in response.data]
@@ -154,17 +164,28 @@ def print_summary():
     print(f"{'─'*55}\n")
 
 
-# ── MAIN ────────────────────────────────────────────────────────
+# ── MAIN ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Embed project walkthrough contexts into ChromaDB."
+    )
+    parser.add_argument("--force-reembed", action="store_true",
+                        help="Delete existing walkthrough chunks and re-embed all")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Show what would be embedded without calling OpenAI")
+    args = parser.parse_args()
+
     print("=" * 55)
     print("  embed_walkthroughs.py — Project Walkthrough Ingestion")
     print("=" * 55)
-
     print(f"\n📂 Loading {len(FEATURED_PROJECTS)} featured projects...\n")
-    n = embed_walkthroughs()
+
+    n = embed_walkthroughs(force=args.force_reembed, dry_run=args.dry_run)
 
     if n > 0:
         print(f"\n💾 Saved {n} new walkthrough chunks to ChromaDB")
 
-    print_summary()
+    if not args.dry_run:
+        print_summary()
+
     print("🎉 Done! Walkthrough content is now retrievable via normal RAG.\n")
