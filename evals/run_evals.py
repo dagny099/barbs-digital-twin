@@ -35,7 +35,7 @@ CHROMA_PATH    = str(_ROOT / ".chroma_db_DT")
 SYSTEM_PROMPT_FILE = str(_ROOT / "SYSTEM_PROMPT.md")
 COLLECTION_NAME = "barb-twin"
 OPENAI_MODEL    = os.getenv("LLM_MODEL", "gpt-4.1-mini")
-N_CHUNKS_RETRIEVE = 8  # Must match app.py
+N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))  # Must match app.py
 
 # Ensure results directory exists
 Path(RESULTS_DIR).mkdir(exist_ok=True)
