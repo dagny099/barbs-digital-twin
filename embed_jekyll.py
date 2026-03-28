@@ -60,9 +60,10 @@ JEKYLL_SITES = [
 
 CHROMA_PATH  = ".chroma_db_DT"   # must match app.py
 COLLECTION   = "barb-twin"        # must match app.py
-CHUNK_SIZE   = 500                # must match app.py
-OVERLAP      = 50                 # must match app.py
+CHUNK_SIZE   = 900                # must match app.py
+OVERLAP      = 120                 # must match app.py
 MIN_CHARS    = 80                 # skip pages shorter than this (stub/redirect pages)
+WHOLE_DOC_THRESHOLD = 1200
 BATCH_SIZE   = 500                # OpenAI embedding batch size
 # ─────────────────────────────────────────────────────────────────
 
@@ -243,7 +244,12 @@ def process_site(site_name: str, base_url: str, collection, client: OpenAI,
             continue
 
         # Chunk the page content
-        chunk_results = chunk_prose(page["text"], chunk_size=CHUNK_SIZE, overlap=OVERLAP)
+        if len(page["text"]) <= WHOLE_DOC_THRESHOLD:
+            chunk_results = [{"text": page["text"], "para_start": 0,
+                            "para_end": -1, "char_count": len(page["text"])}]
+        else:
+            chunk_results = chunk_prose(page["text"], chunk_size=CHUNK_SIZE, overlap=OVERLAP)
+            
         if not chunk_results:
             skipped_empty += 1
             continue

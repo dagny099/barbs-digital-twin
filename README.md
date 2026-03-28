@@ -83,18 +83,13 @@ pip install -r requirements.txt
 ```
 
 4. **Set environment variables**
+
+Copy `.env.example` to `.env` and fill in your values:
 ```bash
-export OPENAI_API_KEY="your-openai-key"
-export PUSHOVER_USER="your-pushover-user"  # Optional
-export PUSHOVER_TOKEN="your-pushover-token"  # Optional
+cp .env.example .env
 ```
 
-Or create a `.env` file:
-```
-OPENAI_API_KEY=your-openai-key
-PUSHOVER_USER=your-pushover-user
-PUSHOVER_TOKEN=your-pushover-token
-```
+At minimum, `OPENAI_API_KEY` is required. All other variables have working defaults or are optional. See `.env.example` for the full list with descriptions.
 
 5. **Run the application**
 ```bash
@@ -296,10 +291,10 @@ The app is deployed on Hugging Face Spaces. To deploy your own:
    - `requirements.txt`
    - `inputs/` folder (all data sources)
    - Pre-built `.chroma_db_DT/` (recommended — avoids cold-start re-embedding)
-3. Set Secrets in Space settings:
-   - `OPENAI_API_KEY`
-   - `PUSHOVER_USER` (optional)
-   - `PUSHOVER_TOKEN` (optional)
+3. Set Secrets in Space settings (see `.env.example` for the full list):
+   - `OPENAI_API_KEY` (required)
+   - `PUSHOVER_USER`, `PUSHOVER_TOKEN` (optional — enables visitor notifications)
+   - `LLM_MODEL`, `SPACE_ID`, `CUSTOM_DOMAIN` (optional — override defaults)
 4. Push to deploy
 
 **Note**: The ChromaDB database (`.chroma_db_DT/`) will be recreated on first run. For faster startup, you can include the pre-built database in your deployment.

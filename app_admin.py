@@ -23,18 +23,25 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from dotenv import load_dotenv
 from openai import OpenAI
 import litellm
 import gradio as gr
 import chromadb
 import requests
-from featured_projects import select_project_for_walkthrough, get_diagram_path, enrich_message_for_walkthrough
+from featured_projects import (
+    select_project_for_walkthrough,
+    find_mentioned_project,
+    build_walkthrough_context_block,
+    get_diagram_path,
+)
 
 
 # ═══════════════════════════════════════════════════════════════════
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════
 
+load_dotenv(override=True)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:
     raise Exception("OPENAI_API_KEY is required (used for embeddings + OpenAI chat).")
@@ -45,7 +52,7 @@ if OPENAI_API_KEY is None:
 # Ollama needs no key, just a running server.
 
 LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4.1")
-N_CHUNKS_RETRIEVE = 8
+N_CHUNKS_RETRIEVE =int(os.getenv("N_CHUNKS_RETRIEVE", 10))
 SERVER_PORT = int(os.getenv("ADMIN_PORT", 7861))
 
 # OpenAI client — used ONLY for embeddings (not chat)
@@ -71,7 +78,7 @@ if collection.count() == 0:
 print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 
 # System prompt
-with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
+with open("SYSTEM_PROMPT_new.md", "r", encoding="utf-8") as _f:
     system_message = _f.read()
 
 
@@ -751,44 +758,55 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     # With multimodal=True, message is a dict {"text": ..., "files": [...]}
     message_text = message["text"] if isinstance(message, dict) else message
 
-    # ── Walkthrough detection ──────────────────────────────────
+    # ── Walkthrough detection (narrow intent) ─────────────────
     project = select_project_for_walkthrough(message_text)
-    diagram_path = None
+    walkthrough_block = None
     walkthrough_info = {"triggered": False}
     workflow_label = "Standard"
     if project:
-        enriched_message = enrich_message_for_walkthrough(message_text, project)
-        diagram_path = get_diagram_path(project)
+        walkthrough_block = build_walkthrough_context_block(project)
         walkthrough_info = {
             "triggered": True,
-            "project_id": project["id"],
+            "project_id": project.get("id", project["title"]),
             "project_title": project["title"],
-            "enriched_message": enriched_message,
         }
         workflow_label = "Walkthrough"
-        message_text = enriched_message
 
-    # ── Retrieve ────────────────────────────────────────────────
+    # ── Diagram detection (broad — any project mention) ────────
+    diagram_project = project or find_mentioned_project(message_text)
+    diagram_path = get_diagram_path(diagram_project) if diagram_project else None
+    if diagram_path and not project:
+        print(f"WORKFLOW: Diagram only → {diagram_project['title']}")
+
+    # ── Retrieve on the ORIGINAL message ───────────────────────
     ctx = retrieve_with_context(message_text, n_results=k)
 
-    # ── Build LLM messages ──────────────────────────────────────
-    context = "\n---------\n".join(ctx["documents"])
-    system_enhanced = active_prompt + "\n\nContext:\n" + context
+    # ── Build metadata-prefixed context (matches app.py) ───────
+    context_parts = []
+    for doc, meta in zip(ctx["documents"], ctx["metadatas"]):
+        src     = meta.get("source", "")
+        section = meta.get("section", "")
+        proj_name = meta.get("project_name", "")
+        if proj_name and section:
+            prefix = f"[{proj_name} — {section}]"
+        elif section:
+            prefix = f"[{src} — {section}]"
+        else:
+            prefix = f"[{src}]"
+        context_parts.append(f"{prefix}\n{doc}")
+    context = "\n---\n".join(context_parts)
 
-    # Sanitize history: Gradio multimodal stores assistant replies as
-    # {"text": ..., "files": [...]} or content lists with "file" entries.
-    # OpenAI/LiteLLM only accepts text/image_url content, so strip file entries.
-    def _clean_content(msg):
-        c = msg.get("content")
-        if isinstance(c, dict):
-            return {**msg, "content": c.get("text", "")}
-        if isinstance(c, list):
-            texts = [p.get("text", "") for p in c if p.get("type") == "text"]
-            return {**msg, "content": " ".join(texts)}
-        return msg
+    # ── Assemble system message (hybrid) ───────────────────────
+    system_enhanced = active_prompt + "\n\nContext:\n" + context
+    if walkthrough_block:
+        system_enhanced += (
+            "\n\n---\n"
+            "[WALKTHROUGH MODE — Use the walkthrough notes below as your primary "
+            "source. Retrieved context above may add detail.]\n\n"
+            + walkthrough_block
+        )
 
     clean_history = [_clean_content(m) for m in history]
-
     msgs = (
         [{"role": "system", "content": system_enhanced}]
         + clean_history

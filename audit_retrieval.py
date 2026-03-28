@@ -1,9 +1,12 @@
 # audit_retrieval.py — run once, no changes to prod
-import os 
+import os
 import chromadb
+from dotenv import load_dotenv
 from openai import OpenAI
-from collections import Counter                               
-                                                                                                                                                                                                          
+from collections import Counter
+
+load_dotenv(override=True)
+
 RECRUITER_PROMPTS = [
     "What led you from cognitive science to AI engineering?",
     "Can you explain how RAG works in simple terms?",

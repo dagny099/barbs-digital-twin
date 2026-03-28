@@ -22,8 +22,11 @@ from typing import Dict, List, Optional
 # Import from your existing app.py
 # We'll query the RAG system directly
 import chromadb
+from dotenv import load_dotenv
 from openai import OpenAI
 
+
+load_dotenv(override=True)
 
 #------ CONFIGURATION ------
 QUESTIONS_FILE = "eval_questions.csv"

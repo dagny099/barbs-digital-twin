@@ -16,6 +16,9 @@ Usage:
 import os
 import tarfile
 import tempfile
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 HF_REPO_ID  = "dagny099/digital-twin-db"
 HF_FILENAME = "chroma_db.tar.gz"

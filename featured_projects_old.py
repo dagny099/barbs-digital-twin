@@ -1,23 +1,11 @@
 """
 featured_projects.py
 ====================
-Lightweight data + selection logic for project walkthrough responses
-and diagram serving.
+Lightweight data + selection logic for project walkthrough responses.
 
-Architecture (v2 — decoupled diagrams from walkthroughs):
-
-  1. Walkthrough detection  — regex on "walk me through", "show me a project", etc.
-     Triggers full walkthrough enrichment (context injected into user message).
-
-  2. Project mention detection — keyword match on project titles, tags, key terms.
-     Triggers diagram serving. Much broader than walkthrough detection.
-
-  3. Diagram serving is its own capability — fires on ANY project mention,
-     not just walkthrough requests.
-
-  4. Walkthrough mode is hybrid — walkthrough context is injected as a
-     separate block (not appended to user message), so RAG retrieval
-     stays grounded in the user's actual question.
+Each featured project includes a title, summary, walkthrough context
+(briefing notes for the LLM), diagram path, and optional tags for
+keyword matching.
 
 To add a new project:
     1. Add a diagram image to assets/project_diagrams/
@@ -60,15 +48,14 @@ FEATURED_PROJECTS = [
         "diagram_filename": "resume_graph_explorer_diagram.png",
         "diagram_caption": "Resume Graph Explorer — extraction → normalization → interactive graph",
         "tags": ["knowledge-graph", "ontology", "skos", "resume", "rdf", "nlp", "semantic-web"],
-        # Extra keywords that should trigger diagram but aren't in title/tags
-        "mention_keywords": ["resume explorer", "resume graph", "skos", "esco"],
         "links": {
             "live demo": "https://resume-graph-explorer.vercel.app/",
-            "github": "https://github.com/dagny099/resume-graph-explorer",
+            "github": "https://github.com/dagny099/resume-graph-explorer", 
+            # "writeup": "https://...",  # add blog post / article URL when available
         },
     },
 
-    # Digital Twin
+    # Digital Twion
     {
         "id": "digital-twin",
         "title": "Digital Twin",
@@ -94,11 +81,10 @@ FEATURED_PROJECTS = [
         "diagram_filename": "digital_twin_diagram.png",
         "diagram_caption": "Digital Twin — document ingestion → embedding → retrieval → response",
         "tags": ["rag", "chatbot", "embeddings", "chromadb", "gradio", "nlp"],
-        "mention_keywords": ["digital twin", "this chatbot", "this twin", "how were you built",
-                             "how was this built", "how does this work"],
         "links": {
             "live demo": "https://twin.barbhs.com",
-            "github": "https://github.com/dagny099/barbs-digital-twin",
+            "github": "https://github.com/dagny099/barbs-digital-twin", 
+            # "writeup": "https://...",  # add blog post / article URL when available
         },
     },
 
@@ -128,10 +114,10 @@ FEATURED_PROJECTS = [
         "diagram_filename": "weaving_memories_diagram.png",
         "diagram_caption": "Weaving Memories — biographical text → LLM extraction → Neo4j graph → interactive views",
         "tags": ["knowledge-graph", "neo4j", "memorial", "family", "wikidata", "llm-extraction"],
-        "mention_keywords": ["weaving memories", "memorial", "father", "domingo", "family graph"],
         "links": {
             "live demo": "https://domingo-hidalgo.com",
-            "github": "https://github.com/dagny099/weaving-memories-into-graphs",
+            "github": "https://github.com/dagny099/weaving-memories-into-graphs", 
+            # "writeup": "https://...",  # add blog post / article URL when available
         },
     },
 
@@ -158,10 +144,14 @@ FEATURED_PROJECTS = [
             "from exploration to presentation. "
             "Stack: Python, Neo4j, Streamlit, TransE, Semantic Scholar API, NetworkX."
         ),
-        "diagram_filename": "academic_citation_platform_diagram.png",
+        "diagram_filename": "citation-chatbot-v2.png",
         "diagram_caption": "Academic Citation Platform — papers → TransE training → citation prediction → interactive analysis",
         "tags": ["knowledge-graph", "neo4j", "machine-learning", "TransE", "citation-prediction", "streamlit"],
-        "mention_keywords": ["citation", "transe", "academic", "papers", "citation platform"],
+        #"links": {
+            # "live demo": "",
+            # "github": "https://github.com/dagny099/", 
+            # "writeup": "https://...",  # add blog post / article URL when available
+        #},
     },
 
     # Poolula Platform
@@ -190,12 +180,16 @@ FEATURED_PROJECTS = [
             "Stack: Python, FastAPI, SQLModel, ChromaDB, Anthropic/OpenAI/Ollama, "
             "Alembic, DSPy."
         ),
-        "diagram_filename": "poolula-platform-diagarm.png",
+        "diagram_filename": "poolula-chatbot-v2.png",
         "diagram_caption": "Poolula Platform — business question → RAG retrieval → LLM answer → evaluation harness verification",
         "tags": ["rag", "fastapi", "llc-management", "evaluation", "chromadb", "multi-provider", "sqlmodel"],
-        "mention_keywords": ["poolula", "llc", "property management", "evaluation harness"],
+        #"links": {
+            # "live demo": "",
+            # "github": "https://github.com/dagny099/", 
+            # "writeup": "https://...",  # add blog post / article URL when available
+        #},
     },
-
+    
     # Beehive Monitor
     {
         "title": "Beehive Monitor",
@@ -219,14 +213,13 @@ FEATURED_PROJECTS = [
             "Stack: Python, Streamlit, Google Cloud Vision, Open-Meteo API, "
             "Docker, Cloud Run."
         ),
-        "diagram_filename": "beehive_metadata_tracker_diagram.png",
+        "diagram_filename": "bees-chatbot-v2.png",
         "diagram_caption": "Beehive Monitor — photo capture → Cloud Vision + weather analysis → dashboard → containerized deployment",
         "tags": ["computer-vision", "streamlit", "google-cloud", "beekeeping", "docker", "weather-api"],
-        "mention_keywords": ["beehive", "bees", "beekeeping", "hive", "apiary"],
         "links": {
             "live demo": "https://beestory.barbhs.com/",
-            "github": "https://github.com/dagny099/beehive-tracker",
-            "writeup": "https://www.barbhs.com/data-stories/hive-photo-metadata-tracker/",
+            "github": "https://github.com/dagny099/beehive-tracker", 
+            "writeup": "https://www.barbhs.com/data-stories/hive-photo-metadata-tracker/",  
         },
     },
 
@@ -254,10 +247,14 @@ FEATURED_PROJECTS = [
             "the model. "
             "Stack: Python, Streamlit, OpenAI API, Anthropic (planned), HTML reports."
         ),
-        "diagram_filename": "convoscope_chatbot_diagram.png",
+        "diagram_filename": "convo-chatbot-v2.png",
         "diagram_caption": "ConvoScope — conversation input → analysis engine → multi-LLM comparison → HTML reports",
         "tags": ["multi-llm", "streamlit", "conversation-analysis", "openai", "anthropic", "nlp"],
-        "mention_keywords": ["convoscope", "conversation analysis", "multi-llm comparison"],
+        #"links": {
+            # "live demo": "",
+            # "github": "https://github.com/dagny099/", 
+            # "writeup": "https://...",  # add blog post / article URL when available
+        #},
     },
 
     # Fitness Tracker
@@ -282,58 +279,20 @@ FEATURED_PROJECTS = [
             "as a custom-domain Streamlit deployment. "
             "Stack: Python, Streamlit, Pandas, Plotly, NumPy."
         ),
-        "diagram_filename": "fitness_tracker_diagram.png",
+        "diagram_filename": "fitness-chatbot-v2.png",
         "diagram_caption": "Fitness Tracker — 14+ years of data → AI pattern detection → interactive Plotly dashboard → live at workouts.barbhs.com",
         "tags": ["data-engineering", "streamlit", "plotly", "fitness", "analytics", "personal-data"],
-        "mention_keywords": ["fitness", "workout", "exercise", "running data"],
         "links": {
             "live demo": "https://workouts.barbhs.com/",
-            "github": "https://github.com/dagny099/fitness-dashboard",
-            "writeup": "https://www.barbhs.com/data-stories/exercise-dashboard/",
+            "github": "https://github.com/dagny099/fitness-dashboard", 
+            "writeup": "https://www.barbhs.com/data-stories/exercise-dashboard/",  # Data Story
         },
-    },
-
-    # Concept Cartographer
-    {
-        "id": "concept-cartographer",
-        "title": "Concept Cartographer",
-        "summary": "Interactive knowledge mapping — chat and watch concepts emerge as a graph.",
-        "walkthrough_context": (
-            "Concept Cartographer is a Gradio app that turns a conversation into a "
-            "growing knowledge graph. As you chat, it extracts concepts and relationships "
-            "and renders them as a color-coded, persistent map you can export. "
-            "The key architectural decision is the single-call design: "
-            "(1) Ask — Pick a domain lens (AI/ML, Cognitive Science, Philosophy, Biology, "
-            "or more) and ask a question through the Gradio interface. "
-            "(2) Extract — A single LLM call (GPT-4o-mini) returns both a conversational "
-            "narrative and a structured JSON ontology (concepts with categories like "
-            "Entity, Process, Theory, Method, Property, plus relationship triples with "
-            "typed edges like causes, requires, enables). This is ~50% faster and cheaper "
-            "than a two-call approach that separates chat from extraction. "
-            "(3) Build — The graph accumulates across conversation turns. Above 30 nodes, "
-            "a connectivity filter ensures only concepts that connect to existing nodes "
-            "are admitted — preventing disconnected islands and keeping the map coherent. "
-            "(4) Export — The current graph state exports as JSON (for downstream tools "
-            "like Neo4j, Obsidian, or presentations) or PNG (for sharing). "
-            "It's intentionally a 'small, sharp demo' of stateful LLM tooling — the kind "
-            "of system that externalizes reasoning structure rather than just generating text. "
-            "Stack: Python, Gradio, OpenAI API (GPT-4o-mini), NetworkX, Matplotlib."
-        ),
-        "diagram_filename": "concept_cartographer_diagram.png",
-        "diagram_caption": "Concept Cartographer — question → single LLM call → growing knowledge graph → export",
-        "tags": ["knowledge-graph", "gradio", "llm", "ontology", "concept-extraction", "structured-output", "nlp"],
-        "mention_keywords": ["concept cartographer", "concept map", "concept graph",
-                             "concept extraction", "knowledge mapping"],
-        "links": {
-            "live demo": "https://concept-cartographer.com/",
-            "github": "https://github.com/dagny099/concept-cartography-gradio",
-        },
-    }
+    }    
 ]
 
 
 # ═══════════════════════════════════════════════════════════════════
-# HELPERS — WALKTHROUGH DETECTION (narrow, intent-based)
+# HELPERS
 # ═══════════════════════════════════════════════════════════════════
 
 def load_featured_projects() -> list[dict]:
@@ -344,91 +303,22 @@ def load_featured_projects() -> list[dict]:
 def _is_walkthrough_request(message: str) -> bool:
     """Return True if the user message is asking for a project walkthrough."""
     patterns = [
-        r"walk\s*(me\s+)?through\s+(a\s+)?project",
+        r"walk\s*(me\s+)?through\b",                    # was: required "project" after
         r"show\s+me\s+a\s+project",
         r"project\s+you.*(proud|excited|built|worked)",
-        r"explain\s+(one\s+of\s+)?your\s+project",
-        r"tell\s+me\s+about\s+(a|one\s+of)\s+(your\s+)?project",
-        r"describe\s+(a|one\s+of)\s+(your\s+)?project",
+        r"explain\s+(one\s+of\s+)?your\s+projects?\b",  # was: cut off mid-phrase
+        r"tell\s+me\s+about\s+(a\s+|one\s+of\s+)?(your\s+)?projects?\b",
+        r"describe\s+(a\s+|one\s+of\s+)?(your\s+)?projects?\b",
         r"portfolio\s+project",
         r"featured\s+project",
-    ]
+        ]
     lower = message.lower()
     return any(re.search(p, lower) for p in patterns)
 
 
-# ═══════════════════════════════════════════════════════════════════
-# HELPERS — PROJECT MENTION DETECTION (broad, keyword-based)
-# ═══════════════════════════════════════════════════════════════════
-
-def _score_project_mention(message: str, project: dict) -> int:
-    """
-    Score how strongly a message mentions a specific project.
-
-    Checks (in priority order):
-      1. Explicit mention_keywords (phrase match, high signal)
-      2. Title substring match
-      3. Tag overlap with message words
-    
-    Returns an integer score. 0 = no mention detected.
-    """
-    lower = message.lower()
-    score = 0
-
-    # Phrase-level keyword matches (highest signal)
-    for kw in project.get("mention_keywords", []):
-        if kw.lower() in lower:
-            score += 10
-
-    # Title match
-    title_lower = project["title"].lower()
-    if title_lower in lower:
-        score += 8
-    else:
-        # Partial title words (less confident)
-        title_words = set(re.findall(r'\w{4,}', title_lower))  # 4+ char words only
-        msg_words = set(re.findall(r'\w+', lower))
-        overlap = title_words & msg_words
-        score += len(overlap) * 2
-
-    # Tag overlap
-    tags = set(project.get("tags", []))
-    msg_words = set(re.findall(r'\w+', lower))
-    score += len(tags & msg_words)
-
-    return score
-
-
-def find_mentioned_project(message: str) -> dict | None:
-    """
-    Find the project most strongly referenced by the message.
-    
-    Unlike select_project_for_walkthrough(), this does NOT require
-    walkthrough intent — it fires on any project mention. Used for
-    diagram serving.
-    
-    Returns None if no project scores above the minimum threshold.
-    """
-    min_threshold = 5  # Avoids false positives on vague messages
-    
-    best, best_score = None, 0
-    for project in FEATURED_PROJECTS:
-        score = _score_project_mention(message, project)
-        if score > best_score:
-            best, best_score = project, score
-
-    if best_score >= min_threshold:
-        return best
-    return None
-
-
-# ═══════════════════════════════════════════════════════════════════
-# HELPERS — WALKTHROUGH SELECTION (narrow intent + keyword match)
-# ═══════════════════════════════════════════════════════════════════
-
 def select_project_for_walkthrough(user_message: str) -> dict | None:
     """
-    Select a featured project for a full walkthrough response.
+    Select a featured project based on the user's message.
 
     Returns None if the message doesn't look like a walkthrough request.
     When it is a walkthrough request, tries keyword matching against
@@ -441,14 +331,10 @@ def select_project_for_walkthrough(user_message: str) -> dict | None:
     if not projects:
         return None
 
-    # Try mention-based matching first (more precise)
-    mentioned = find_mentioned_project(user_message)
-    if mentioned:
-        return mentioned
-
-    # Fallback: word overlap scoring (original logic)
+    # Score each project by keyword overlap with the user message
     words = set(re.findall(r'\w+', user_message.lower()))
-    best, best_score = projects[0], 0
+
+    best, best_score = projects[0], 0  # default fallback
     for project in projects:
         searchable = " ".join([
             project["title"].lower(),
@@ -462,56 +348,20 @@ def select_project_for_walkthrough(user_message: str) -> dict | None:
     return best
 
 
-# ═══════════════════════════════════════════════════════════════════
-# HELPERS — DIAGRAM SERVING (decoupled from walkthrough)
-# ═══════════════════════════════════════════════════════════════════
-
 def get_diagram_path(project: dict) -> str | None:
     """
     Return the absolute path to the project's diagram if it exists on disk.
     Returns None if the file is missing, so callers can gracefully omit the image.
     """
-    filename = project.get("diagram_filename")
-    if not filename:
-        return None
-    diagram_path = os.path.join(_DIAGRAM_DIR, filename)
+    diagram_path = os.path.join(_DIAGRAM_DIR, project["diagram_filename"])
     if os.path.isfile(diagram_path):
+        print("THE EXISTING DIAGRAM PATH WAS FOUND")
         return diagram_path
     return None
 
 
-# ═══════════════════════════════════════════════════════════════════
-# HELPERS — CONTEXT ENRICHMENT
-# ═══════════════════════════════════════════════════════════════════
-
-def build_walkthrough_context_block(project: dict) -> str:
-    """
-    Build a context block for walkthrough injection.
-
-    This is injected as a SEPARATE context section (not appended to
-    the user message), so RAG retrieval stays grounded in the user's
-    actual question while the LLM still has the full walkthrough notes.
-    """
-    links = {k: v for k, v in project.get("links", {}).items() if v}
-    if links:
-        lines = "\n".join(f"  - {label}: {url}" for label, url in links.items())
-        links_block = f"\nProject links (use these exact URLs only, do not modify or invent others):\n{lines}"
-    else:
-        links_block = ""
-
-    return (
-        f"[WALKTHROUGH PROJECT: {project['title']}]\n"
-        f"Summary: {project['summary']}\n"
-        f"Walkthrough notes: {project['walkthrough_context']}"
-        f"{links_block}"
-    )
-
-
 def enrich_message_for_walkthrough(message: str, project: dict) -> str:
     """
-    DEPRECATED — kept for backward compatibility.
-    Prefer build_walkthrough_context_block() + separate injection.
-
     Append project context to the user message so the LLM can generate
     a natural walkthrough grounded in the project's details.
     """

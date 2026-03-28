@@ -54,12 +54,15 @@ import glob
 import argparse
 import pdfplumber
 import chromadb
+from dotenv import load_dotenv
 from openai import OpenAI
 from utils import (
     build_metadata,
     delete_chunks_by_source,
     section_already_embedded,
 )
+
+load_dotenv(override=True)
 
 # ── CONFIG ──────────────────────────────────────────────────────────────
 SUMMARIES_FOLDER = "inputs/project-summaries"
@@ -91,6 +94,13 @@ TECH_KEYWORDS = [
     "Anthropic", "Claude",
 ]
 
+FEATURED_SLUGS = {
+    "digital-twin-one-pager",
+    "resume-explorer-one-pager",       
+    "concept-cartographer-summary",  # run --dry-run first to confirm slugs are correct,
+    "beehive-tracker-one-pager",
+    "fitness-dashboard-summary"
+}
 
 # ── ARGUMENT PARSING ─────────────────────────────────────────────────────
 
@@ -358,6 +368,9 @@ def process_pdf(filepath: str, collection, client: OpenAI,
             project_name=project_name,
             tech_stack=tech_stack,
         )
+        metadata["featured"] = slug in FEATURED_SLUGS
+        metadata["char_count"] = len(text)
+
         if date_str:
             metadata['date'] = date_str
 

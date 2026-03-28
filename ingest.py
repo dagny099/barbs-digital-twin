@@ -122,6 +122,7 @@ SOURCES = [
         "source_prefix": "kb-publications:",
     },
 
+
     # ── Other sources ────────────────────────────────────────────────────────
     {
         "key":           "project-summaries",
@@ -143,6 +144,17 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "jekyll:",
     },
+
+    {
+        "key":           "project-walkthroughs",
+        "label":         "Project Walkthroughs",
+        "description":   "Walkthrough contexts from featured_projects.py (1 chunk per project, no splitting)",
+        "script":        "embed_walkthroughs.py",
+        "base_args":     [],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-walkthrough:",
+    }
 ]
 
 SOURCE_BY_KEY = {s["key"]: s for s in SOURCES}

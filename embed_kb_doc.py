@@ -47,6 +47,7 @@ CHUNKING:
 import os
 import uuid
 import argparse
+from dotenv import load_dotenv
 from openai import OpenAI
 import chromadb
 from utils import (
@@ -57,11 +58,14 @@ from utils import (
     section_already_embedded,
 )
 
+load_dotenv(override=True)
+
 # ── CONFIG ──────────────────────────────────────────────────────────────────
 CHROMA_PATH = ".chroma_db_DT"
 COLLECTION  = "barb-twin"
-CHUNK_SIZE  = 500
-OVERLAP     = 50
+CHUNK_SIZE  = 900
+OVERLAP     = 100
+MIN_CHUNK_CHARS = 150   # added mar-25
 BATCH_SIZE  = 500   # max chunks per OpenAI embeddings API call
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -110,6 +114,29 @@ Examples:
         help="Parse and preview sections without embedding or storing anything",
     )
     return parser.parse_args()
+
+
+def merge_tiny_chunks(chunks, min_chars=150):
+    if not chunks:
+        return chunks
+    merged = []
+    carry  = None
+    for chunk in chunks:
+        if carry is not None:
+            combined = carry["text"] + "\n\n" + chunk["text"]
+            chunk = {**chunk, "text": combined, "char_count": len(combined)}
+            carry = None
+        if len(chunk["text"]) < min_chars:
+            carry = chunk
+        else:
+            merged.append(chunk)
+    if carry is not None:
+        if merged:
+            combined = merged[-1]["text"] + "\n\n" + carry["text"]
+            merged[-1] = {**merged[-1], "text": combined, "char_count": len(combined)}
+        else:
+            merged.append(carry)
+    return merged
 
 
 # ── PROCESSING PIPELINE ─────────────────────────────────────────────────────
@@ -184,12 +211,19 @@ def process_kb_doc(
         section_name = section["section_name"]
         section_text = section["text"]
 
+        # ── Skip sections too small to be useful ──
+        if len(section_text.strip()) < 160:
+            print(f"   ⏭️   Skipping '{section_name}' (too short: {len(section_text)} chars)")
+            continue
+
         # Per-section idempotency: skip if this (source, section) pair is already stored
         if not force_reembed and section_already_embedded(collection, full_source, section_name):
             print(f"   ⏭️   Skipping '{section_name}' (already embedded)")
             continue
 
         chunk_results = chunk_prose(section_text, chunk_size=CHUNK_SIZE, overlap=OVERLAP)
+        chunk_results = merge_tiny_chunks(chunk_results, min_chars=MIN_CHUNK_CHARS)  # ← add this
+
         if not chunk_results:
             print(f"   ⚠️   '{section_name}' produced no chunks (empty section?)")
             continue
@@ -201,7 +235,7 @@ def process_kb_doc(
                 section_name=section_name,
                 chunk_index=chunk_index,
             )
-            all_chunks.append(chunk_data["text"])
+            all_chunks.append(f"[{section_name}]\n{chunk_data['text']}")
             all_ids.append(str(uuid.uuid4()))
             all_metadatas.append(metadata)
 
