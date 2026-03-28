@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-RESULTS_DIR = "eval_results"
+RESULTS_DIR = str(Path(__file__).parent / "eval_results")
 
 
 #------ LOAD RESULTS ------

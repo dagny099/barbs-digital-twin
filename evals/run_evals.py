@@ -22,18 +22,20 @@ from typing import Dict, List, Optional
 # Import from your existing app.py
 # We'll query the RAG system directly
 import chromadb
-from dotenv import load_dotenv
 from openai import OpenAI
 
 
-load_dotenv(override=True)
-
 #------ CONFIGURATION ------
-QUESTIONS_FILE = "eval_questions.csv"
-RESULTS_DIR = "eval_results"
-CHROMA_PATH = ".chroma_db_DT"
+_HERE = Path(__file__).parent          # evals/
+_ROOT = _HERE.parent                   # project root
+
+QUESTIONS_FILE = str(_HERE / "eval_questions.csv")
+RESULTS_DIR    = str(_HERE / "eval_results")
+CHROMA_PATH    = str(_ROOT / ".chroma_db_DT")
+SYSTEM_PROMPT_FILE = str(_ROOT / "SYSTEM_PROMPT.md")
 COLLECTION_NAME = "barb-twin"
-OPENAI_MODEL = "gpt-4.1-mini"
+OPENAI_MODEL    = os.getenv("LLM_MODEL", "gpt-4.1-mini")
+N_CHUNKS_RETRIEVE = 8  # Must match app.py
 
 # Ensure results directory exists
 Path(RESULTS_DIR).mkdir(exist_ok=True)
@@ -70,10 +72,10 @@ def query_digital_twin(
     )
     query_embedding = embed_response.data[0].embedding
 
-    # Step 2: Retrieve relevant chunks
+    # Step 2: Retrieve relevant chunks (matches N_CHUNKS_RETRIEVE in app.py)
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=3
+        n_results=N_CHUNKS_RETRIEVE
     )
 
     # Extract retrieved chunks with metadata
@@ -98,7 +100,7 @@ def query_digital_twin(
         context_text = "(No relevant context found)"
 
     # Step 4: Build system prompt — same base as app.py (reads SYSTEM_PROMPT.md)
-    with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
+    with open(SYSTEM_PROMPT_FILE, "r", encoding="utf-8") as _f:
         system_prompt_base = _f.read()
     system_prompt = system_prompt_base + f"\n\nContext:\n{context_text}"
 
