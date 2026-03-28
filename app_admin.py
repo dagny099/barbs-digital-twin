@@ -52,7 +52,8 @@ if OPENAI_API_KEY is None:
 # Ollama needs no key, just a running server.
 
 LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4.1")
-N_CHUNKS_RETRIEVE =int(os.getenv("N_CHUNKS_RETRIEVE", 10))
+N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 SERVER_PORT = int(os.getenv("ADMIN_PORT", 7861))
 
 # OpenAI client — used ONLY for embeddings (not chat)
@@ -149,6 +150,22 @@ tools = [
         "parameters": {"type": "object", "properties": {}, "required": []},
     }},
 ]
+
+def _clean_content(msg):
+    """Normalise a history message so content is always a plain string.
+
+    Gradio can pass multimodal content as a dict {"text": ..., "files": [...]}
+    or a list of content blocks [{"type": "text", "text": ...}, ...].
+    The OpenAI API requires content to be a string, so we extract text only.
+    """
+    c = msg.get("content")
+    if isinstance(c, dict):
+        return {**msg, "content": c.get("text", "")}
+    if isinstance(c, list):
+        texts = [p.get("text", "") for p in c if p.get("type") == "text"]
+        return {**msg, "content": " ".join(texts)}
+    return msg
+
 
 def handle_tool_call(tool_calls):
     results = []
@@ -308,13 +325,22 @@ def l2_to_cosine_sim(l2_distance):
 # ═══════════════════════════════════════════════════════════════════
 
 SOURCE_COLORS = {
-    "github-readme":   ("#EEEDFE", "#3C3489"),
-    "project-summary": ("#E1F5EE", "#085041"),
-    "project-brief":   ("#E1F5EE", "#085041"),
-    "mkdocs":          ("#E6F1FB", "#0C447C"),
-    "kb-biosketch":    ("#FAEEDA", "#633806"),
-    "biosketch":       ("#FAEEDA", "#633806"),
-    "resume":          ("#EAF3DE", "#27500A"),
+    # Current KB sources
+    "kb-biosketch":      ("#FAEEDA", "#633806"),
+    "kb-philosophy":     ("#E6F4FB", "#0C4470"),
+    "kb-positioning":    ("#EDF5E8", "#2A5E1A"),
+    "kb-projects":       ("#EEE8FA", "#4A2B8A"),
+    "kb-career":         ("#FAE8F2", "#7A1A4A"),
+    "kb-publications":   ("#E8F4F8", "#1A5A6A"),
+    "project-summaries": ("#E1F5EE", "#085041"),
+    "jekyll":            ("#F5F0E8", "#6B5020"),
+    # Legacy / retired sources (kept for any old chunks still in DB)
+    "github-readme":     ("#EEEDFE", "#3C3489"),
+    "project-summary":   ("#E1F5EE", "#085041"),
+    "project-brief":     ("#E1F5EE", "#085041"),
+    "mkdocs":            ("#E6F1FB", "#0C447C"),
+    "biosketch":         ("#FAEEDA", "#633806"),
+    "resume":            ("#EAF3DE", "#27500A"),
 }
 DEFAULT_SOURCE_COLOR = ("#F1EFE8", "#444441")
 
@@ -888,8 +914,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
         _ext = diagram_path.rsplit(".", 1)[-1].lower()
         _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px"
         _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
-        collected += f"\n\n{_tag}"          # ← BOTTOM: comment out for TOP
-        # collected = f"{_tag}\n\n" + collected  # ← TOP:    uncomment for TOP
+        collected += f"\n\n{_tag}"
     yield collected, metrics_val, chunks_val, metadata_val, embed_val
 
 
@@ -942,9 +967,9 @@ if __name__ == "__main__":
             render=False,
         )
         temp_slider = gr.Slider(
-            minimum=0.0, maximum=2.0, value=1.0, step=0.05,
+            minimum=0.0, maximum=2.0, value=LLM_TEMPERATURE, step=0.05,
             label="Temperature",
-            info="0 = deterministic, 2 = max creativity.",
+            info="0 = deterministic, 2 = max creativity. Default matches LLM_TEMPERATURE env var.",
             render=False,
         )
         model_dropdown = gr.Dropdown(

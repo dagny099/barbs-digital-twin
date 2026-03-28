@@ -39,7 +39,7 @@ Gradio Interface
     ↓
 Query Embedding (OpenAI)
     ↓
-Semantic Search (ChromaDB) → Retrieve top 3 chunks
+Semantic Search (ChromaDB) → Retrieve top 10 chunks
     ↓
 Context + System Prompt + Query → LLM
     ↓
@@ -103,11 +103,14 @@ The Gradio interface will launch at `http://localhost:7860`
 
 ```
 digital-twin/
-├── app.py                              # Main Gradio application
+├── app.py                              # Main Gradio application (public-facing)
+├── app_admin.py                        # Admin/debug interface (local only, port 7861)
+├── featured_projects.py                # Project walkthrough logic and diagram serving
 ├── ingest.py                           # Master ingestion manager (start here)
 ├── embed_kb_doc.py                     # Generic: embed any inputs/kb_*.md document
 ├── embed_project_summaries.py          # Embed one-page project summary PDFs
 ├── embed_jekyll.py                     # Embed Jekyll website via sitemap
+├── db_sync.py                          # Push/pull ChromaDB to/from HF Hub
 ├── utils.py                            # Shared text processing utilities
 ├── verify_collection.py                # Inspect ChromaDB contents
 ├── clear_collection.py                 # Wipe ChromaDB collection
@@ -299,6 +302,26 @@ The app is deployed on Hugging Face Spaces. To deploy your own:
 
 **Note**: The ChromaDB database (`.chroma_db_DT/`) will be recreated on first run. For faster startup, you can include the pre-built database in your deployment.
 
+## Admin Interface
+
+A developer-focused debug interface that runs alongside the main app:
+
+```bash
+python app_admin.py   # http://localhost:7861
+```
+
+Features not in the public app:
+- **Side-by-side chat + retrieval inspector** — see every retrieved chunk with cosine similarity scores
+- **Multi-provider model switching** — compare OpenAI, Anthropic, Google, and Ollama models via LiteLLM
+- **Adjustable top-k and temperature** — experiment without code changes
+- **Collection browser** — browse, filter, and text-search all ~500 chunks in the knowledge base
+- **Semantic probe** — embed any query and rank the entire collection to check KB coverage
+- **Session cost tracking** — running token count and USD cost across the session
+
+Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to unlock those models. Ollama requires a local server at the default port. Note that LiteLLM model names require a provider prefix (e.g. `openai/gpt-4.1`, `anthropic/claude-sonnet-4-5`).
+
+`app_admin.py` is not included in the HF Spaces deployment and is intended for local development only.
+
 ## Evaluation
 
 The project includes an offline evaluation harness for systematically testing response quality. See `EVAL_QUICKSTART.md` for the 5-minute getting started guide and `EVAL_WORKFLOW.md` for full documentation.
@@ -310,7 +333,7 @@ The project includes an offline evaluation harness for systematically testing re
 | Type | Categories | Purpose |
 |------|------------|---------|
 | **Coverage** | `bio`, `projects`, `technical`, `personality`, `tool`, `publication` | Does the system retrieve and answer correctly? Run after knowledge base changes. |
-| **Visitor** | `recruiter`, `friendly` | Does the system satisfy real visitors? Mirrors `RECRUITER_PROMPTS` / `FRIENDLY_PROMPTS` in `app.py`. |
+| **Visitor** | `recruiter`, `friendly` | Does the system satisfy real visitors? Simulates recruiter and casual visitor perspectives. |
 
 ### Quick commands
 
@@ -318,7 +341,7 @@ The project includes an offline evaluation harness for systematically testing re
 # Full evaluation (~$0.21, ~5 min)
 python run_evals.py
 
-# Coverage only — fast regression check after re-embedding
+# Coverage check after re-embedding (run each separately)
 python run_evals.py --category bio
 python run_evals.py --category publication
 

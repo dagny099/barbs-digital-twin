@@ -34,8 +34,9 @@ RESULTS_DIR    = str(_HERE / "eval_results")
 CHROMA_PATH    = str(_ROOT / ".chroma_db_DT")
 SYSTEM_PROMPT_FILE = str(_ROOT / "SYSTEM_PROMPT.md")
 COLLECTION_NAME = "barb-twin"
-OPENAI_MODEL    = os.getenv("LLM_MODEL", "gpt-4.1-mini")
+OPENAI_MODEL      = os.getenv("LLM_MODEL", "gpt-4.1-mini")
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))  # Must match app.py
+LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 
 # Ensure results directory exists
 Path(RESULTS_DIR).mkdir(exist_ok=True)
@@ -113,7 +114,7 @@ def query_digital_twin(
     completion = openai_client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=messages,
-        temperature=0.7
+        temperature=LLM_TEMPERATURE,
     )
 
     response_text = completion.choices[0].message.content
@@ -136,7 +137,7 @@ def load_questions(
 
     if not os.path.exists(filepath):
         print(f"ERROR: Questions file not found: {filepath}")
-        print("Run this script with --generate to create the questions file.")
+        print(f"Expected: {filepath}")
         sys.exit(1)
 
     questions = []

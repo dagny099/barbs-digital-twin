@@ -46,11 +46,11 @@ This file provides context about the Digital Twin project to help AI coding assi
 [inputs/project-summaries/*.pdf] → [embed_project_summaries.py] ──┤
 [https://barbhs.com]     → [embed_jekyll.py]            ──┤── OpenAI → ChromaDB
                                                             │
-[User Query] → [Embed Query] → [Semantic Search (ChromaDB, top 3 chunks)]
+[User Query] → [Embed Query] → [Semantic Search (ChromaDB, top 10 chunks)]
                                                             │
                 [SYSTEM_PROMPT.md + Retrieved Context + Query]
                                                             │
-                                [GPT-4.1-mini w/ Tools]
+                                [GPT-4.1 w/ Tools]
                                                             │
                                 [Tool Execution Loop]
                                                             │
@@ -61,11 +61,14 @@ This file provides context about the Digital Twin project to help AI coding assi
 
 | Path | Purpose | Git Tracked? |
 |------|---------|--------------|
-| `app.py` | Main Gradio app + RAG pipeline | ✅ Yes |
+| `app.py` | Main Gradio app + RAG pipeline (public-facing) | ✅ Yes |
+| `app_admin.py` | Admin/debug interface — multi-provider chat, chunk inspector, collection browser (see below) | ✅ Yes |
+| `featured_projects.py` | Project walkthrough logic: intent detection, diagram serving, context blocks | ✅ Yes |
 | `ingest.py` | Master ingestion manager (start here) | ✅ Yes |
 | `embed_kb_doc.py` | Generic KB document ingestion (all `kb_*.md` files) | ✅ Yes |
 | `embed_project_summaries.py` | One-page PDF ingestion | ✅ Yes |
 | `embed_jekyll.py` | Jekyll website ingestion via sitemap | ✅ Yes |
+| `db_sync.py` | Push/pull ChromaDB to/from HF Hub (used at cold-start) | ✅ Yes |
 | `utils.py` | Shared text processing utilities | ✅ Yes |
 | `clear_collection.py` | Helper to clear ChromaDB collection | ✅ Yes |
 | `verify_collection.py` | Helper to verify collection stats | ✅ Yes |
@@ -111,12 +114,13 @@ This file provides context about the Digital Twin project to help AI coding assi
 - **Database**: ChromaDB (persistent)
 - **Path**: `.chroma_db_DT/`
 - **Collection**: `barb-twin`
-- **Retrieval**: Top 3 chunks per query
+- **Retrieval**: Top 10 chunks per query (configurable via `N_CHUNKS_RETRIEVE` env var)
 
 ### LLM
-- **Model**: `gpt-4.1-mini`
-- **Provider**: OpenAI API
+- **Model**: `gpt-4.1` (app.py default) / `openai/gpt-4.1` (app_admin.py default — LiteLLM prefix required)
+- **Provider**: OpenAI API (app.py); LiteLLM multi-provider (app_admin.py)
 - **Features**: Chat completion + tool calling
+- **Temperature**: `0.7` default, configurable via `LLM_TEMPERATURE` env var
 
 ## Environment Variables
 
@@ -203,6 +207,35 @@ All text processing functions are centralized in `utils.py`:
 - `section_already_embedded()` — Per-section idempotency check (skip if already stored)
 
 All ingestion scripts import from `utils.py` to ensure consistency.
+
+## Admin Interface (`app_admin.py`)
+
+A developer-only interface that runs separately from the public app on port 7861.
+
+```bash
+python app_admin.py   # http://localhost:7861
+```
+
+**What it adds over `app.py`:**
+
+| Feature | Details |
+|---------|---------|
+| **Multi-provider chat** | Switch between OpenAI, Anthropic, Google, Ollama via LiteLLM |
+| **Chunk inspector** | See every retrieved chunk with cosine similarity scores and source metadata |
+| **Raw metadata tab** | Full JSON dump of retrieval context, config, and per-call cost |
+| **Session cost tracker** | Running token count and USD cost across the session |
+| **Collection browser** | Browse, filter, and text-search all chunks in the DB |
+| **Semantic probe** | Embed a query and rank the entire collection — answers "does the KB cover this?" |
+| **System prompt editing** | Edit the system prompt inline (ephemeral — applies to next message only) |
+| **Adjustable top-k and temperature** | Sliders for runtime experimentation |
+
+**Architecture differences:**
+- Uses **LiteLLM** for chat completions (not the OpenAI SDK directly)
+- LiteLLM model names require provider prefix: `openai/gpt-4.1`, `anthropic/claude-sonnet-4-5`, `gemini/gemini-2.5-flash`, `ollama/llama3.2`
+- Embeddings are still pinned to OpenAI `text-embedding-3-small` (not switchable)
+- Pushover notifications work the same way
+
+**Note:** `app_admin.py` is not deployed to HF Spaces. Local use only.
 
 ## Common Development Tasks
 
@@ -315,6 +348,6 @@ If you're an AI assistant and encounter ambiguity:
 
 ---
 
-**Last Updated**: 2026-03-21
+**Last Updated**: 2026-03-28
 **Maintained By**: Barbara Hidalgo-Sotelo
 **For**: Claude Code and other AI coding assistants

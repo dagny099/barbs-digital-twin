@@ -1,97 +1,187 @@
-## Usage
+# Usage Guide
 
-### For Recruiters & Employers
+Developer reference for running, customizing, and maintaining the Digital Twin.
 
-Ask the digital twin about:
-- Barbara's technical skills and certifications
-- Specific projects and their technical implementations
-- Professional experience and achievements
-- Educational background (UT Austin, MIT PhD)
-- Research publications and contributions
+---
 
-**Example queries:**
-- "What experience do you have with data governance?"
-- "Tell me about your fitness dashboard project"
-- "What certifications do you hold?"
-- "Describe your work at Inflective"
+## Running the App
 
-### For Developers
+### Public app (user-facing)
 
-The digital twin can explain:
-- Technical architecture of specific projects
-- Code implementations and design decisions
-- Tech stack choices and trade-offs
-- Development workflows and best practices
-
-**Example queries:**
-- "How does the beehive tracker handle metadata?"
-- "What graph database technologies have you used?"
-- "Explain the architecture of your fitness dashboard"
-
-### For General Users
-
-Learn about:
-- Barbara's journey from cognitive science to data science
-- Her research on visual attention and eye movements
-- Personal projects and hobbies (beekeeping, running, etc.)
-- Philosophy and approach to learning/building
-
-## Customizing Suggested Questions
-
-The example questions shown in the Gradio interface can be easily customized in `app.py`.
-
-### Quick Edit
-
-Edit the `CURATED_EXAMPLES` list (around line 43 in `app.py`):
-
-```python
-CURATED_EXAMPLES = [
-    "💼 Your professional question here",
-    "🔗 Your bridge question here",
-    "💭 Your personal question here",
-]
+```bash
+python app.py        # http://localhost:7860
 ```
 
-### Question Categories
+### Admin/debug interface (developer-only)
 
-The interface uses three visual categories with color-coding:
-
-| Icon | Category | Color | Purpose |
-|------|----------|-------|---------|
-| 💼 | Professional | Soft Blue | Career, technical skills, work experience |
-| 🔗 | Bridge | Soft Teal | Questions connecting personal and professional |
-| 💭 | Personal | Soft Purple | Interests, hobbies, philosophy, learning |
-
-**Current distribution:** 3 professional + 3 bridge + 3 personal = 9 questions total
-
-### Full Question Banks
-
-Two complete question sets are stored as constants for reference and evaluation testing:
-
-- **`RECRUITER_PROMPTS`** (10 questions): Professional/hiring-focused questions
-- **`FRIENDLY_PROMPTS`** (10 questions): Casual/personal questions from friends
-
-You can pull questions from these banks or write your own.
-
-### Updating Colors
-
-If you change the number of questions or reorder them, update the CSS selectors in `custom_css` (around line 205 in `app.py`) to match:
-
-```python
-/* Professional questions (positions 1-3) */
-.examples button:nth-child(1),
-.examples button:nth-child(2),
-.examples button:nth-child(3) { ... }
-
-/* Bridge questions (positions 4-6) */
-.examples button:nth-child(4),
-.examples button:nth-child(5),
-.examples button:nth-child(6) { ... }
-
-/* Personal questions (positions 7-9) */
-.examples button:nth-child(7),
-.examples button:nth-child(8),
-.examples button:nth-child(9) { ... }
+```bash
+python app_admin.py  # http://localhost:7861
 ```
 
-The `:nth-child(N)` numbers must match the position of each question in the list.
+The admin app requires `litellm` (`pip install litellm`) and provides a chunk inspector,
+multi-provider model switching, semantic probe, and session cost tracking. See
+`docs/CLAUDE.md` for a full feature list. It is **not** deployed to Hugging Face Spaces.
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and set values before running either app.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | ✅ | — | Used for embeddings and OpenAI completions |
+| `LLM_MODEL` | No | `gpt-4.1` | Model for completions (use LiteLLM prefix in admin app: `openai/gpt-4.1`) |
+| `LLM_TEMPERATURE` | No | `0.7` | Temperature for all LLM calls; applies to app, admin app, and eval runner |
+| `N_CHUNKS_RETRIEVE` | No | `10` | Number of chunks retrieved per query |
+| `PUSHOVER_USER` | No | — | Enables visitor notifications to Barbara's phone |
+| `PUSHOVER_TOKEN` | No | — | Required if `PUSHOVER_USER` is set |
+| `PORT` | No | `7860` | Server port for `app.py` |
+| `ADMIN_PORT` | No | `7861` | Server port for `app_admin.py` |
+| `ANTHROPIC_API_KEY` | No | — | Unlocks Anthropic models in admin app |
+| `GEMINI_API_KEY` | No | — | Unlocks Google models in admin app |
+
+---
+
+## Managing the Knowledge Base
+
+The `ingest.py` script orchestrates all data sources. Always start here:
+
+```bash
+python ingest.py              # Interactive menu with live DB status
+python ingest.py --status     # Show chunk counts per source and exit
+```
+
+### Non-interactive commands
+
+```bash
+python ingest.py --all                            # Embed all sources (skip existing)
+python ingest.py --all --force                    # Force re-embed everything
+python ingest.py --source kb-biosketch            # Embed one source
+python ingest.py --source kb-biosketch --force    # Force re-embed one source
+python ingest.py --source kb-projects --dry-run   # Preview without embedding
+```
+
+**Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-projects`,
+`kb-career`, `kb-publications`, `project-summaries`, `jekyll`
+
+### Verifying the DB
+
+```bash
+python ingest.py --status
+python verify_collection.py --show-sources
+python verify_collection.py --show-sections
+```
+
+---
+
+## Customizing the Interface
+
+### Suggested questions (Explore Topics accordion)
+
+Edit `CURATED_EXAMPLES` near the top of `app.py`:
+
+```python
+CURATED_EXAMPLES = {
+    "Professional": [
+        "What led you from cognitive science to AI engineering?",
+        ...
+    ],
+    "Bridge": [...],
+    "Personal": [...],
+}
+```
+
+Three categories, three questions each. The accordion groups them with color-coded buttons
+(`btn-professional`, `btn-bridge`, `btn-personal` in `custom_css`).
+
+### Pinned example questions (below the chat input)
+
+Edit the `examples` list in the `gr.ChatInterface` call in `app.py`. These always show
+and are not part of the accordion:
+
+```python
+examples=["What problems does Barbara solve?", "Walk me through a project", ...]
+```
+
+### System prompt
+
+Edit `SYSTEM_PROMPT.md` directly. It is loaded at startup by `app.py`. Changes take
+effect on next app restart (or on next message in the admin app's ephemeral edit mode).
+
+After significant prompt edits, run the eval harness to check for regressions:
+```bash
+cd evals && python run_evals.py --category recruiter --category friendly
+```
+
+---
+
+## Adding a New Knowledge Base Document
+
+1. Create a markdown file in `inputs/` using `##` H2 headers for sections (e.g. `inputs/kb_mynewtopic.md`)
+2. Add an entry to the `SOURCES` list in `ingest.py` following the existing `kb-*` pattern
+3. Update source priority rules in `SYSTEM_PROMPT.md` if needed
+4. Embed it: `python ingest.py --source kb-mynewtopic`
+5. Update `docs/CLAUDE.md` and this file
+
+---
+
+## Adding a New Tool
+
+Tools extend the LLM's capabilities via function calling (e.g. Pushover notifications, dice roll).
+
+1. Define the Python function in `app.py`
+2. Add a function descriptor to the `tools` list
+3. Add a handler case in `handle_tool_call()`
+4. Update `SYSTEM_PROMPT.md` with behavioral guidance for when to use the tool
+5. Mirror the definition in `app_admin.py` (both files maintain their own tool lists)
+
+---
+
+## Deployment (Hugging Face Spaces)
+
+1. Create a Space and set Secrets for `OPENAI_API_KEY` and any optional vars
+2. Deploy `app.py`, `requirements.txt`, `inputs/`, `assets/`, and the pre-built `.chroma_db_DT/`
+3. On cold start, if `.chroma_db_DT/` is missing, the app pulls from HF Hub; if that fails,
+   it runs `ingest.py --all` from scratch (requires input files to be present)
+
+Use `db_sync.py` to push a fresh local DB to HF Hub after a full re-ingest:
+
+```bash
+python db_sync.py push
+```
+
+---
+
+## Evaluation
+
+See `evals/EVAL_QUICKSTART.md` for the full guide. Quick reference:
+
+```bash
+cd evals
+python run_evals.py              # Full run — ~$0.21, ~5 min
+python run_evals.py --limit 10   # Smoke test
+python run_evals.py --category recruiter
+python analyze_evals.py          # Summarize latest results
+python analyze_evals.py --export # Export CSV for manual grading
+```
+
+Run evals before every deployment and after any edit to `SYSTEM_PROMPT.md` or KB sources.
+
+---
+
+## Debugging Retrieval
+
+**In the terminal**: `app.py` prints each retrieved chunk (source, section, text preview) on
+every query when running locally.
+
+**In the admin app**: the Chunks and Raw metadata inspector tabs show cosine similarity scores
+and full chunk text for every query.
+
+**Standalone tools**:
+
+```bash
+python ingest.py --source kb-biosketch --dry-run   # Preview section parsing
+python verify_collection.py --show-sources          # Per-source chunk counts
+python app_admin.py                                 # Semantic probe: "does the KB cover X?"
+```

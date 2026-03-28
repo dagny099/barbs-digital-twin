@@ -3,9 +3,7 @@ import subprocess
 from dotenv import load_dotenv
 from openai import OpenAI
 import gradio as gr
-import uuid
 import chromadb
-from pprint import pprint
 import json
 import requests
 import random
@@ -48,6 +46,9 @@ if OPENAI_API_KEY is None:
 # Model used for all LLM completions. Override via env to switch without code changes.
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
 
+# Temperature for LLM completions. 0.7 is a reasonable default for personality+accuracy balance.
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+
 # Local server port. HF Spaces ignores this and always uses 7860.
 SERVER_PORT = int(os.getenv("PORT", 7860))
 
@@ -79,9 +80,6 @@ ga_head = """
 </script>
 """
 
-# FOR CHUNKING, TEXT PROCESSING & STORING EMBEDDINGS:
-size, olap = 500, 50
-
 # Startup: restore DB from HF Hub if the directory is missing entirely.
 # Must happen before ChromaDB opens the path, or the pull would conflict.
 if not os.path.exists(".chroma_db_DT"):
@@ -99,94 +97,6 @@ if collection.count() == 0:
     push_db()
     print("Ingestion complete.")
 
-#If there are already existing items, delete 'em
-# if collection.get()['ids']:
-#     collection.delete(collection.get['ids'])
-# pprint(collection.get())
-#--------------------------
-
-#------ CUSTOM FUNCTIONS -------
-"""
-Chunk plain prose into overlapping segments for retrieval tasks.
-
-Atomic unit: paragraph (double-newline delimited)
-- Paragraphs are never split mid-sentence
-- Overlap re-includes trailing paragraphs from the previous chunk
-- No external dependencies
-"""
-
-def parse_paragraphs(raw_text: str) -> list[str]:
-    """
-    Split text on blank lines, strip whitespace, drop empties.
-    Handles both \n\n and \r\n\r\n line endings.
-    """
-    paragraphs = raw_text.split("\n\n")
-    # Collapse internal newlines within each paragraph into spaces
-    cleaned = [" ".join(p.split()) for p in paragraphs]
-    return [p for p in cleaned if p]
-
-
-def chunk_prose(raw_text, chunk_size=500, overlap=50):
-    """
-    Chunk plain prose into overlapping segments.
-
-    Args:
-        raw_text:   Full text (paragraphs separated by blank lines).
-        chunk_size: Target size in chars. May slightly exceed to keep
-                    paragraphs intact.
-        overlap:    Target overlap in chars. Backtracks whole paragraphs.
-
-    Returns:
-        List of dicts: {text, para_start, para_end, char_count}
-    """
-    paragraphs = parse_paragraphs(raw_text)
-
-    if not paragraphs:
-        return []
-
-    chunks = []
-    i = 0
-
-    while i < len(paragraphs):
-        # --- Accumulate paragraphs until we hit chunk_size ---
-        chunk_paras, char_count, j = [], 0, i
-        while j < len(paragraphs):
-            para_len = len(paragraphs[j])
-
-            # Always include at least one paragraph per chunk
-            if char_count > 0 and (char_count + para_len) > chunk_size:
-                break
-
-            chunk_paras.append(paragraphs[j])
-            char_count += para_len + 1
-            j += 1
-
-        # --- Store as a plain dict ---
-        text = "\n\n".join(chunk_paras)
-        chunks.append({
-            "text": text,
-            "para_start": i,
-            "para_end": j - 1,
-            "char_count": len(text),
-        })
-
-        # --- Stop if we've consumed everything ---
-        if j >= len(paragraphs):
-            break
-
-        # --- Backtrack for overlap ---
-        overlap_chars = 0
-        backtrack = 0
-        for k in range(j - 1, i, -1):
-            if overlap_chars + len(paragraphs[k]) > overlap:
-                break
-            overlap_chars += len(paragraphs[k])
-            backtrack += 1
-
-        i = j - backtrack
-
-    return chunks
-#----------------------
 
 # My favicon (local png)
 with open("assets/bee_barb.png", "rb") as f:
@@ -458,36 +368,7 @@ def vote(data: gr.LikeData):
         print("You downvoted this response: " + data.value["value"])
 
 
-#------ COLD-START FALLBACK ----
-# Embed biosketch only if the collection is empty (e.g. fresh HF Spaces deployment).
-# For normal use, populate the DB with: python ingest.py --all
-if collection.count() == 0:
-    print("⚠️  Collection is empty — running cold-start biosketch embed...")
-
-    with open("inputs/kb_biosketch.md", 'r', encoding='utf-8') as f:
-        barb_bio = f.read()
-
-    documents = [{'source': 'kb_biosketch.md', 'text': barb_bio}]
-    chunks, ids, metadatas = [], [], []
-
-    for doc in documents:
-        print(f"\nNow processing: {doc['source']}...")
-        results = chunk_prose(doc['text'], chunk_size=size, overlap=olap)
-        chunks_ = [results[i]["text"] for i, chunk in enumerate(results)]
-        print(f"Parsed {doc['source']} into {len(chunks_)} chunks")
-        ids_ = [str(uuid.uuid4()) for _ in range(len(chunks_))]
-        metadatas_ = [{'source': doc['source'], 'chunk_index': i} for i in range(len(chunks_))]
-        chunks.extend(chunks_)
-        ids.extend(ids_)
-        metadatas.extend(metadatas_)
-
-    embeddings = [item.embedding for item in client.embeddings.create(
-        model='text-embedding-3-small', input=chunks).data]
-    collection.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas)
-    print(f"✅ Cold-start embed complete: {len(chunks)} biosketch chunks added")
-else:
-    print(f"✅ Collection ready: {collection.count()} chunks loaded")
-#-------------------------------
+print(f"✅ Collection ready: {collection.count()} chunks loaded")
 
 #------ Tools -----------
 # Function that sends notification via pushover app
@@ -659,9 +540,10 @@ def respond_ai(message, history):
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=msgs,
-        tools=tools
+        tools=tools,
+        temperature=LLM_TEMPERATURE,
     )
- 
+
     while response.choices[0].message.tool_calls:
         tool_result = handle_tool_call(response.choices[0].message.tool_calls)
         msgs.append(response.choices[0].message)
@@ -669,14 +551,16 @@ def respond_ai(message, history):
         response = client.chat.completions.create(
             model=LLM_MODEL,
             messages=msgs,
-            tools=tools
+            tools=tools,
+            temperature=LLM_TEMPERATURE,
         )
- 
+
     # ── Step 8: Stream the response ─────────────────────────────
     stream = client.chat.completions.create(
         model=LLM_MODEL,
         messages=msgs,
-        stream=True
+        stream=True,
+        temperature=LLM_TEMPERATURE,
     )
     collected = ""
     for chunk in stream:
@@ -769,9 +653,7 @@ if __name__ == "__main__":
                            "assets/communication-icon.svg",
                            "assets/precision-icon.svg",
                            "assets/psychology-icon.svg",
-                           ],  
-            #cache_examples=True,
-            #cache_mode='eager'
+                           ],
         )
         
         # ── "GET IN TOUCH" CTA — fills textbox with contact trigger ──
@@ -816,7 +698,6 @@ if __name__ == "__main__":
         root = ""
 
     demo.launch(
-#        theme=gr.themes.Citrus(),
         root_path=root,
         head=FAVICON_HEAD + ga_head + font_head,
         server_name="0.0.0.0",

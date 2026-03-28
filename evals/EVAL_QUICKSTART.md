@@ -2,186 +2,128 @@
 
 ## What You Have
 
-A simple offline evaluation system for your Digital Twin with:
-- **92 seed questions** across 8 categories
-- **Automated runner** that queries your RAG system
-- **Analysis tools** that flag issues
-- **Manual review workflow** for human grading
+An offline evaluation harness for systematically testing Digital Twin response quality:
+- **92 seed questions** across 8 categories in `eval_questions.csv`
+- **`run_evals.py`** — queries the RAG system and saves timestamped JSON results
+- **`analyze_evals.py`** — summarizes results by category and exports for manual grading
+
+The eval harness replicates the core RAG pipeline (embed → retrieve → prompt → complete) but
+**does not** exercise tool calling (Pushover notifications, dice roll) or project walkthrough
+mode. Those require manual testing in the running app.
+
+## When to Run Evals
+
+Run after any of these changes:
+- Editing `SYSTEM_PROMPT.md`
+- Adding, editing, or re-ingesting any KB source
+- Changing `LLM_MODEL`, `LLM_TEMPERATURE`, or `N_CHUNKS_RETRIEVE`
+- Before deploying to Hugging Face Spaces
+
+Frequency: treat it as a pre-deploy gate. A full run costs ~$0.21 and takes ~5 minutes.
 
 ## Two Types of Questions
 
-The question bank uses two complementary perspectives:
-
 **Coverage questions** (6 categories) — *"Does the system know X?"*
-Organized by data source type. Run these to detect regressions after knowledge base changes (new embeddings, chunking tweaks, prompt edits).
+Run these to catch regressions after KB or prompt changes.
 
-**Visitor questions** (2 categories) — *"Would a real person get a satisfying response?"*
-Organized by who's asking. These mirror `RECRUITER_PROMPTS` and `FRIENDLY_PROMPTS` in `app.py` — the same questions shown as UI examples. Run these to evaluate quality from the visitor's perspective.
+**Visitor questions** (2 categories) — *"Would a real visitor get a satisfying response?"*
+Run these to evaluate quality from the visitor's perspective.
 
-## Question Distribution
-
-| Category | Count | Perspective | What It Tests |
-|----------|-------|-------------|---------------|
+| Category | Count | Type | What It Tests |
+|----------|-------|------|---------------|
 | `bio` | 19 | Coverage | Personal background, education, career history |
-| `projects` | 20 | Coverage | Technical projects, work experience, accomplishments |
-| `technical` | 10 | Coverage | Skills, tools, methodologies, frameworks |
+| `projects` | 20 | Coverage | Technical projects, accomplishments, tech stacks |
+| `technical` | 10 | Coverage | Skills, tools, methodologies |
 | `personality` | 10 | Coverage | Voice consistency, tone, Barbara's style |
-| `tool` | 5 | Coverage | Notification and dice tool calling |
+| `tool` | 5 | Coverage | Notification and dice tool calling (note: not exercised by eval runner) |
 | `publication` | 8 | Coverage | Academic research, papers, citations |
-| `recruiter` | 10 | Visitor | Career narrative as a hiring manager would ask |
+| `recruiter` | 10 | Visitor | Career narrative from a hiring manager's perspective |
 | `friendly` | 10 | Visitor | Personal side and authentic personality |
-| **TOTAL** | **92** | | **Full Digital Twin capabilities** |
+| **TOTAL** | **92** | | |
 
-## Your First Evaluation (5 minutes)
+## Running Evals
 
-### Step 1: Quick test (30 seconds)
+**Must run from the `evals/` directory** (paths are relative to this directory):
+
+```bash
+cd evals
+```
+
+### Quick test (30 seconds, ~$0.02)
 ```bash
 python run_evals.py --limit 10
 ```
 
-This runs the first 10 questions to make sure everything works.
-
-### Step 2: See the results (30 seconds)
-```bash
-python analyze_evals.py
-```
-
-This shows you:
-- Success rate by category
-- How many chunks were retrieved
-- Any flagged issues
-
-### Step 3: Look at the actual responses (2 minutes)
-```bash
-ls -la eval_results/
-```
-
-Open the latest JSON file and browse a few responses:
-- Does the response make sense?
-- Were the right chunks retrieved?
-- Does it sound like you?
-
-### Step 4: Run the full eval (3 minutes)
+### Full run (~5 min, ~$0.21)
 ```bash
 python run_evals.py
 ```
 
-All 92 questions. Takes ~4-6 minutes. Costs ~$0.21 in OpenAI API calls.
-
-### Step 5: Grade a few responses (5-10 minutes)
+### Targeted runs by category
 ```bash
-python analyze_evals.py --export
-```
-
-This creates `eval_review.csv`. Open it in Excel/Google Sheets and grade 10-15 responses.
-
----
-
-## Targeted Runs by Category
-
-```bash
-# Test only coverage categories
 python run_evals.py --category bio
-python run_evals.py --category publication
-
-# Test only visitor experience
 python run_evals.py --category recruiter
-python run_evals.py --category friendly
-
-# Quick regression check after knowledge base changes
-python run_evals.py --category bio --category projects --category technical
+python run_evals.py --category publication
 ```
 
----
+Results are saved to `evals/eval_results/eval_results_YYYY-MM-DD_HH-MM-SS.json`.
 
-## Weekly Workflow (15 minutes)
+## Analyzing Results
 
-**Every Monday** (or after making changes):
+```bash
+python analyze_evals.py              # Summary of latest results
+python analyze_evals.py --export     # Export to eval_review.csv for manual grading
+```
 
-1. Run full evaluation: `python run_evals.py`
-2. Check analysis: `python analyze_evals.py`
-3. Export and grade 10-15 responses: `python analyze_evals.py --export`
-4. Track scores over time in a simple spreadsheet
-5. Make improvements based on findings
+Open `eval_review.csv` in a spreadsheet. Grade 10–15 responses on a 1–5 scale, prioritizing:
+- `recruiter` and `friendly` categories (visitor impact)
+- Any responses flagged as errors
 
----
+## Interpreting Results
 
-## Files You'll Use
+### Benchmark targets
 
-### You WILL edit these:
-- `eval_questions.csv` — Add more questions as you think of them
-- `eval_review.csv` — Add your 1-5 scores after running `--export`
+| Metric | Target | What to do if low |
+|--------|--------|-------------------|
+| Overall success rate | 95%+ | Check for API errors in the JSON output |
+| Top-10 retrieval coverage | All questions get 10 chunks | Run `python ingest.py --status` to confirm all sources are embedded |
+| Manual accuracy score | 4.0+ / 5.0 | Update KB content or re-ingest the relevant source |
+| Manual personality score | 4.0+ / 5.0 | Adjust system prompt in `SYSTEM_PROMPT.md` |
 
-### Connected to app.py:
-- `RECRUITER_PROMPTS` in `app.py` → maps to `recruiter` category in CSV
-- `FRIENDLY_PROMPTS` in `app.py` → maps to `friendly` category in CSV
-- Keep these in sync when you update either
+### What low scores by category usually mean
 
-### You WON'T edit these (unless changing logic):
-- `run_evals.py` — The evaluation runner
-- `analyze_evals.py` — The analysis tool
-- `EVAL_WORKFLOW.md` — Full documentation
+- **`bio` low** → biosketch needs updating, or run `python ingest.py --source kb-biosketch --force`
+- **`publication` low** → check `python ingest.py --status` for the `kb-publications` source
+- **`recruiter` low personality** → refine the tone/voice section of `SYSTEM_PROMPT.md`
+- **`friendly` generic responses** → add more personal detail to `kb_biosketch.md` or `kb_philosophy-and-approach.md`
+- **`technical` misses** → check `kb_projects.md` coverage or re-ingest `project-summaries`
 
-### Generated automatically:
-- `eval_results/*.json` — Results from each run (timestamped)
+### Known limitations
 
----
+- **Temperature**: eval uses the same `LLM_TEMPERATURE` env var as the app (default 0.7). Keep
+  this consistent so eval results reflect production behavior.
+- **No tool calls**: the eval runner skips tool calling. Test notifications and dice manually.
+- **No walkthrough mode**: project walkthrough responses are not evaluated. Test manually.
+- **No conversation history**: each question is asked in isolation (single-turn only).
 
-## Understanding Your Scores
+## Files
 
-### Good Benchmarks:
-
-**Overall success rate**: 95%+
-- Less than this? Check for errors in the analysis output
-
-**Retrieval (3 chunks)**: 60%+
-- Less than this? Your source documents may not cover these topics
-
-**Manual grading targets**:
-- Accuracy (coverage categories): 4.0+ / 5.0
-- Personality (visitor categories): 4.0+ / 5.0
-- Retrieval quality: 3.5+ / 5.0
-
-### What to focus on by category:
-- **`bio` low accuracy** → biosketch may need updating or re-embedding
-- **`publication` low retrieval** → check that `kb-publications` source is embedded (`python ingest.py --source kb-publications`)
-- **`recruiter` low personality** → adjust system prompt in `app.py`
-- **`friendly` generic responses** → add more personal detail to biosketch
-
----
+| File | Description |
+|------|-------------|
+| `eval_questions.csv` | Question bank — add questions here |
+| `run_evals.py` | Evaluation runner |
+| `analyze_evals.py` | Results analysis and CSV export |
+| `eval_results/*.json` | Timestamped output from each run |
+| `EVAL_WORKFLOW.md` | Full documentation and troubleshooting |
 
 ## Common Questions
 
-**Q: How often should I run this?**
-A: Weekly for monitoring, and immediately after any changes (new sources, prompt tweaks, model changes)
+**How much does this cost?**
+~$0.21 per full run (92 questions at gpt-4.1-mini rates). Weekly runs ≈ $0.85/month.
 
-**Q: Do I need to grade all 91 responses?**
-A: No! Grade 10-15 representative ones, prioritizing flagged items and the `recruiter`/`friendly` categories
+**Do I need to grade all 92 responses?**
+No. Grade 10–15 representative ones, prioritizing `recruiter`/`friendly` and any errors.
 
-**Q: Can I use Google Sheets instead of CSV?**
-A: Yes! Upload `eval_questions.csv` to Google Sheets, edit there, then download as CSV before running
-
-**Q: What if I see low scores?**
-A: See "Common issues and fixes" in `EVAL_WORKFLOW.md` — usually it's missing source docs or prompt adjustments
-
-**Q: How much does this cost?**
-A: ~$0.21 per full run (91 questions). Weekly runs ≈ $0.85/month
-
----
-
-## Next Steps
-
-1. **Run your first test**: `python run_evals.py --limit 10`
-2. **Read the full docs**: Open `EVAL_WORKFLOW.md`
-3. **Add your own questions**: Edit `eval_questions.csv`
-4. **Set a weekly reminder**: "Run Digital Twin evaluation"
-
----
-
-## Need Help?
-
-See `EVAL_WORKFLOW.md` for:
-- Detailed component descriptions
-- Troubleshooting guide
-- Examples of good vs. bad results
-- How to extend the system
+**Can I add my own questions?**
+Yes — edit `eval_questions.csv`. Follow the existing format: `question,category,expected_info,notes`.
+Valid categories: `bio`, `projects`, `technical`, `personality`, `tool`, `publication`, `recruiter`, `friendly`.
