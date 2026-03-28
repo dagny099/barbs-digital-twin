@@ -39,7 +39,8 @@ jobs:
              hf_space/
 
           # ── Static assets (images, etc.) ──────────────────────────────────
-          cp -r assets hf_space/
+          # project_diagrams/ PNGs are excluded — manage them directly on HF Space.
+          rsync -a --exclude='project_diagrams/*.png' assets/ hf_space/assets/
 
           # ── Input data ────────────────────────────────────────────────────
           # Only the files the embed scripts actually need.
