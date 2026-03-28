@@ -567,7 +567,7 @@ def handle_tool_call(tool_calls):
 
 
 #------ SYSTEM MESSAGE ----
-with open("SYSTEM_PROMPT_new.md", "r", encoding="utf-8") as _f:
+with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
     system_message = _f.read()
 
 

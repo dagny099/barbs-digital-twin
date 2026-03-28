@@ -78,7 +78,7 @@ if collection.count() == 0:
 print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 
 # System prompt
-with open("SYSTEM_PROMPT_new.md", "r", encoding="utf-8") as _f:
+with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
     system_message = _f.read()
 
 
