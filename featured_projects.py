@@ -91,7 +91,7 @@ FEATURED_PROJECTS = [
             "doc, and a career narrative. "
             "Stack: Python, Gradio, ChromaDB, OpenAI API, HuggingFace Spaces."
         ),
-        "diagram_filename": "digital_twin_diagram.png",
+        "diagram_filename": "architecture-overview_barb_twin.png",
         "diagram_caption": "Digital Twin — document ingestion → embedding → retrieval → response",
         "tags": ["rag", "chatbot", "embeddings", "chromadb", "gradio", "nlp"],
         "mention_keywords": ["digital twin", "this chatbot", "this twin", "how were you built",
@@ -319,7 +319,7 @@ FEATURED_PROJECTS = [
             "of system that externalizes reasoning structure rather than just generating text. "
             "Stack: Python, Gradio, OpenAI API (GPT-4o-mini), NetworkX, Matplotlib."
         ),
-        "diagram_filename": "concept_cartographer_diagram.png",
+        "diagram_filename": "architecture-diagram_concept_cartography.png",
         "diagram_caption": "Concept Cartographer — question → single LLM call → growing knowledge graph → export",
         "tags": ["knowledge-graph", "gradio", "llm", "ontology", "concept-extraction", "structured-output", "nlp"],
         "mention_keywords": ["concept cartographer", "concept map", "concept graph",
