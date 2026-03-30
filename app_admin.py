@@ -51,7 +51,7 @@ if OPENAI_API_KEY is None:
 # ANTHROPIC_API_KEY, GEMINI_API_KEY are optional.
 # Ollama needs no key, just a running server.
 
-LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4.1")
+LLM_MODEL = "openai/gpt-4.1" #os.getenv("LLM_MODEL", "openai/gpt-4.1") 
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 SERVER_PORT = int(os.getenv("ADMIN_PORT", 7861))

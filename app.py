@@ -421,6 +421,23 @@ tools = [
 #------------------------
 
 
+def _assistant_message_dict(msg):
+    """Convert an OpenAI SDK assistant message to a plain API payload dict."""
+    payload = {"role": "assistant", "content": msg.content or ""}
+    if msg.tool_calls:
+        payload["tool_calls"] = [
+            {
+                "id": tc.id,
+                "type": tc.type,
+                "function": {
+                    "name": tc.function.name,
+                    "arguments": tc.function.arguments,
+                },
+            }
+            for tc in msg.tool_calls
+        ]
+    return payload
+
 #------ Tool Handler -----------
 def handle_tool_call(tool_calls):
     tool_results = []
@@ -546,7 +563,7 @@ def respond_ai(message, history):
 
     while response.choices[0].message.tool_calls:
         tool_result = handle_tool_call(response.choices[0].message.tool_calls)
-        msgs.append(response.choices[0].message)
+        msgs.append(_assistant_message_dict(response.choices[0].message))
         msgs.extend(tool_result)
         response = client.chat.completions.create(
             model=LLM_MODEL,
@@ -625,6 +642,8 @@ def _build_title_html() -> str:
     )
 
 if __name__ == "__main__":
+    _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+
     # Serve diagram assets as static files so diagrams are clickable (open full-size in new tab)
     gr.set_static_paths(paths=[
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "project_diagrams")
@@ -649,10 +668,11 @@ if __name__ == "__main__":
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
             examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
-            example_icons=["assets/want-shine.svg",
-                           "assets/communication-icon.svg",
-                           "assets/precision-icon.svg",
-                           "assets/psychology-icon.svg",
+            example_icons=[
+                           os.path.join(_assets_dir, "want-shine.svg"),
+                           os.path.join(_assets_dir, "communication-icon.svg"),
+                           os.path.join(_assets_dir, "precision-icon.svg"),
+                           os.path.join(_assets_dir, "psychology-icon.svg"),
                            ],
         )
         
@@ -690,8 +710,11 @@ if __name__ == "__main__":
     # Without the full https:// URL, Gradio generates http:// URLs which browsers
     # block as mixed content. Fix per gradio-app/gradio#9381: set root_path to
     # the full HTTPS URL so Gradio generates correct resource URLs.
-    space_id = os.getenv("SPACE_ID")
-    if space_id:
+    # Only set root_path when actually running inside HuggingFace Spaces.
+    # SPACE_ID is present in .env for deploy config but shouldn't affect local dev.
+    # HF Spaces always sets SYSTEM=spaces; local .env does not.
+    running_on_hf = os.getenv("SYSTEM") == "spaces"
+    if running_on_hf:
         custom_domain = os.getenv("CUSTOM_DOMAIN", "twin.barbhs.com")
         root = f"https://{custom_domain}"
     else:
@@ -704,4 +727,5 @@ if __name__ == "__main__":
         server_port=SERVER_PORT,
         show_error=True,
         css=custom_css,
+        allowed_paths=[_assets_dir],
     )

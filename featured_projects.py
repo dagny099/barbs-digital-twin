@@ -95,7 +95,7 @@ FEATURED_PROJECTS = [
         "diagram_caption": "Digital Twin — document ingestion → embedding → retrieval → response",
         "tags": ["rag", "chatbot", "embeddings", "chromadb", "gradio", "nlp"],
         "mention_keywords": ["digital twin", "this chatbot", "this twin", "how were you built",
-                             "how was this built", "how does this work"],
+                             "how was this built", "how does this work", "digital twin chatbot", "your chatbot", "this bot"],
         "links": {
             "live demo": "https://twin.barbhs.com",
             "github": "https://github.com/dagny099/barbs-digital-twin",
@@ -161,7 +161,7 @@ FEATURED_PROJECTS = [
         "diagram_filename": "academic_citation_platform_diagram.png",
         "diagram_caption": "Academic Citation Platform — papers → TransE training → citation prediction → interactive analysis",
         "tags": ["knowledge-graph", "neo4j", "machine-learning", "TransE", "citation-prediction", "streamlit"],
-        "mention_keywords": ["citation", "transe", "academic", "papers", "citation platform"],
+        "mention_keywords": ["citation", "transe", "academic", "papers", "citation platform", "citation compass", "paper prediction"],
     },
 
     # Poolula Platform
@@ -222,7 +222,7 @@ FEATURED_PROJECTS = [
         "diagram_filename": "beehive_metadata_tracker_diagram.png",
         "diagram_caption": "Beehive Monitor — photo capture → Cloud Vision + weather analysis → dashboard → containerized deployment",
         "tags": ["computer-vision", "streamlit", "google-cloud", "beekeeping", "docker", "weather-api"],
-        "mention_keywords": ["beehive", "bees", "beekeeping", "hive", "apiary"],
+        "mention_keywords": ["beehive", "bees", "beekeeping", "hive", "apiary", "beehive tracker", "bee tracker", "bee monitor"],
         "links": {
             "live demo": "https://beestory.barbhs.com/",
             "github": "https://github.com/dagny099/beehive-tracker",
@@ -285,7 +285,7 @@ FEATURED_PROJECTS = [
         "diagram_filename": "fitness_tracker_diagram.png",
         "diagram_caption": "Fitness Tracker — 14+ years of data → AI pattern detection → interactive Plotly dashboard → live at workouts.barbhs.com",
         "tags": ["data-engineering", "streamlit", "plotly", "fitness", "analytics", "personal-data"],
-        "mention_keywords": ["fitness", "workout", "exercise", "running data"],
+        "mention_keywords": ["fitness", "workout", "exercise", "running data", "fitness dashboard", "workout dashboard", "workout tracker"],
         "links": {
             "live demo": "https://workouts.barbhs.com/",
             "github": "https://github.com/dagny099/fitness-dashboard",
@@ -322,8 +322,11 @@ FEATURED_PROJECTS = [
         "diagram_filename": "architecture-diagram_concept_cartography.png",
         "diagram_caption": "Concept Cartographer — question → single LLM call → growing knowledge graph → export",
         "tags": ["knowledge-graph", "gradio", "llm", "ontology", "concept-extraction", "structured-output", "nlp"],
-        "mention_keywords": ["concept cartographer", "concept map", "concept graph",
-                             "concept extraction", "knowledge mapping"],
+        "mention_keywords": [
+            "concept cartographer", "concept cartography",  # ← add alias
+            "concept map", "concept graph",
+            "concept extraction", "knowledge mapping"
+        ],        
         "links": {
             "live demo": "https://concept-cartographer.com/",
             "github": "https://github.com/dagny099/concept-cartography-gradio",
@@ -341,17 +344,45 @@ def load_featured_projects() -> list[dict]:
     return FEATURED_PROJECTS
 
 
+# ── Names used in regex patterns ────────────────────────────────
+# Keep this in sync with FEATURED_PROJECTS titles/aliases.
+# Lowercase, no regex special chars. Used for intent detection only.
+_PROJECT_NAMES = (
+    "cartograph|explorer|digital\\s*twin|beehive|fitness|"
+    "citation|poolula|convoscope|memories|weaving|chronoscope"
+)
+ 
 def _is_walkthrough_request(message: str) -> bool:
-    """Return True if the user message is asking for a project walkthrough."""
+    """
+    Return True if the user message is asking for a project walkthrough.
+ 
+    Two detection strategies:
+      1. VERB-BASED — "walk me through", "show me", "describe" + project/generic
+      2. NAME-BASED — "tell me about [project name]", "how does [project name] work"
+ 
+    Kept deliberately broad: false positives are cheap (we just inject
+    extra context + show a diagram), false negatives mean the visitor
+    gets a worse answer.
+    """
     patterns = [
-        r"walk\s*(me\s+)?through\s+(a\s+)?project",
+        # ── Verb-based: walkthrough intent verbs ─────────────────
+        # "walk me through X" — matches regardless of what X is
+        r"walk\s*(me\s+)?through",
+        # "show me a project"
         r"show\s+me\s+a\s+project",
+        # "portfolio project", "featured project"
+        r"(portfolio|featured)\s+project",
+        # "project you're proud of / built / worked on"
         r"project\s+you.*(proud|excited|built|worked)",
-        r"explain\s+(one\s+of\s+)?your\s+project",
-        r"tell\s+me\s+about\s+(a|one\s+of)\s+(your\s+)?project",
-        r"describe\s+(a|one\s+of)\s+(your\s+)?project",
-        r"portfolio\s+project",
-        r"featured\s+project",
+        r"(proud|excited)\s+.*(project|built)",
+ 
+        # ── Name-based: project name in an explanatory request ───
+        # "tell me about [project]" / "talk about [project]"
+        rf"(tell|talk)\s+(me\s+)?about\s+.*({_PROJECT_NAMES}|project)",
+        # "explain [project]" / "describe [project]"
+        rf"(explain|describe)\s+.*?({_PROJECT_NAMES}|project)",
+        # "how does [project] work/handle/do"
+        rf"how\s+(does|did|do|is)\s+.*({_PROJECT_NAMES})",
     ]
     lower = message.lower()
     return any(re.search(p, lower) for p in patterns)
