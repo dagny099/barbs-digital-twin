@@ -1,5 +1,6 @@
 import os
 import subprocess
+import types
 from dotenv import load_dotenv
 from openai import OpenAI
 import gradio as gr
@@ -471,6 +472,9 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 #------ MAIN RESPONSE FUNCTION ----
 def respond_ai(message, history):
+    if not message or not message.strip():
+        return
+
     # ── Step 1: Detect walkthrough intent (narrow) ──────────────
     walkthrough_project = select_project_for_walkthrough(message)
     walkthrough_block = None
@@ -553,38 +557,81 @@ def respond_ai(message, history):
         + [{"role": "user", "content": message}]  # ← original message, not enriched
     )
  
-    # ── Step 7: Tool-calling loop ───────────────────────────────
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=msgs,
-        tools=tools,
-        temperature=LLM_TEMPERATURE,
-    )
-
-    while response.choices[0].message.tool_calls:
-        tool_result = handle_tool_call(response.choices[0].message.tool_calls)
-        msgs.append(_assistant_message_dict(response.choices[0].message))
-        msgs.extend(tool_result)
-        response = client.chat.completions.create(
+    # ── Steps 7+8: Stream with tools (single-pass) ─────────────
+    # Start streaming immediately. Content deltas are yielded to the user
+    # as they arrive. Tool-call deltas are accumulated silently.
+    # If the model calls a tool (finish_reason=="tool_calls"), we resolve
+    # it and stream again. No-tool messages (the common case) skip the
+    # non-streaming round-trip entirely, cutting TTFT by ~1–2s.
+    def _stream_and_accumulate(messages):
+        """Stream one LLM turn. Yield content to caller; return (collected, tool_calls_acc, finish_reason)."""
+        tool_calls_acc = []
+        collected = ""
+        finish_reason = None
+        stream = client.chat.completions.create(
             model=LLM_MODEL,
-            messages=msgs,
+            messages=messages,
             tools=tools,
+            stream=True,
             temperature=LLM_TEMPERATURE,
         )
+        for chunk in stream:
+            choice = chunk.choices[0]
+            finish_reason = choice.finish_reason or finish_reason
+            delta = choice.delta
+            if delta.content:
+                collected += delta.content
+                yield ("content", delta.content)
+            if delta.tool_calls:
+                for tc in delta.tool_calls:
+                    while len(tool_calls_acc) <= tc.index:
+                        tool_calls_acc.append({"id": "", "type": "function",
+                                               "function": {"name": "", "arguments": ""}})
+                    acc = tool_calls_acc[tc.index]
+                    if tc.id:   acc["id"] = tc.id
+                    if tc.type: acc["type"] = tc.type
+                    if tc.function:
+                        if tc.function.name:      acc["function"]["name"]      += tc.function.name
+                        if tc.function.arguments: acc["function"]["arguments"] += tc.function.arguments
+        yield ("done", (collected, tool_calls_acc, finish_reason))
 
-    # ── Step 8: Stream the response ─────────────────────────────
-    stream = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=msgs,
-        stream=True,
-        temperature=LLM_TEMPERATURE,
-    )
     collected = ""
-    for chunk in stream:
-        delta = chunk.choices[0].delta.content
-        if delta:
-            collected += delta
+    finish_reason = None
+    tool_calls_acc = []
+
+    for event, payload in _stream_and_accumulate(msgs):
+        if event == "content":
+            collected += payload
             yield collected
+        else:  # "done"
+            collected, tool_calls_acc, finish_reason = payload
+
+    # Tool loop — only runs when the model actually called a tool
+    while finish_reason == "tool_calls":
+        wrapped = [
+            types.SimpleNamespace(
+                id=tc["id"], type=tc["type"],
+                function=types.SimpleNamespace(
+                    name=tc["function"]["name"],
+                    arguments=tc["function"]["arguments"],
+                ),
+            )
+            for tc in tool_calls_acc
+        ]
+        tool_results = handle_tool_call(wrapped)
+        msgs.append({"role": "assistant", "content": collected or "",
+                     "tool_calls": tool_calls_acc})
+        msgs.extend(tool_results)
+
+        collected = ""
+        tool_calls_acc = []
+        finish_reason = None
+        for event, payload in _stream_and_accumulate(msgs):
+            if event == "content":
+                collected += payload
+                yield collected
+            else:
+                collected, tool_calls_acc, finish_reason = payload
  
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
     print(f"<<FILES:>>\n{diagram_path}\n")
@@ -595,11 +642,12 @@ def respond_ai(message, history):
         with open(diagram_path, "rb") as _img:
             _b64 = base64.b64encode(_img.read()).decode()
         _ext = diagram_path.rsplit(".", 1)[-1].lower()
-        _file_url = f"/file={diagram_path}"
+        _data_url = f"data:image/{_ext};base64,{_b64}"
+        _href = f"/diagrams/{os.path.basename(diagram_path)}"
         _style = "max-width:100%;width:740px;!important;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
 
-        _img_tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}" alt="Project diagram"/>'
-        _tag = f'<a href="{_file_url}" target="_blank" rel="noopener noreferrer" style="display:block">{_img_tag}</a>'
+        _img_tag = f'<img src="{_data_url}" style="{_style}" alt="Project diagram"/>'
+        _tag = f'<a href="{_href}" target="_blank" rel="noopener noreferrer" style="display:block">{_img_tag}</a>'
         collected += f"\n\n{_tag}"
         yield collected
 #----------------------------------
@@ -643,11 +691,6 @@ def _build_title_html() -> str:
 
 if __name__ == "__main__":
     _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-
-    # Serve diagram assets as static files so diagrams are clickable (open full-size in new tab)
-    gr.set_static_paths(paths=[
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "project_diagrams")
-    ])
 
     with gr.Blocks(title="Barbara's Digital Twin") as demo:
         # ── TITLE with circular headshot ──────────────────────────
@@ -720,7 +763,10 @@ if __name__ == "__main__":
     else:
         root = ""
 
-    demo.launch(
+    from fastapi.staticfiles import StaticFiles
+    _diagrams_dir = os.path.join(_assets_dir, "project_diagrams")
+
+    _app, _, _ = demo.launch(
         root_path=root,
         head=FAVICON_HEAD + ga_head + font_head,
         server_name="0.0.0.0",
@@ -728,4 +774,7 @@ if __name__ == "__main__":
         show_error=True,
         css=custom_css,
         allowed_paths=[_assets_dir],
+        prevent_thread_lock=True,
     )
+    _app.mount("/diagrams", StaticFiles(directory=_diagrams_dir), name="diagrams")
+    demo.server.thread.join()
