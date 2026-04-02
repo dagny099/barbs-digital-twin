@@ -41,7 +41,7 @@ jobs:
         run: |
           echo "Waiting for app to be ready..."
           for i in $(seq 1 6); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:7860 || true)
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:${{ secrets.EC2_APP_PORT }} || true)
             if [ "$STATUS" = "200" ]; then
               echo "Smoke test passed (HTTP 200)."
               exit 0
@@ -62,6 +62,7 @@ jobs:
 #   EC2_APP_DIR       Absolute path to the app on EC2
 #                     e.g. /home/ec2-user/barbs-digital-twin
 #   EC2_SERVICE_NAME  systemd service name (e.g. barbs-digital-twin)
+#   EC2_APP_PORT      Port the Gradio app listens on (e.g. 7860)
 #
 # ── Security notes ──────────────────────────────────────────────────────────
 # 1. Generate a DEDICATED deploy keypair (not your personal key):
