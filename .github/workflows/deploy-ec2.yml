@@ -1,0 +1,107 @@
+name: Deploy to EC2
+
+# Triggers on every push to main.
+# SSHes into the EC2 instance, pulls the latest code, installs deps,
+# restarts the systemd service, and smoke-tests the app endpoint.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            cd ${{ secrets.EC2_APP_DIR }}
+
+            echo "── Pulling latest code ──"
+            git pull origin main
+
+            echo "── Installing/upgrading dependencies ──"
+            source .venv/bin/activate
+            pip install -q -r requirements.txt
+
+            echo "── Restarting service ──"
+            sudo systemctl restart ${{ secrets.EC2_SERVICE_NAME }}
+            sudo systemctl is-active --quiet ${{ secrets.EC2_SERVICE_NAME }} \
+              && echo "Service is running." \
+              || { echo "ERROR: service failed to start"; sudo journalctl -u ${{ secrets.EC2_SERVICE_NAME }} -n 30 --no-pager; exit 1; }
+
+      - name: Smoke test
+        # Wait up to 30 s for the Gradio app to accept connections, then verify HTTP 200.
+        run: |
+          echo "Waiting for app to be ready..."
+          for i in $(seq 1 6); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:7860 || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Smoke test passed (HTTP 200)."
+              exit 0
+            fi
+            echo "  Attempt $i: HTTP $STATUS — retrying in 5s..."
+            sleep 5
+          done
+          echo "ERROR: App did not respond with HTTP 200 after 30s."
+          exit 1
+
+# ── Required GitHub Secrets ─────────────────────────────────────────────────
+# Set these in: Settings → Secrets and variables → Actions → New repository secret
+#
+#   EC2_HOST          Public IP or hostname of your EC2 instance
+#   EC2_USER          SSH user (typically "ec2-user" on Amazon Linux 2)
+#   EC2_SSH_KEY       Private key of a dedicated deploy keypair (PEM, no passphrase)
+#                     Add the corresponding public key to ~/.ssh/authorized_keys on EC2
+#   EC2_APP_DIR       Absolute path to the app on EC2
+#                     e.g. /home/ec2-user/barbs-digital-twin
+#   EC2_SERVICE_NAME  systemd service name (e.g. digital-twin)
+#
+# ── Security notes ──────────────────────────────────────────────────────────
+# 1. Generate a DEDICATED deploy keypair (not your personal key):
+#      ssh-keygen -t ed25519 -C "github-deploy" -f ~/.ssh/github_deploy -N ""
+#    Put the private key in EC2_SSH_KEY secret, append the public key to
+#    ~/.ssh/authorized_keys on EC2.
+#
+# 2. (Optional but recommended) Restrict the key to only the pull+restart
+#    commands by prefixing the public key line in authorized_keys:
+#      command="cd /home/ec2-user/barbs-digital-twin && git pull && sudo systemctl restart digital-twin",no-port-forwarding,no-X11-forwarding ssh-ed25519 AAAA...
+#
+# 3. The smoke test hits port 7860 directly. If you're behind a load balancer
+#    or Nginx reverse proxy, adjust the URL/port accordingly.
+#
+# 4. Ensure the EC2 security group allows inbound port 22 from GitHub Actions
+#    IP ranges (or use AWS SSM Session Manager to avoid opening port 22 at all).
+#
+# ── systemd service setup on EC2 ────────────────────────────────────────────
+# If your service doesn't exist yet, create /etc/systemd/system/digital-twin.service:
+#
+#   [Unit]
+#   Description=Barb's Digital Twin (Gradio)
+#   After=network.target
+#
+#   [Service]
+#   User=ec2-user
+#   WorkingDirectory=/home/ec2-user/barbs-digital-twin
+#   EnvironmentFile=/home/ec2-user/barbs-digital-twin/.env
+#   ExecStart=/home/ec2-user/barbs-digital-twin/.venv/bin/python app.py
+#   Restart=on-failure
+#   RestartSec=5
+#
+#   [Install]
+#   WantedBy=multi-user.target
+#
+# Then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable digital-twin
+#   sudo systemctl start digital-twin
+#
+# And add this to /etc/sudoers.d/ec2-deploy (so the deploy user can restart
+# the service without a password):
+#   ec2-user ALL=(ALL) NOPASSWD: /bin/systemctl restart digital-twin, /bin/systemctl is-active digital-twin, /bin/journalctl

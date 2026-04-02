@@ -1,6 +1,7 @@
 import os
 import subprocess
 import types
+import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 import gradio as gr
@@ -422,6 +423,26 @@ tools = [
 #------------------------
 
 
+_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
+
+def _log_query(message, project_title, walkthrough, tool_name, had_error):
+    """Append one query record to the JSONL log. Fails silently — must never affect the user."""
+    try:
+        entry = {
+            "ts":          datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "message":     message,
+            "project":     project_title,
+            "walkthrough": walkthrough,
+            "tool_called": tool_name is not None,
+            "tool_name":   tool_name,
+            "had_error":   had_error,
+        }
+        with open(_QUERY_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception:
+        pass  # logging must NEVER break the app
+
+
 def _assistant_message_dict(msg):
     """Convert an OpenAI SDK assistant message to a plain API payload dict."""
     payload = {"role": "assistant", "content": msg.content or ""}
@@ -598,6 +619,7 @@ def respond_ai(message, history):
     collected = ""
     finish_reason = None
     tool_calls_acc = []
+    _tool_name_called = None   # tracks first tool fired this turn (for logging)
 
     for event, payload in _stream_and_accumulate(msgs):
         if event == "content":
@@ -608,6 +630,8 @@ def respond_ai(message, history):
 
     # Tool loop — only runs when the model actually called a tool
     while finish_reason == "tool_calls":
+        if _tool_name_called is None and tool_calls_acc:
+            _tool_name_called = tool_calls_acc[0]["function"]["name"]
         wrapped = [
             types.SimpleNamespace(
                 id=tc["id"], type=tc["type"],
@@ -650,6 +674,14 @@ def respond_ai(message, history):
         _tag = f'<a href="{_href}" target="_blank" rel="noopener noreferrer" style="display:block">{_img_tag}</a>'
         collected += f"\n\n{_tag}"
         yield collected
+
+    _log_query(
+        message       = message,
+        project_title = (walkthrough_project or diagram_project or {}).get("title"),
+        walkthrough   = bool(walkthrough_project),
+        tool_name     = _tool_name_called,
+        had_error     = False,
+    )
 #----------------------------------
 
 

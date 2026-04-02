@@ -314,7 +314,33 @@ python verify_collection.py --show-sources
 
 - **ChromaDB on HF Spaces**: Database is ephemeral on container restart; include pre-built `.chroma_db_DT/` in deployment or run `ingest.py --all` in a startup script
 - **API costs**: The V2 KB is larger than V1; monitor OpenAI usage
-- **Environment variables**: Set secrets in HF Spaces settings, not in code
+- **Environment variables**: Set secrets in HF Spaces settings (HF) or `.env` on EC2 — never in code
+
+### CI/CD Pipelines
+
+Two independent GitHub Actions workflows trigger on every push to `main`:
+
+| Workflow | File | Target | Mechanism |
+|----------|------|--------|-----------|
+| HF Spaces deploy | `.github/workflows/deploy-hf.yml` | Hugging Face Spaces | git push to HF Space repo |
+| EC2 deploy | `.github/workflows/deploy-ec2.yml` | AWS EC2 (Amazon Linux 2) | SSH → git pull → systemctl restart |
+
+**EC2 deploy required secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `EC2_HOST` | Public IP or hostname of EC2 instance |
+| `EC2_USER` | SSH user (`ec2-user` on Amazon Linux 2) |
+| `EC2_SSH_KEY` | Private key of the dedicated deploy keypair (no passphrase) |
+| `EC2_APP_DIR` | Absolute path to app on EC2 (e.g. `/home/ec2-user/barbs-digital-twin`) |
+| `EC2_SERVICE_NAME` | systemd service name (e.g. `digital-twin`) |
+
+**Security requirements:**
+- Use a dedicated deploy keypair — never put a personal key in GH Secrets
+- The deploy user needs passwordless `sudo` for `systemctl restart <service>` only (see sudoers note in the workflow file)
+- EC2 security group must allow inbound port 22 from GitHub Actions IP ranges
+
+The workflow also runs a smoke test (HTTP 200 on port 7860) before marking the deploy green.
 
 ## Testing Checklist
 

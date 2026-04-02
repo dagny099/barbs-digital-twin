@@ -51,10 +51,17 @@ if OPENAI_API_KEY is None:
 # ANTHROPIC_API_KEY, GEMINI_API_KEY are optional.
 # Ollama needs no key, just a running server.
 
-LLM_MODEL = "openai/gpt-4.1" #os.getenv("LLM_MODEL", "openai/gpt-4.1") 
+_raw_model = os.getenv("LLM_MODEL", "openai/gpt-4.1")
+LLM_MODEL  = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
-LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
-SERVER_PORT = int(os.getenv("ADMIN_PORT", 7861))
+LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7861))
+ADMIN_USER        = os.getenv("ADMIN_USER", "admin")
+ADMIN_PASSWORD    = os.getenv("ADMIN_PASSWORD")   # None = no auth (local dev without password set)
+if not ADMIN_PASSWORD:
+    print("WARNING: ADMIN_PASSWORD not set — admin app has no authentication.")
+
+_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
 
 # OpenAI client — used ONLY for embeddings (not chat)
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -1149,9 +1156,54 @@ if __name__ == "__main__":
                     outputs=[chunk_detail],
                 )
 
-    demo.launch(
+            # ─── TAB 3: Query Log ────────────────────────────
+            with gr.Tab("Query Log"):
+                gr.Markdown(
+                    "## Visitor Query Log\n"
+                    "One row per query since last restart. "
+                    "**tool_called=True** rows (especially `send_notification`) indicate KB gaps. "
+                    "Download before redeploying — log resets on Space restart."
+                )
+                log_df = gr.Dataframe(
+                    headers=["ts", "message", "project", "walkthrough",
+                             "tool_called", "tool_name", "had_error"],
+                    datatype=["str", "str", "str", "bool", "bool", "str", "bool"],
+                    label="Recent queries (newest last)",
+                    wrap=True,
+                    interactive=False,
+                )
+                with gr.Row():
+                    log_refresh_btn  = gr.Button("Refresh", variant="secondary")
+                    log_download_btn = gr.DownloadButton("Download JSONL")
+
+                def _load_log():
+                    import pandas as pd
+                    try:
+                        df = pd.read_json(_QUERY_LOG, lines=True)
+                        cols = ["ts", "message", "project", "walkthrough",
+                                "tool_called", "tool_name", "had_error"]
+                        for c in cols:
+                            if c not in df.columns:
+                                df[c] = None
+                        return df[cols]
+                    except (FileNotFoundError, ValueError):
+                        import pandas as pd
+                        return pd.DataFrame(columns=["ts", "message", "project", "walkthrough",
+                                                     "tool_called", "tool_name", "had_error"])
+
+                def _download_log():
+                    return _QUERY_LOG if os.path.exists(_QUERY_LOG) else None
+
+                log_refresh_btn.click(fn=_load_log, outputs=[log_df])
+                log_download_btn.click(fn=_download_log, outputs=[log_download_btn])
+                demo.load(fn=_load_log, outputs=[log_df])
+
+    _launch_kwargs = dict(
         server_name="0.0.0.0",
         server_port=SERVER_PORT,
         show_error=True,
         css=admin_css,
     )
+    if ADMIN_PASSWORD:
+        _launch_kwargs["auth"] = (ADMIN_USER, ADMIN_PASSWORD)
+    demo.launch(**_launch_kwargs)

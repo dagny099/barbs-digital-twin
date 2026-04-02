@@ -28,7 +28,7 @@ This digital twin serves as an intelligent interface to explore Barbara's profes
 | **Vector Database** | ChromaDB (persistent local storage) |
 | **UI Framework** | Gradio |
 | **Language** | Python 3.11 |
-| **Deployment** | Hugging Face Spaces |
+| **Deployment** | AWS EC2 (primary), Hugging Face Spaces (secondary) |
 
 ## Architecture
 
@@ -292,23 +292,31 @@ This approach balances:
 
 ## Deployment
 
-### Hugging Face Spaces
+Both deployments are automated via GitHub Actions and trigger on every push to `main`.
 
-The app is deployed on Hugging Face Spaces. To deploy your own:
+### EC2 (primary)
 
-1. Create a Space at [huggingface.co/spaces](https://huggingface.co/spaces)
-2. Add these files to your Space:
-   - `app.py`
-   - `requirements.txt`
-   - `inputs/` folder (all data sources)
-   - Pre-built `.chroma_db_DT/` (recommended — avoids cold-start re-embedding)
-3. Set Secrets in Space settings (see `.env.example` for the full list):
-   - `OPENAI_API_KEY` (required)
-   - `PUSHOVER_USER`, `PUSHOVER_TOKEN` (optional — enables visitor notifications)
-   - `LLM_MODEL`, `SPACE_ID`, `CUSTOM_DOMAIN` (optional — override defaults)
-4. Push to deploy
+The app runs as a `systemd` service on an AWS EC2 instance (Amazon Linux 2). On push to `main`, GitHub Actions SSHes in, pulls the latest code, installs dependencies, restarts the service, and smoke-tests the endpoint.
 
-**Note**: The ChromaDB database (`.chroma_db_DT/`) will be recreated on first run. For faster startup, you can include the pre-built database in your deployment.
+**Required GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `EC2_HOST` | Public IP or hostname |
+| `EC2_USER` | `ec2-user` |
+| `EC2_SSH_KEY` | Private key of the dedicated deploy keypair |
+| `EC2_APP_DIR` | Path to app on instance (e.g. `/home/ec2-user/barbs-digital-twin`) |
+| `EC2_SERVICE_NAME` | systemd service name (e.g. `digital-twin`) |
+
+See `.github/workflows/deploy-ec2.yml` for the full setup guide including keypair generation, sudoers configuration, and the systemd unit file template.
+
+### Hugging Face Spaces (secondary)
+
+Still active. On push to `main`, GitHub Actions syncs app code and input data to the HF Space repo. ChromaDB is ephemeral on HF Spaces — the app rebuilds it from scratch on container restart.
+
+**Required GitHub Secret**: `HF_TOKEN`
+
+See `.github/workflows/deploy-hf.yml` for details.
 
 ## Admin Interface
 
