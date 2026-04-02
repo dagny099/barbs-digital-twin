@@ -27,7 +27,7 @@ jobs:
             git pull origin main
 
             echo "── Installing/upgrading dependencies ──"
-            source /home/ec2-user/venvs/gradio-ui-py312
+            source /home/ec2-user/venvs/gradio-ui-py312/bin/activate
             pip install -q -r requirements.txt
 
             echo "── Restarting service ──"
