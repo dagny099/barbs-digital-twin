@@ -61,7 +61,7 @@ jobs:
 #                     Add the corresponding public key to ~/.ssh/authorized_keys on EC2
 #   EC2_APP_DIR       Absolute path to the app on EC2
 #                     e.g. /home/ec2-user/barbs-digital-twin
-#   EC2_SERVICE_NAME  systemd service name (e.g. digital-twin)
+#   EC2_SERVICE_NAME  systemd service name (e.g. barbs-digital-twin)
 #
 # ── Security notes ──────────────────────────────────────────────────────────
 # 1. Generate a DEDICATED deploy keypair (not your personal key):
@@ -80,7 +80,7 @@ jobs:
 #    IP ranges (or use AWS SSM Session Manager to avoid opening port 22 at all).
 #
 # ── systemd service setup on EC2 ────────────────────────────────────────────
-# If your service doesn't exist yet, create /etc/systemd/system/digital-twin.service:
+# If your service doesn't exist yet, create /etc/systemd/system/barbs-digital-twin.service:
 #
 #   [Unit]
 #   Description=Barb's Digital Twin (Gradio)
@@ -99,9 +99,9 @@ jobs:
 #
 # Then:
 #   sudo systemctl daemon-reload
-#   sudo systemctl enable digital-twin
-#   sudo systemctl start digital-twin
+#   sudo systemctl enable barbs-digital-twin
+#   sudo systemctl start barbs-digital-twin
 #
 # And add this to /etc/sudoers.d/ec2-deploy (so the deploy user can restart
 # the service without a password):
-#   ec2-user ALL=(ALL) NOPASSWD: /bin/systemctl restart digital-twin, /bin/systemctl is-active digital-twin, /bin/journalctl
+#   ec2-user ALL=(ALL) NOPASSWD: /bin/systemctl restart barbs-digital-twin, /bin/systemctl is-active barbs-digital-twin, /bin/journalctl

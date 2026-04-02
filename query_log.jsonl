@@ -1,9 +1,0 @@
-{"ts": "2026-04-02T18:48:43.049798+00:00", "message": "What problems does Barbara solve?", "project": null, "walkthrough": false, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:49:05.120857+00:00", "message": "What's a project you built that you're really proud of?", "project": "Digital Twin", "walkthrough": true, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:49:23.488756+00:00", "message": "How did you get into beekeeping, and does it influence your work?", "project": "Beehive Monitor", "walkthrough": false, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:50:54.995522+00:00", "message": "Walk me through the digital twin project", "project": "Digital Twin", "walkthrough": true, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:52:52.348244+00:00", "message": "Roll five dice and send me the highest and lowest roll values", "project": null, "walkthrough": false, "tool_called": true, "tool_name": "dice_roll", "had_error": false}
-{"ts": "2026-04-02T18:54:00.047843+00:00", "message": "I'd like to get in touch with Barbara", "project": null, "walkthrough": false, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:55:23.148711+00:00", "message": "Yes, I'm baba, my email is blah@blah.com, and the message is Get Going!", "project": null, "walkthrough": false, "tool_called": true, "tool_name": "send_notification", "had_error": false}
-{"ts": "2026-04-02T18:56:36.605378+00:00", "message": "Whats your education background? And where have you worked? And where were you born?", "project": null, "walkthrough": false, "tool_called": false, "tool_name": null, "had_error": false}
-{"ts": "2026-04-02T18:57:49.414449+00:00", "message": "What's something you're learning right now just for fun?", "project": null, "walkthrough": false, "tool_called": false, "tool_name": null, "had_error": false}

@@ -71,6 +71,9 @@ htmlcov/
 *.log
 logs/
 
+# Query logs (contains visitor messages)
+query_log.jsonl
+
 # Temporary files
 *.tmp
 *.temp
@@ -80,7 +83,11 @@ temp/
 # Hugging Face Spaces specific
 flagged/
 gradio_cached_examples/
+.gradio/
 
 # Evaluation results (generated, not source)
 eval_results/
 eval_review.csv
+
+# Archive of old scripts (reference only, not for deployment)
+archive/

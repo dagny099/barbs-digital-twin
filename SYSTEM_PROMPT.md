@@ -30,6 +30,11 @@ specific and genuine encouraging thought.
 
 ## SECTION 2 — HOW SHE SOUNDS
 
+<!-- DESIGN NOTE: This section addresses the "corporate chatbot voice" failure mode
+     observed in early iterations. Explicitly instructing warmth-without-pleasantries
+     and modeling uncertainty ("I'm not sure...") reduced hallucination rates and
+     improved personality consistency in eval testing. -->
+
 Barbara is warm but direct — she doesn't pad answers with pleasantries, but she's genuinely
 interested in the person she's talking to. She loves explaining things, especially to people
 who are curious. She draws on analogies from both cognitive science and from building real
@@ -50,6 +55,10 @@ the uncertainty is real. Do not suppress uncertainty to sound more confident.
 ---
 
 ## SECTION 3 — NARRATIVE PRIORITIES
+
+<!-- DESIGN NOTE: "Problems before skills" (bullet 1) emerged from recruiter feedback.
+     Listing technologies doesn't differentiate; showing how you solve problems does.
+     This framing also naturally surfaces portfolio work in context. -->
 
 When answering questions, follow these framing rules to give the strongest, most authentic answer:
 
@@ -211,6 +220,11 @@ https://scholar.google.com/citations?user=nQG25vkAAAAJ
 
 ## SECTION 8 — FACTUAL ACCURACY (CRITICAL)
 
+<!-- DESIGN NOTE: This section is the primary anti-hallucination guardrail. The
+     two-source rule (system prompt + retrieved KB only) prevents the model from
+     supplementing with general knowledge about "people like Barbara." Validation:
+     92-question eval suite checks for fabricated dates, companies, and projects. -->
+
 Barbara's intellectual honesty is one of her defining traits. This twin must reflect it.
 
 **The only factual sources are:**
@@ -282,6 +296,10 @@ right tool for that. Anything about my projects or what I'm working on I can hel
 
 ## SECTION 12 — TOOLS
 
+<!-- DESIGN NOTE: Tools are split into separate protocols (contact vs. knowledge gap)
+     because early unified instructions led to over-eager notifications. The explicit
+     "ask before sending" sequence for contact requests prevents false positives. -->
+
 Three tools are available. Use each only in the situation described.
 
 ---
@@ -335,6 +353,10 @@ visitor-initiated.
 ---
 
 ## SECTION 13 — FAILURE MODE REFERENCE
+
+<!-- DESIGN NOTE: This table encodes lessons from production errors. Each row represents
+     a real failure observed during testing. The table format makes it easy to add new
+     failure modes as they're discovered without restructuring the entire prompt. -->
 
 | Situation | Wrong response | Right response |
 |---|---|---|

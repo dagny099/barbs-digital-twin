@@ -6,7 +6,20 @@ A conversational AI digital twin powered by RAG (Retrieval-Augmented Generation)
 
 This digital twin serves as an intelligent interface to explore Barbara's professional background, technical projects, and expertise. It uses vector embeddings and semantic search to retrieve relevant context from multiple knowledge sources, then generates responses in Barbara's voice and personality.
 
-**Live Demo:** [Hugging Face Spaces](https://huggingface.co/spaces/YOUR-USERNAME/digital-twin) *(Update with your actual URL)*
+**For Visitors**: Chat with the twin at [twin.barbhs.com](https://twin.barbhs.com)
+**For Developers**: Clone this repo to explore the RAG architecture, evaluation suite, and admin debugging tools
+
+## Quick Start
+
+Want to run it locally in 5 minutes?
+
+1. Clone the repo: `git clone https://github.com/dagny099/digital-twin.git`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Set `OPENAI_API_KEY` in `.env` (copy from `.env.example`)
+4. Run: `python app.py`
+5. Open http://localhost:7860
+
+Full setup details below.
 
 ## Features
 
@@ -55,6 +68,23 @@ Final Response (as Barbara)
 3. **Storage**: Chunks + embeddings + metadata stored in ChromaDB
 4. **Retrieval**: Query embedded → top-k semantic search → context injection
 
+## Prompt Engineering
+
+The system prompt is a core architectural component, not an afterthought. `SYSTEM_PROMPT.md` is organized into 13 sections covering persona, voice consistency, narrative priorities, factual accuracy guardrails, and tool integration.
+
+**Key Design Decisions**:
+- **Structured sections**: Numbered sections make debugging and iteration easier
+- **Explicit failure modes** (Section 13): Table of wrong vs. right responses prevents common errors
+- **Source priority ordering** (Section 5): Knowledge base conflicts resolved deterministically
+- **"I don't know" protocols** (Sections 8, 9): Uncertainty is acceptable; fabrication is not
+- **Featured projects** (Section 4): Proactive surfacing without being spammy
+
+**Design Philosophy**: The prompt balances authenticity (Barbara's actual voice), accuracy (source-based only), and utility (helpful without overpromising). Each section addresses a specific failure mode observed during development and eval testing.
+
+**Validation**: The 92-question evaluation suite (see `evals/`) tests adherence to these guidelines across 8 categories.
+
+[View the full system prompt →](SYSTEM_PROMPT.md) | [Read the design rationale →](PROMPT_DESIGN.md)
+
 ## Installation & Setup
 
 ### Prerequisites
@@ -67,8 +97,8 @@ Final Response (as Barbara)
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/YOUR-USERNAME/digital-twin.git
-cd digital-twin
+git clone https://github.com/dagny099/barbs-digital-twin.git my-digital-twin
+cd my-digital-twin
 ```
 
 2. **Create and activate virtual environment**
@@ -415,8 +445,8 @@ The biographical content and project descriptions are © Barbara Hidalgo-Sotelo.
 
 ## Contact & Links
 
-- **Personal Site**: [barbhs.com](https://www.barbhs.com/)
 - **LinkedIn**: [barbara-hidalgo-sotelo](https://www.linkedin.com/in/barbara-hidalgo-sotelo)
+- **Personal Site**: [barbhs.com](https://www.barbhs.com/)
 - **GitHub**: [dagny099](https://github.com/dagny099)
 - **Google Scholar**: [Barbara Hidalgo-Sotelo](https://scholar.google.com/citations?hl=en&user=nQG25vkAAAAJ)
 
