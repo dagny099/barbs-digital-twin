@@ -51,10 +51,10 @@ if OPENAI_API_KEY is None:
 # ANTHROPIC_API_KEY, GEMINI_API_KEY are optional.
 # Ollama needs no key, just a running server.
 
-_raw_model = os.getenv("LLM_MODEL", "openai/gpt-4.1")
+_raw_model = os.getenv("LLM_MODEL", "openai/gpt-5.4-nano")
 LLM_MODEL  = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
-N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
-LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 7))
+LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.4"))
 SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7862))
 ADMIN_USER        = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASSWORD    = os.getenv("ADMIN_PASSWORD")   # None = no auth (local dev without password set)
@@ -102,21 +102,43 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 AVAILABLE_MODELS = [
     # OpenAI
-    "openai/gpt-4.1",
-    "openai/gpt-4.1-mini",
-    "openai/gpt-4.1-nano",
-    "openai/gpt-4o",
-    "openai/gpt-4o-mini",
+    "openai/gpt-5.4",
+    "openai/gpt-5.4-mini",
+    "openai/gpt-5.4-nano",
+    "openai/gpt-5.4-pro",
+    "openai/gpt-5.3-chat-latest",
     # Anthropic
-    "anthropic/claude-sonnet-4-20250514",
-    "anthropic/claude-haiku-4-20250414",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-sonnet-4.6",
+    "anthropic/claude-haiku-4.5",
     # Google
-    "gemini/gemini-2.5-flash",
+    "gemini/gemini-3.1-pro-preview",
+    "gemini/gemini-3.1-flash-lite-preview",
     "gemini/gemini-2.5-pro",
+    "gemini/gemini-2.5-flash",
+    "gemini/gemini-2.5-flash-lite",
     # Ollama (local)
     "ollama/llama3.2",
     "ollama/mistral",
 ]
+
+# AVAILABLE_MODELS = [
+#     # OpenAI
+#     "openai/gpt-4.1",
+#     "openai/gpt-4.1-mini",
+#     "openai/gpt-4.1-nano",
+#     "openai/gpt-4o",
+#     "openai/gpt-4o-mini",
+#     # Anthropic
+#     "anthropic/claude-sonnet-4-20250514",
+#     "anthropic/claude-haiku-4-20250414",
+#     # Google
+#     "gemini/gemini-2.5-flash",
+#     "gemini/gemini-2.5-pro",
+#     # Ollama (local)
+#     "ollama/llama3.2",
+#     "ollama/mistral",
+# ]
 
 MODELS_WITHOUT_TOOL_SUPPORT = {
     "ollama/mistral",
