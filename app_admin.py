@@ -55,7 +55,7 @@ _raw_model = os.getenv("LLM_MODEL", "openai/gpt-4.1")
 LLM_MODEL  = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
 LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.7"))
-SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7861))
+SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7862))
 ADMIN_USER        = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASSWORD    = os.getenv("ADMIN_PASSWORD")   # None = no auth (local dev without password set)
 if not ADMIN_PASSWORD:
@@ -72,6 +72,8 @@ pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
 
 # ChromaDB
+# Startup: restore DB from HF Hub if the directory is missing entirely.
+# Must happen before ChromaDB opens the path, or the pull would conflict.
 if not os.path.exists(".chroma_db_DT"):
     from db_sync import pull_db
     pull_db()
@@ -82,6 +84,10 @@ collection = chroma_client.get_or_create_collection(name="barb-twin")
 if collection.count() == 0:
     print("Knowledge base empty — running ingest...")
     subprocess.run(["python", "ingest.py", "--all"], check=True)
+    # from db_sync import push_db
+    # push_db()
+    # print("Ingestion complete.")
+
 
 print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 

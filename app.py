@@ -37,10 +37,12 @@ CURATED_EXAMPLES = {
     ],
 }
 
-N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
+# ═══════════════════════════════════════════════════════════════════
+# CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════
 
-#------ SETUP -------
 load_dotenv(override=True)
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:
     raise Exception("API key is missing")
@@ -51,11 +53,15 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
 # Temperature for LLM completions. 0.7 is a reasonable default for personality+accuracy balance.
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 
+N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
+
 # Local server port. HF Spaces ignores this and always uses 7860.
 SERVER_PORT = int(os.getenv("PORT", 7860))
 
+# OpenAI client — used ONLY for embeddings (not chat)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+# Pushover notifications
 pushover_user = os.getenv("PUSHOVER_USER")
 pushover_token = os.getenv("PUSHOVER_TOKEN")
 pushover_url = "https://api.pushover.net/1/messages.json"
@@ -99,6 +105,89 @@ if collection.count() == 0:
     push_db()
     print("Ingestion complete.")
 
+
+#------ CUSTOM FUNCTIONS -------
+"""
+Chunk plain prose into overlapping segments for retrieval tasks.
+
+Atomic unit: paragraph (double-newline delimited)
+- Paragraphs are never split mid-sentence
+- Overlap re-includes trailing paragraphs from the previous chunk
+- No external dependencies
+"""
+
+def parse_paragraphs(raw_text: str) -> list[str]:
+    """
+    Split text on blank lines, strip whitespace, drop empties.
+    Handles both \n\n and \r\n\r\n line endings.
+    """
+    paragraphs = raw_text.split("\n\n")
+    # Collapse internal newlines within each paragraph into spaces
+    cleaned = [" ".join(p.split()) for p in paragraphs]
+    return [p for p in cleaned if p]
+
+
+def chunk_prose(raw_text, chunk_size=500, overlap=50):
+    """
+    Chunk plain prose into overlapping segments.
+
+    Args:
+        raw_text:   Full text (paragraphs separated by blank lines).
+        chunk_size: Target size in chars. May slightly exceed to keep
+                    paragraphs intact.
+        overlap:    Target overlap in chars. Backtracks whole paragraphs.
+
+    Returns:
+        List of dicts: {text, para_start, para_end, char_count}
+    """
+    paragraphs = parse_paragraphs(raw_text)
+
+    if not paragraphs:
+        return []
+
+    chunks = []
+    i = 0
+
+    while i < len(paragraphs):
+        # --- Accumulate paragraphs until we hit chunk_size ---
+        chunk_paras, char_count, j = [], 0, i
+        while j < len(paragraphs):
+            para_len = len(paragraphs[j])
+
+            # Always include at least one paragraph per chunk
+            if char_count > 0 and (char_count + para_len) > chunk_size:
+                break
+
+            chunk_paras.append(paragraphs[j])
+            char_count += para_len + 1
+            j += 1
+
+        # --- Store as a plain dict ---
+        text = "\n\n".join(chunk_paras)
+        chunks.append({
+            "text": text,
+            "para_start": i,
+            "para_end": j - 1,
+            "char_count": len(text),
+        })
+
+        # --- Stop if we've consumed everything ---
+        if j >= len(paragraphs):
+            break
+
+        # --- Backtrack for overlap ---
+        overlap_chars = 0
+        backtrack = 0
+        for k in range(j - 1, i, -1):
+            if overlap_chars + len(paragraphs[k]) > overlap:
+                break
+            overlap_chars += len(paragraphs[k])
+            backtrack += 1
+
+        i = j - backtrack
+
+    return chunks
+#----------------------
 
 # My favicon (local png)
 with open("assets/bee_barb.png", "rb") as f:
