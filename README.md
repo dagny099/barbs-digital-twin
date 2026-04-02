@@ -6,7 +6,7 @@ A conversational AI digital twin powered by RAG (Retrieval-Augmented Generation)
 
 This digital twin serves as an intelligent interface to explore Barbara's professional background, technical projects, and expertise. It uses vector embeddings and semantic search to retrieve relevant context from multiple knowledge sources, then generates responses in Barbara's voice and personality.
 
-**For Visitors**: Chat with the twin at [twin.barbhs.com](https://twin.barbhs.com)
+**For Visitors**: Chat with the twin at [twin.barbhs.com](https://twin.barbhs.com)     
 **For Developers**: Clone this repo to explore the RAG architecture, evaluation suite, and admin debugging tools
 
 ## Quick Start
