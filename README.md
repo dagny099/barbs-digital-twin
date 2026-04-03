@@ -1,6 +1,12 @@
 # Digital Twin: Barbara Hidalgo-Sotelo
 
-A conversational AI digital twin powered by RAG (Retrieval-Augmented Generation) that embodies Barbara Hidalgo-Sotelo's professional knowledge, project portfolio, and personal expertise. Built with Python, Gradio, ChromaDB, and OpenAI's GPT models.
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)
+![RAG](https://img.shields.io/badge/architecture-RAG-orange.svg)
+![LLM](https://img.shields.io/badge/LLM-multi--provider-purple.svg)
+
+A conversational AI digital twin powered by RAG (Retrieval-Augmented Generation) that embodies Barbara Hidalgo-Sotelo's professional knowledge, project portfolio, and personal expertise. Built with Python, Gradio, ChromaDB, and multi-provider LLM support via LiteLLM.
 
 ## Overview
 
@@ -27,8 +33,10 @@ Full setup details below.
 - **Semantic Search & RAG**: ChromaDB vector store with OpenAI embeddings for intelligent context retrieval
 - **Section-Aware Ingestion**: Each data source is parsed into named sections, giving the LLM precise provenance for every retrieved chunk
 - **Conversational Interface**: Gradio ChatInterface for natural conversations
+- **Multi-Provider LLM Support**: Production app (app.py) supports OpenAI, Anthropic, Google, and Ollama models via LiteLLM with optional Settings panel (SHOW_SETTINGS_PANEL env toggle)
 - **Tool Integration**: Function calling capabilities (notifications via Pushover, interactive features)
 - **First-Person Perspective**: Responds as Barbara, maintaining her voice and personality
+- **Production-Grade Logging**: Lightweight query logging (~16μs overhead) tracks model, latency, similarity scores, cost, and tokens for continuous improvement
 - **Persistent Memory**: ChromaDB enables incremental knowledge base updates without reprocessing
 - **Ingestion Manager**: Single `ingest.py` script orchestrates all data sources with an interactive status-first menu
 
@@ -36,7 +44,7 @@ Full setup details below.
 
 | Component | Technology |
 |-----------|------------|
-| **LLM** | OpenAI GPT-4.1-mini |
+| **LLM** | Multi-provider support via LiteLLM (OpenAI, Anthropic, Google, Ollama)<br>Production default: OpenAI GPT-4.1-mini |
 | **Embeddings** | OpenAI text-embedding-3-small (1536 dimensions) |
 | **Vector Database** | ChromaDB (persistent local storage) |
 | **UI Framework** | Gradio |
@@ -353,18 +361,23 @@ See `.github/workflows/deploy-hf.yml` for details.
 A developer-focused debug interface that runs alongside the main app:
 
 ```bash
-python app_admin.py   # http://localhost:7861
+python app_admin.py   # http://localhost:7862
 ```
 
-Features not in the public app:
-- **Side-by-side chat + retrieval inspector** — see every retrieved chunk with cosine similarity scores
+**Shared features** (also in `app.py` when `SHOW_SETTINGS_PANEL=true`):
 - **Multi-provider model switching** — compare OpenAI, Anthropic, Google, and Ollama models via LiteLLM
 - **Adjustable top-k and temperature** — experiment without code changes
-- **Collection browser** — browse, filter, and text-search all ~500 chunks in the knowledge base
-- **Semantic probe** — embed any query and rank the entire collection to check KB coverage
 - **Session cost tracking** — running token count and USD cost across the session
 
-Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to unlock those models. Ollama requires a local server at the default port. Note that LiteLLM model names require a provider prefix (e.g. `openai/gpt-4.1`, `anthropic/claude-sonnet-4-5`).
+**Admin-only features**:
+- **Side-by-side chat + retrieval inspector** — see every retrieved chunk with cosine similarity scores
+- **Collection browser** — browse, filter, and text-search all ~500 chunks in the knowledge base
+- **Semantic probe** — embed any query and rank the entire collection to check KB coverage
+- **Separate logging** — `query_log_admin.jsonl` for experimentation without corrupting production analytics
+
+Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to unlock non-OpenAI models. Ollama requires a local server at the default port. Note that LiteLLM model names require a provider prefix (e.g. `openai/gpt-4.1`, `anthropic/claude-sonnet-4-5`).
+
+**Production tip:** Keep `SHOW_SETTINGS_PANEL=false` in production for a clean UI. Enable it locally for development and testing.
 
 `app_admin.py` is not included in the HF Spaces deployment and is intended for local development only.
 
@@ -404,12 +417,13 @@ python analyze_evals.py --export
 - [ ] **Multi-modal support**: Integrate image understanding for project screenshots
 - [ ] **Citation tracking**: Return source documents with responses
 - [ ] **Conversation memory**: Implement session-based memory across conversations
-- [ ] **Analytics dashboard**: Track query patterns and popular topics
 - [ ] **Voice interface**: Add speech-to-text/text-to-speech capabilities
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries
 - [ ] **Automated updates**: GitHub Actions to re-embed on repo changes
 - [x] **Evaluation suite**: 91-question offline eval harness across 8 categories (see `EVAL_QUICKSTART.md`)
+- [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
+- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see `LOGGING_GUIDE.md`, `ADMIN_LOGGING_GUIDE.md`)
 
 ## Key Design Decisions
 
@@ -419,11 +433,12 @@ python analyze_evals.py --export
 - **Python-native**: Seamless integration with OpenAI SDK
 - **Metadata filtering**: Supports source-based filtering and priority rules
 
-### Why GPT-4.1-mini?
-- **Cost-effective**: Lower API costs for a personal project
-- **Fast**: Quick response times for interactive chat
-- **Tool-calling**: Native function calling support
-- **Sufficient capability**: Adequate for RAG + personality emulation
+### Why multi-provider support (with GPT-4.1-mini as default)?
+- **Flexibility**: Test OpenAI, Anthropic, Google, and Ollama models without code changes
+- **Cost optimization**: Admin interface enables data-driven model selection via ROI analysis
+- **Provider resilience**: Swap providers if one experiences downtime or pricing changes
+- **GPT-4.1-mini default**: Cost-effective, fast, tool-calling support, sufficient for RAG + personality
+- **Local development**: Settings panel (`SHOW_SETTINGS_PANEL=true`) for experimentation; hidden in production
 
 ### Why 500-character chunks?
 - **Context window**: Fits 3 chunks comfortably in context with room for conversation
