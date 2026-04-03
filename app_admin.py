@@ -65,6 +65,8 @@ if not ADMIN_PASSWORD:
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
 _ADMIN_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log_admin.jsonl")
 
+MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 14))  # Last 14 turns (7 user + 7 assistant)
+
 def _compute_similarity_stats(distances):
     """Convert L2 distances to cosine similarity scores. Returns avg and max."""
     if not distances:
@@ -153,21 +155,28 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 AVAILABLE_MODELS = [
     # OpenAI
-    "openai/gpt-5.4",
-    "openai/gpt-5.4-mini",
-    "openai/gpt-5.4-nano",
-    "openai/gpt-5.4-pro",
-    "openai/gpt-5.3-chat-latest",
+    #"openai/gpt-5.4",      # Input: $2.50, Output $15.00   (short-context, <270K tokens) - needs reasoning_effor=none
+    "openai/gpt-5.4-mini",  # Input: $0.75, Output $4.50    (short-context, <270K tokens; mini-version for simpler tasks) - needs reasoning_effor=none
+    "openai/gpt-5.4-nano",  # Input: $0.20, Output $1.25    (short-context, <270K tokens; nano-version, low cost model) - needs reasoning_effor=none
+    #"openai/gpt-5.2",      # Input: $1.75, Output $14.00 
+    "openai/gpt-5.1",       # Input: $1.25, Output $10.00
+    "openai/gpt-5-mini",    # Input: $0.25, Output $2.00
+    "openai/gpt-5-nano",    # Input: $0.005, Output $0.40
+    #"openai/gpt-4.1",      # Input: $2.00, Output $8.00   (128K tokens; High‑quality 128K‑context model; widely used)
+    "openai/gpt-4.1-mini",  # Input: $0.40, Output $1.60
+    "openai/gpt-o4-mini",   # Input: $1.10, Output $4.40
     # Anthropic
-    "anthropic/claude-opus-4.6",
-    "anthropic/claude-sonnet-4.6",
-    "anthropic/claude-haiku-4.5",
+    #"anthropic/claude-opus-4.6",    # Input: $5.00, Output $25.00
+    #"anthropic/claude-sonnet-4.6",  # Input: $3.00, Output $15.00
+    "anthropic/claude-haiku-4.5",    # Input: $1.00, Output $5.00  (cost-efficient for high-volume work-loads)
+    "anthropic/claude-haiku-3.5",    # Input: $0.80, Output $5.00
+    "anthropic/claude-haiku-3",      # Input: $0.25, Output $1.25 
     # Google
-    "gemini/gemini-3.1-pro-preview",
-    "gemini/gemini-3.1-flash-lite-preview",
-    "gemini/gemini-2.5-pro",
-    "gemini/gemini-2.5-flash",
-    "gemini/gemini-2.5-flash-lite",
+    #"gemini/gemini-3.1-pro-preview",         # Input: $2.00-4.00, Output $12-18
+    "gemini/gemini-3.1-flash-lite-preview",  # Input: $0.25, Output $1.50 (for now)
+    #"gemini/gemini-2.5-pro",                 # Input: $1.25-2.5, Output $10-15  (state-of-art)
+    "gemini/gemini-2.5-flash",               # Input: $0.30, Output $2.50   (multi-modal)
+    "gemini/gemini-2.5-flash-lite",          # Input: $0.10, Output $0.40   (multi-modal)  
     # Ollama (local)
     "ollama/llama3.2",
     "ollama/mistral",
@@ -940,7 +949,6 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     # Truncate history to prevent token overflow
     # Keep only last N conversation turns (N turns = 2N messages: user + assistant)
     # This prevents hitting the 272k token limit on long conversations
-    MAX_HISTORY_MESSAGES = 20  # Last 10 turns (10 user + 10 assistant)
     if len(clean_history) > MAX_HISTORY_MESSAGES:
         clean_history = clean_history[-MAX_HISTORY_MESSAGES:]
 

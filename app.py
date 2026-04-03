@@ -6,11 +6,14 @@ import time
 from dotenv import load_dotenv
 from openai import OpenAI
 import gradio as gr
+import litellm
 import chromadb
 import json
 import requests
 import random
 import base64
+from dataclasses import dataclass, field
+from datetime import datetime as dt
 from featured_projects import (
       select_project_for_walkthrough,
       find_mentioned_project,
@@ -49,15 +52,57 @@ if OPENAI_API_KEY is None:
     raise Exception("API key is missing")
 
 # Model used for all LLM completions. Override via env to switch without code changes.
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
+# Auto-prefixes "openai/" if no provider specified (backward compatibility).
+_raw_model = os.getenv("LLM_MODEL", "gpt-4.1")
+LLM_MODEL = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
 
 # Temperature for LLM completions. 0.7 is a reasonable default for personality+accuracy balance.
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 10))
 
+# Controls visibility of settings panel in UI (default: hidden for production)
+SHOW_SETTINGS_PANEL = os.getenv("SHOW_SETTINGS_PANEL", "false").lower() == "true"
+
+MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 14))  # Last 14 turns (7 user + 7 assistant)
+
 # Local server port. HF Spaces ignores this and always uses 7860.
 SERVER_PORT = int(os.getenv("PORT", 7860))
+
+# ═══════════════════════════════════════════════════════════════════
+# MULTI-PROVIDER MODEL REGISTRY
+# ═══════════════════════════════════════════════════════════════════
+
+AVAILABLE_MODELS = [
+    # OpenAI
+    "openai/gpt-5.4-mini",  # Input: $0.75, Output $4.50    (short-context, <270K tokens; mini-version for simpler tasks)
+    "openai/gpt-5.4-nano",  # Input: $0.20, Output $1.25    (short-context, <270K tokens; nano-version, low cost model)
+    "openai/gpt-5.1",       # Input: $1.25, Output $10.00
+    "openai/gpt-5-mini",    # Input: $0.25, Output $2.00
+    "openai/gpt-5-nano",    # Input: $0.005, Output $0.40
+    "openai/gpt-4.1",      # Input: $2.00, Output $8.00   (128K tokens; High‑quality 128K‑context model; widely used)
+    #"openai/gpt-4.1-mini",  # Input: $0.40, Output $1.60
+    #"openai/gpt-o4-mini",   # Input: $1.10, Output $4.40
+    # Anthropic
+    "anthropic/claude-haiku-4.5",    # Input: $1.00, Output $5.00  (cost-efficient for high-volume work-loads)
+    "anthropic/claude-haiku-3.5",    # Input: $0.80, Output $5.00
+    "anthropic/claude-haiku-3",      # Input: $0.25, Output $1.25
+    # Google
+    "gemini/gemini-3.1-flash-lite-preview",  # Input: $0.25, Output $1.50
+    "gemini/gemini-2.5-flash",               # Input: $0.30, Output $2.50   (multi-modal)
+    "gemini/gemini-2.5-flash-lite",          # Input: $0.10, Output $0.40   (multi-modal)
+    # Ollama (local)
+    "ollama/llama3.2",
+    "ollama/mistral",
+]
+
+MODELS_WITHOUT_TOOL_SUPPORT = {
+    "ollama/mistral",
+}
+
+def model_supports_tools(model_name: str) -> bool:
+    """Check if a model supports tool/function calling."""
+    return model_name not in MODELS_WITHOUT_TOOL_SUPPORT
 
 # OpenAI client — used ONLY for embeddings (not chat)
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -451,6 +496,27 @@ footer {
     color: #FFCC80 !important;
     border: 1px solid rgba(255,204,128,0.25) !important;
 }
+/* ── Settings accordion ────────────────────────────────────────── */
+.settings-accordion {
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    border-radius: 8px !important;
+    margin: 8px 0 !important;
+    background: linear-gradient(135deg, rgba(224, 245, 248, 0.3) 0%,
+                rgba(229, 237, 243, 0.3) 100%) !important;
+}
+.dark .settings-accordion {
+    background: linear-gradient(135deg, rgba(10, 32, 40, 0.4) 0%,
+                rgba(27, 45, 58, 0.4) 100%) !important;
+    border: 1px solid rgba(144,184,212,0.2) !important;
+}
+/* ── Cost display ───────────────────────────────────────────────── */
+#cost-display {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+#cost-display:hover {
+    opacity: 1.0;
+}
 """
 
 def vote(data: gr.LikeData):
@@ -529,7 +595,8 @@ def _compute_similarity_stats(distances):
 
 def _log_query(message, project_title, walkthrough, tool_name, had_error,
                model, temperature, n_chunks_retrieved, response_chars,
-               workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max):
+               workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
+               provider, cost_usd, prompt_tokens, completion_tokens):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
@@ -558,11 +625,121 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             # Phase 2: Quality metrics
             "chunk_similarity_avg": chunk_similarity_avg,
             "chunk_similarity_max": chunk_similarity_max,
+
+            # Provider and cost tracking
+            "provider": provider,
+            "cost_usd": cost_usd,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
         }
         with open(_QUERY_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
     except Exception:
         pass  # logging must NEVER break the app
+
+
+# ═══════════════════════════════════════════════════════════════════
+# SESSION COST TRACKER
+# ═══════════════════════════════════════════════════════════════════
+
+@dataclass
+class CallRecord:
+    timestamp: str
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    cost_usd: float
+    call_type: str  # "chat", "tool_loop", "chat_stream", "embedding"
+
+@dataclass
+class SessionTracker:
+    """Tracks token usage and cost across messages in one session."""
+    calls: list = field(default_factory=list)
+
+    def log_chat(self, response, model: str, call_type: str = "chat"):
+        """Log a LiteLLM completion response with auto cost calculation."""
+        try:
+            cost = litellm.completion_cost(completion_response=response)
+        except Exception:
+            cost = 0.0
+
+        usage = getattr(response, "usage", None)
+        prompt_tok = getattr(usage, "prompt_tokens", 0) if usage else 0
+        completion_tok = getattr(usage, "completion_tokens", 0) if usage else 0
+
+        self.calls.append(CallRecord(
+            timestamp=dt.now().isoformat(),
+            model=model,
+            prompt_tokens=prompt_tok,
+            completion_tokens=completion_tok,
+            cost_usd=cost,
+            call_type=call_type,
+        ))
+
+    def log_embedding(self, response):
+        """Log an OpenAI embedding call."""
+        usage = getattr(response, "usage", None)
+        tokens = getattr(usage, "total_tokens", 0) if usage else 0
+        cost = tokens * 0.00000002  # text-embedding-3-small: $0.02/1M tokens
+        self.calls.append(CallRecord(
+            timestamp=dt.now().isoformat(),
+            model="openai/text-embedding-3-small",
+            prompt_tokens=tokens,
+            completion_tokens=0,
+            cost_usd=cost,
+            call_type="embedding",
+        ))
+
+    def log_stream(self, model: str, prompt_text: str, completion_text: str):
+        """Log a streaming completion by estimating cost from text."""
+        try:
+            cost = litellm.completion_cost(
+                model=model, prompt=prompt_text, completion=completion_text,
+            )
+        except Exception:
+            cost = 0.0
+
+        self.calls.append(CallRecord(
+            timestamp=dt.now().isoformat(),
+            model=model,
+            prompt_tokens=0,
+            completion_tokens=0,
+            cost_usd=cost,
+            call_type="chat_stream",
+        ))
+
+    def summary(self) -> dict:
+        total_prompt = sum(c.prompt_tokens for c in self.calls)
+        total_completion = sum(c.completion_tokens for c in self.calls)
+        total_cost = sum(c.cost_usd for c in self.calls)
+        return {
+            "total_prompt_tokens": total_prompt,
+            "total_completion_tokens": total_completion,
+            "total_tokens": total_prompt + total_completion,
+            "total_cost_usd": round(total_cost, 6),
+            "total_calls": len(self.calls),
+        }
+
+    def last_query_cost(self) -> float:
+        """Sum cost of the most recent query (may span multiple calls)."""
+        if not self.calls:
+            return 0.0
+        last_ts = self.calls[-1].timestamp
+        return sum(c.cost_usd for c in self.calls if c.timestamp == last_ts)
+
+    def history_for_json(self) -> list:
+        return [
+            {
+                "timestamp": c.timestamp, "model": c.model, "type": c.call_type,
+                "prompt_tokens": c.prompt_tokens,
+                "completion_tokens": c.completion_tokens,
+                "cost_usd": round(c.cost_usd, 8),
+            }
+            for c in self.calls
+        ]
+
+
+session_tracker = SessionTracker()
 
 
 def _assistant_message_dict(msg):
@@ -614,8 +791,27 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 
 #------ MAIN RESPONSE FUNCTION ----
-def respond_ai(message, history):
+def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
     if not message or not message.strip():
+        return
+
+    # Use UI values if provided, otherwise read from current settings or env vars
+    if SHOW_SETTINGS_PANEL:
+        actual_top_k = int(_current_settings["top_k"])
+        actual_temp = float(_current_settings["temperature"])
+        actual_model = _current_settings["model"]
+    else:
+        actual_top_k = int(top_k) if top_k is not None else N_CHUNKS_RETRIEVE
+        actual_temp = float(temperature) if temperature is not None else LLM_TEMPERATURE
+        actual_model = model_name if model_name else LLM_MODEL
+
+    # Validate API key for selected provider
+    provider = actual_model.split("/")[0] if "/" in actual_model else "openai"
+    if provider == "anthropic" and not os.getenv("ANTHROPIC_API_KEY"):
+        yield "⚠️ Anthropic API key not configured. Please set ANTHROPIC_API_KEY in .env"
+        return
+    elif provider == "gemini" and not os.getenv("GEMINI_API_KEY"):
+        yield "⚠️ Google API key not configured. Please set GEMINI_API_KEY in .env"
         return
 
     # Start latency timer (Phase 1 logging)
@@ -644,7 +840,7 @@ def respond_ai(message, history):
     query_embedded = response.data[0].embedding
     results = collection.query(
         query_embeddings=[query_embedded],
-        n_results=N_CHUNKS_RETRIEVE
+        n_results=actual_top_k
     )
 
     # ── Compute retrieval quality metrics (Phase 2 logging) ─────
@@ -703,7 +899,6 @@ def respond_ai(message, history):
     # Truncate history to prevent token overflow
     # Keep only last N conversation turns (N turns = 2N messages: user + assistant)
     # This prevents hitting the 272k token limit on long conversations
-    MAX_HISTORY_MESSAGES = 20  # Last 10 turns (10 user + 10 assistant)
     if len(clean_history) > MAX_HISTORY_MESSAGES:
         clean_history = clean_history[-MAX_HISTORY_MESSAGES:]
 
@@ -724,12 +919,12 @@ def respond_ai(message, history):
         tool_calls_acc = []
         collected = ""
         finish_reason = None
-        stream = client.chat.completions.create(
-            model=LLM_MODEL,
+        stream = litellm.completion(
+            model=actual_model,
             messages=messages,
-            tools=tools,
+            tools=tools if model_supports_tools(actual_model) else None,
             stream=True,
-            temperature=LLM_TEMPERATURE,
+            temperature=actual_temp,
         )
         for chunk in stream:
             choice = chunk.choices[0]
@@ -794,7 +989,13 @@ def respond_ai(message, history):
  
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
     print(f"<<FILES:>>\n{diagram_path}\n")
- 
+
+    # ── Log cost after streaming completes ──────────────────────
+    prompt_text = "\n".join(
+        m.get("content", "") for m in msgs if isinstance(m.get("content"), str)
+    )
+    session_tracker.log_stream(actual_model, prompt_text, collected)
+
     # ── Step 9: Append diagram if available ──────────────────────
     # Now fires for ANY project mention, not just walkthroughs
     if diagram_path:
@@ -818,6 +1019,13 @@ def respond_ai(message, history):
     else:
         workflow_type = "standard"
 
+    # ── Extract provider and cost info for logging ──────────────
+    provider = actual_model.split("/")[0] if "/" in actual_model else "openai"
+    last_call = session_tracker.calls[-1] if session_tracker.calls else None
+    query_cost = last_call.cost_usd if last_call else 0.0
+    prompt_toks = last_call.prompt_tokens if last_call else 0
+    completion_toks = last_call.completion_tokens if last_call else 0
+
     _log_query(
         message       = message,
         project_title = (walkthrough_project or diagram_project or {}).get("title"),
@@ -825,8 +1033,8 @@ def respond_ai(message, history):
         tool_name     = _tool_name_called,
         had_error     = False,
         # Phase 1: Model & config
-        model            = LLM_MODEL,
-        temperature      = LLM_TEMPERATURE,
+        model            = actual_model,
+        temperature      = actual_temp,
         # Phase 1: RAG metrics
         n_chunks_retrieved = len(results['documents'][0]),
         # Phase 1: Response metrics
@@ -836,6 +1044,11 @@ def respond_ai(message, history):
         # Phase 2: Quality metrics
         chunk_similarity_avg = similarity_stats["avg"],
         chunk_similarity_max = similarity_stats["max"],
+        # Provider and cost tracking
+        provider         = provider,
+        cost_usd         = query_cost,
+        prompt_tokens    = prompt_toks,
+        completion_tokens = completion_toks,
     )
 #----------------------------------
 
@@ -856,6 +1069,13 @@ CATEGORY_ICONS = {
     "Professional": _svg_b64("business-center.svg"),
     "Bridge":       _svg_b64("schema.svg"),
     "Personal":     _svg_b64("self-improvement.svg"),
+}
+
+# Module-level storage for current UI settings (used when SHOW_SETTINGS_PANEL=True)
+_current_settings = {
+    "top_k": N_CHUNKS_RETRIEVE,
+    "temperature": LLM_TEMPERATURE,
+    "model": LLM_MODEL,
 }
 
 def _build_title_html() -> str:
@@ -893,6 +1113,39 @@ if __name__ == "__main__":
             autoscroll=True,
             render_markdown=True,
         )
+
+        # ── SETTINGS PANEL (conditionally rendered) ──────────────────
+        if SHOW_SETTINGS_PANEL:
+            with gr.Accordion("Settings", open=False, elem_classes=["settings-accordion"]):
+                with gr.Row():
+                    with gr.Column(scale=1, min_width=140):
+                        top_k_slider = gr.Slider(
+                            minimum=1, maximum=20, value=N_CHUNKS_RETRIEVE, step=1,
+                            label="Top-K", info="Number of chunks to retrieve",
+                        )
+                    with gr.Column(scale=1, min_width=140):
+                        temp_slider = gr.Slider(
+                            minimum=0.0, maximum=2.0, value=LLM_TEMPERATURE, step=0.05,
+                            label="Temperature", info="0 = deterministic, 2 = creative",
+                        )
+                    with gr.Column(scale=1, min_width=200):
+                        model_dropdown = gr.Dropdown(
+                            choices=AVAILABLE_MODELS, value=LLM_MODEL,
+                            label="Model", info="Select provider/model",
+                        )
+
+            # Update module-level settings when sliders change
+            def update_top_k(value):
+                _current_settings["top_k"] = value
+            def update_temp(value):
+                _current_settings["temperature"] = value
+            def update_model(value):
+                _current_settings["model"] = value
+
+            top_k_slider.change(fn=update_top_k, inputs=top_k_slider)
+            temp_slider.change(fn=update_temp, inputs=temp_slider)
+            model_dropdown.change(fn=update_model, inputs=model_dropdown)
+
         chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
@@ -934,6 +1187,26 @@ if __name__ == "__main__":
             fn=lambda: "I'd like to get in touch with Barbara",
             outputs=chat.textbox,
         )
+
+        # ── COST DISPLAY (conditionally shown with settings panel) ──
+        if SHOW_SETTINGS_PANEL:
+            with gr.Row():
+                cost_display = gr.HTML(
+                    value='<div style="text-align:center;font-size:12px;color:#666;padding:8px;">'
+                          'Session cost: $0.0000</div>',
+                    elem_id="cost-display"
+                )
+
+            def update_cost_display():
+                summary = session_tracker.summary()
+                return (
+                    f'<div style="text-align:center;font-size:12px;color:#666;padding:8px;">'
+                    f'Session cost: ${summary["total_cost_usd"]:.4f} | '
+                    f'{summary["total_tokens"]} tokens | '
+                    f'{summary["total_calls"]} calls</div>'
+                )
+
+            chat.chatbot.change(fn=update_cost_display, outputs=cost_display)
 
     # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
     # Gradio uses root_path to construct absolute URLs for theme.css, /config, etc.
