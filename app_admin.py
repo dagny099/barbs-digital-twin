@@ -1030,12 +1030,14 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")
 
+    # OPTIMIZATION: Serve diagram via URL instead of base64 encoding
+    # Saves ~82k tokens per diagram response
     if diagram_path:
-        with open(diagram_path, "rb") as _img:
-            _b64 = base64.b64encode(_img.read()).decode()
-        _ext = diagram_path.rsplit(".", 1)[-1].lower()
-        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px"
-        _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
+        _href = f"/diagrams/{os.path.basename(diagram_path)}"
+        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
+        # Use URL instead of base64 data URI - eliminates 82k tokens per response
+        _img_tag = f'<img src="{_href}" style="{_style}" alt="Project diagram"/>'
+        _tag = f'<a href="{_href}" target="_blank" rel="noopener noreferrer" style="display:block">{_img_tag}</a>'
         collected += f"\n\n{_tag}"
     yield collected, metrics_val, chunks_val, metadata_val, embed_val
 
@@ -1352,6 +1354,14 @@ if __name__ == "__main__":
                 log_refresh_btn.click(fn=_load_log, outputs=[log_df])
                 log_download_btn.click(fn=_download_log, outputs=[log_download_btn])
                 demo.load(fn=_load_log, outputs=[log_df])
+
+    # Mount diagrams directory for serving project diagrams via URL
+    _diagrams_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "assets", "project_diagrams")
+    if os.path.exists(_diagrams_dir):
+        from starlette.staticfiles import StaticFiles
+        _app = demo.app
+        _app.mount("/diagrams", StaticFiles(directory=_diagrams_dir), name="diagrams")
 
     _launch_kwargs = dict(
         server_name="0.0.0.0",
