@@ -22,6 +22,7 @@ import random
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -62,6 +63,56 @@ if not ADMIN_PASSWORD:
     print("WARNING: ADMIN_PASSWORD not set — admin app has no authentication.")
 
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
+_ADMIN_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log_admin.jsonl")
+
+def _compute_similarity_stats(distances):
+    """Convert L2 distances to cosine similarity scores. Returns avg and max."""
+    if not distances:
+        return {"avg": 0.0, "max": 0.0}
+    # L2 to cosine similarity: sim = 1 - (dist^2 / 2)
+    # Clamp to [0, 1] to handle floating point edge cases
+    sims = [max(0.0, min(1.0, 1.0 - (d * d / 2.0))) for d in distances]
+    return {
+        "avg": round(sum(sims) / len(sims), 3),
+        "max": round(max(sims), 3),
+    }
+
+def _log_admin_query(message, project_title, walkthrough, tool_name, had_error,
+                     model, temperature, n_chunks_retrieved, response_chars,
+                     workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
+                     provider, cost_usd, prompt_tokens, completion_tokens, config_override):
+    """Append admin query record to separate JSONL log. Fails silently — must never affect the user."""
+    try:
+        entry = {
+            # Production-equivalent fields
+            "ts":          datetime.now(datetime.timezone.utc).isoformat(),
+            "message":     message,
+            "project":     project_title,
+            "walkthrough": walkthrough,
+            "tool_called": tool_name is not None,
+            "tool_name":   tool_name,
+            "had_error":   had_error,
+            "model":       model,
+            "temperature": temperature,
+            "n_chunks_retrieved": n_chunks_retrieved,
+            "n_chunks_config":    N_CHUNKS_RETRIEVE,
+            "response_chars": response_chars,
+            "latency_ms":     latency_ms,
+            "workflow":       workflow_type,
+            "chunk_similarity_avg": chunk_similarity_avg,
+            "chunk_similarity_max": chunk_similarity_max,
+
+            # Admin-specific fields
+            "provider":        provider,
+            "cost_usd":        cost_usd,
+            "prompt_tokens":   prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "config_override": config_override,
+        }
+        with open(_ADMIN_QUERY_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception:
+        pass  # logging must NEVER break the app
 
 # OpenAI client — used ONLY for embeddings (not chat)
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -806,6 +857,9 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     Tool calling: attempted if model supports it. On failure,
     falls back gracefully and notes it in the inspector.
     """
+    # Start latency timer
+    _start_time = time.time()
+
     k = int(top_k)
     temp = float(temperature)
     model = model_name or LLM_MODEL
@@ -816,8 +870,19 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     )
     use_tools = model_supports_tools(model)
 
+    # Track if user overrode defaults
+    config_override = (
+        k != N_CHUNKS_RETRIEVE or
+        temp != LLM_TEMPERATURE or
+        model != LLM_MODEL or
+        (system_prompt_edit and system_prompt_edit.strip() != system_message)
+    )
+
     # With multimodal=True, message is a dict {"text": ..., "files": [...]}
     message_text = message["text"] if isinstance(message, dict) else message
+
+    # Track tool calls
+    _tool_name_called = None
 
     # ── Walkthrough detection (narrow intent) ─────────────────
     project = select_project_for_walkthrough(message_text)
@@ -841,6 +906,9 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     # ── Retrieve on the ORIGINAL message ───────────────────────
     ctx = retrieve_with_context(message_text, n_results=k)
+
+    # ── Compute retrieval quality metrics ──────────────────────
+    similarity_stats = _compute_similarity_stats(ctx.get('distances', []))
 
     # ── Build metadata-prefixed context (matches app.py) ───────
     context_parts = []
@@ -868,6 +936,14 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
         )
 
     clean_history = [_clean_content(m) for m in history]
+
+    # Truncate history to prevent token overflow
+    # Keep only last N conversation turns (N turns = 2N messages: user + assistant)
+    # This prevents hitting the 272k token limit on long conversations
+    MAX_HISTORY_MESSAGES = 20  # Last 10 turns (10 user + 10 assistant)
+    if len(clean_history) > MAX_HISTORY_MESSAGES:
+        clean_history = clean_history[-MAX_HISTORY_MESSAGES:]
+
     msgs = (
         [{"role": "system", "content": system_enhanced}]
         + clean_history
@@ -884,6 +960,9 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
             session_tracker.log_chat(response, model, call_type="tool_loop")
 
             while response.choices[0].message.tool_calls:
+                # Track first tool called
+                if _tool_name_called is None:
+                    _tool_name_called = response.choices[0].message.tool_calls[0].function.name
                 tool_result = handle_tool_call(response.choices[0].message.tool_calls)
                 msgs.append(response.choices[0].message)
                 msgs.extend(tool_result)
@@ -951,6 +1030,46 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
         _tag = f'<img src="data:image/{_ext};base64,{_b64}" style="{_style}"/>'
         collected += f"\n\n{_tag}"
     yield collected, metrics_val, chunks_val, metadata_val, embed_val
+
+    # ── Log admin query ─────────────────────────────────────────
+    # Extract provider from model name
+    provider = model.split("/")[0] if "/" in model else "openai"
+
+    # Determine workflow type
+    if project:
+        workflow_type = "walkthrough"
+    elif diagram_path:
+        workflow_type = "diagram_only"
+    else:
+        workflow_type = "standard"
+
+    # Get tokens/cost from last session tracker call
+    last_call = session_tracker.calls[-1] if session_tracker.calls else None
+    prompt_tokens = last_call.prompt_tokens if last_call else 0
+    completion_tokens = last_call.completion_tokens if last_call else 0
+
+    _log_admin_query(
+        message       = message_text,
+        project_title = (project or diagram_project or {}).get("title"),
+        walkthrough   = bool(project),
+        tool_name     = _tool_name_called,
+        had_error     = False,
+        # Production fields
+        model            = model,
+        temperature      = temp,
+        n_chunks_retrieved = len(ctx['documents']),
+        response_chars   = len(collected),
+        workflow_type    = workflow_type,
+        latency_ms       = int((time.time() - _start_time) * 1000),
+        chunk_similarity_avg = similarity_stats["avg"],
+        chunk_similarity_max = similarity_stats["max"],
+        # Admin-specific fields
+        provider         = provider,
+        cost_usd         = query_cost,
+        prompt_tokens    = prompt_tokens,
+        completion_tokens = completion_tokens,
+        config_override  = config_override,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════

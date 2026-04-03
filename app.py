@@ -2,6 +2,7 @@ import os
 import subprocess
 import types
 import datetime
+import time
 from dotenv import load_dotenv
 from openai import OpenAI
 import gradio as gr
@@ -514,10 +515,25 @@ tools = [
 
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
 
-def _log_query(message, project_title, walkthrough, tool_name, had_error):
+def _compute_similarity_stats(distances):
+    """Convert L2 distances to cosine similarity scores. Returns avg and max."""
+    if not distances:
+        return {"avg": 0.0, "max": 0.0}
+    # L2 to cosine similarity: sim = 1 - (dist^2 / 2)
+    # Clamp to [0, 1] to handle floating point edge cases
+    sims = [max(0.0, min(1.0, 1.0 - (d * d / 2.0))) for d in distances]
+    return {
+        "avg": round(sum(sims) / len(sims), 3),
+        "max": round(max(sims), 3),
+    }
+
+def _log_query(message, project_title, walkthrough, tool_name, had_error,
+               model, temperature, n_chunks_retrieved, response_chars,
+               workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
+            # Original fields
             "ts":          datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "message":     message,
             "project":     project_title,
@@ -525,6 +541,23 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error):
             "tool_called": tool_name is not None,
             "tool_name":   tool_name,
             "had_error":   had_error,
+
+            # Phase 1: Model & config
+            "model":       model,
+            "temperature": temperature,
+
+            # Phase 1: RAG metrics
+            "n_chunks_retrieved": n_chunks_retrieved,
+            "n_chunks_config":    N_CHUNKS_RETRIEVE,
+
+            # Phase 1: Response metrics
+            "response_chars": response_chars,
+            "latency_ms":     latency_ms,
+            "workflow":       workflow_type,
+
+            # Phase 2: Quality metrics
+            "chunk_similarity_avg": chunk_similarity_avg,
+            "chunk_similarity_max": chunk_similarity_max,
         }
         with open(_QUERY_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
@@ -585,6 +618,9 @@ def respond_ai(message, history):
     if not message or not message.strip():
         return
 
+    # Start latency timer (Phase 1 logging)
+    _start_time = time.time()
+
     # ── Step 1: Detect walkthrough intent (narrow) ──────────────
     walkthrough_project = select_project_for_walkthrough(message)
     walkthrough_block = None
@@ -610,7 +646,10 @@ def respond_ai(message, history):
         query_embeddings=[query_embedded],
         n_results=N_CHUNKS_RETRIEVE
     )
- 
+
+    # ── Compute retrieval quality metrics (Phase 2 logging) ─────
+    similarity_stats = _compute_similarity_stats(results.get('distances', [[]])[0])
+
     # ── Step 4: Build context from RAG chunks ───────────────────
     context_parts = []
     for doc, meta in zip(results['documents'][0], results['metadatas'][0]):
@@ -660,7 +699,14 @@ def respond_ai(message, history):
         return msg
  
     clean_history = [_clean_content(m) for m in history]
- 
+
+    # Truncate history to prevent token overflow
+    # Keep only last N conversation turns (N turns = 2N messages: user + assistant)
+    # This prevents hitting the 272k token limit on long conversations
+    MAX_HISTORY_MESSAGES = 20  # Last 10 turns (10 user + 10 assistant)
+    if len(clean_history) > MAX_HISTORY_MESSAGES:
+        clean_history = clean_history[-MAX_HISTORY_MESSAGES:]
+
     msgs = (
         [{"role": "system", "content": system_message_enhanced}]
         + clean_history
@@ -764,12 +810,32 @@ def respond_ai(message, history):
         collected += f"\n\n{_tag}"
         yield collected
 
+    # ── Determine workflow type for logging ─────────────────────
+    if walkthrough_project:
+        workflow_type = "walkthrough"
+    elif diagram_path:
+        workflow_type = "diagram_only"
+    else:
+        workflow_type = "standard"
+
     _log_query(
         message       = message,
         project_title = (walkthrough_project or diagram_project or {}).get("title"),
         walkthrough   = bool(walkthrough_project),
         tool_name     = _tool_name_called,
         had_error     = False,
+        # Phase 1: Model & config
+        model            = LLM_MODEL,
+        temperature      = LLM_TEMPERATURE,
+        # Phase 1: RAG metrics
+        n_chunks_retrieved = len(results['documents'][0]),
+        # Phase 1: Response metrics
+        response_chars   = len(collected),
+        workflow_type    = workflow_type,
+        latency_ms       = int((time.time() - _start_time) * 1000),
+        # Phase 2: Quality metrics
+        chunk_similarity_avg = similarity_stats["avg"],
+        chunk_similarity_max = similarity_stats["max"],
     )
 #----------------------------------
 
