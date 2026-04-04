@@ -52,7 +52,7 @@ if OPENAI_API_KEY is None:
 # ANTHROPIC_API_KEY, GEMINI_API_KEY are optional.
 # Ollama needs no key, just a running server.
 
-_raw_model = os.getenv("LLM_MODEL", "openai/gpt-5.4-nano")
+_raw_model = os.getenv("LLM_MODEL", "openai/gpt-4.1")
 LLM_MODEL  = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 7))
 LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.4"))
@@ -162,7 +162,7 @@ AVAILABLE_MODELS = [
     "openai/gpt-5.1",       # Input: $1.25, Output $10.00
     "openai/gpt-5-mini",    # Input: $0.25, Output $2.00
     "openai/gpt-5-nano",    # Input: $0.005, Output $0.40
-    #"openai/gpt-4.1",      # Input: $2.00, Output $8.00   (128K tokens; High‑quality 128K‑context model; widely used)
+    "openai/gpt-4.1",      # Input: $2.00, Output $8.00   (128K tokens; High‑quality 128K‑context model; widely used)
     "openai/gpt-4.1-mini",  # Input: $0.40, Output $1.60
     "openai/gpt-o4-mini",   # Input: $1.10, Output $4.40
     # Anthropic

@@ -23,6 +23,22 @@ To add a new project:
     1. Add a diagram image to assets/project_diagrams/
     2. Append a new dict to FEATURED_PROJECTS below
     3. That's it — the selection logic picks it up automatically
+
+Fields per project:
+    - id (str):                  URL-safe identifier
+    - title (str):               Display name
+    - summary (str):             2-3 sentence overview (used for casual mentions too)
+    - design_insight (str):      1-2 sentences on what makes this project distinctive —
+                                 gives the LLM a narrative lead for "stories before specs"
+    - walkthrough_context (str): Full pipeline/architecture walkthrough for deep dives
+    - diagram_filename (str):    Filename in assets/project_diagrams/
+    - diagram_caption (str):     Alt-text / caption for diagram
+    - tags (list[str]):          Searchable topic tags
+    - mention_keywords (list):   Phrase-level triggers for project detection
+    - links (dict):              Operational URLs — live demo, github, docs
+    - blog_posts (list[dict]):   Blog posts / writeups about the project
+                                 Each entry: {"title": str, "url": str}
+                                 Rendered separately from links in context block
 """
 
 import os
@@ -37,19 +53,33 @@ _DIAGRAM_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 FEATURED_PROJECTS = [
 
-    # Resume Graph Explorer
+    # ── Resume Graph Explorer ────────────────────────────────────
     {
         "id": "resume-graph-explorer",
         "title": "Resume Graph Explorer",
-        "summary": "Transforms resumes into interactive SKOS-compliant knowledge graphs.",
+        "summary": (
+            "Transforms a flat resume into an interactive, navigable knowledge graph "
+            "built on established semantic standards (SKOS, ESCO, schema.org). Skills "
+            "form hierarchies using SKOS broader/narrower relations, so the graph "
+            "captures not just what someone knows but how those skills relate."
+        ),
+        "design_insight": (
+            "The distinctive choice here is grounding applied AI work in existing "
+            "standards rather than inventing a bespoke schema. The graph uses six "
+            "entity types validated with SHACL constraints and mapped to the ESCO "
+            "European skills taxonomy — making the output interoperable, not just pretty."
+        ),
         "walkthrough_context": (
             "Resume Graph Explorer turns a flat resume into a living knowledge graph. "
             "The pipeline works in three stages: "
             "(1) Extract — An LLM (Claude, OpenAI, or Ollama) reads the resume and "
             "pulls out structured entities: skills, roles, organizations, industries. "
+            "Six entity types total: Person, Job, Skill, Education, Certification, "
+            "Organization, connected by typed relationships. "
             "(2) Normalize — A three-phase pipeline maps those entities to the ESCO "
             "European skills taxonomy, resolving synonyms and aligning to a hybrid "
             "SKOS vocabulary (SKOS Core + ESCO + schema.org + a custom resume namespace). "
+            "SHACL constraints validate every triple before it enters the graph. "
             "(3) Visualize — The result is an interactive graph (Vis.js) you can "
             "explore in the browser, query with SPARQL, or export as Turtle/RDF/JSON-LD. "
             "It also generates two narrative career stories from the graph structure — "
@@ -60,7 +90,6 @@ FEATURED_PROJECTS = [
         "diagram_filename": "resume_graph_explorer_diagram.png",
         "diagram_caption": "Resume Graph Explorer — extraction → normalization → interactive graph",
         "tags": ["knowledge-graph", "ontology", "skos", "resume", "rdf", "nlp", "semantic-web"],
-        # Extra keywords that should trigger diagram but aren't in title/tags
         "mention_keywords": ["resume explorer", "resume graph", "skos", "esco"],
         "links": {
             "live demo": "https://resume-graph-explorer.vercel.app/",
@@ -68,28 +97,41 @@ FEATURED_PROJECTS = [
         },
     },
 
-    # Digital Twin
+    # ── Digital Twin ─────────────────────────────────────────────
     {
         "id": "digital-twin",
         "title": "Digital Twin",
-        "summary": "A RAG-powered chatbot that represents Barbara conversationally.",
+        "summary": (
+            "A RAG-powered chatbot that represents Barbara conversationally, grounded "
+            "in her actual writing and work history. The twin itself is a portfolio piece "
+            "— not just a wrapper around an LLM — demonstrating how knowledge base design "
+            "directly shapes retrieval quality."
+        ),
+        "design_insight": (
+            "The key insight: retrieval quality depends more on how you write your "
+            "knowledge base documents than on the embedding model. Three documents were "
+            "written specifically to improve retrieval — a philosophy doc, a positioning "
+            "doc, and a career narrative — each designed for how chunks will be retrieved, "
+            "not just how they read as prose."
+        ),
         "walkthrough_context": (
             "Digital Twin is the chatbot you may be talking to right now. "
             "It's a retrieval-augmented generation (RAG) system grounded in Barbara's "
             "actual writing and work history. "
             "(1) Knowledge Base — Multiple document types (biosketch, project briefs, "
-            "website pages, resume, publications) are chunked and embedded using "
-            "OpenAI's text-embedding-3-small into ChromaDB. "
+            "website pages, resume, publications) are chunked with section-aware "
+            "splitting and embedded using OpenAI's text-embedding-3-small into ChromaDB. "
+            "The KB was designed for retrieval quality, not just storage: source priority "
+            "ordering, synthetic overview chunks, and a multi-document architecture ensure "
+            "the right context surfaces for different question types. "
             "(2) Retrieval — When you ask a question, the system embeds your query, "
             "retrieves the most relevant chunks, and injects them as context. "
             "(3) Generation — A carefully designed system prompt controls voice, "
             "framing, and source priority so the chatbot sounds like Barbara, not a "
-            "generic assistant. "
-            "The key insight: retrieval quality depends more on how you write your "
-            "knowledge base documents than on the embedding model. Three documents were "
-            "written specifically to improve retrieval — a philosophy doc, a positioning "
-            "doc, and a career narrative. "
-            "Stack: Python, Gradio, ChromaDB, OpenAI API, HuggingFace Spaces."
+            "generic assistant. The prompt encodes narrative priorities ('stories before "
+            "specs', 'problems before skills') and explicit failure modes observed "
+            "during testing. "
+            "Stack: Python, Gradio, ChromaDB, OpenAI API, AWS EC2."
         ),
         "diagram_filename": "architecture-overview_barb_twin.png",
         "diagram_caption": "Digital Twin — document ingestion → embedding → retrieval → response",
@@ -102,11 +144,22 @@ FEATURED_PROJECTS = [
         },
     },
 
-    # Weaving Memories into Graphs
+    # ── Weaving Memories into Graphs ─────────────────────────────
     {
         "id": "weaving-memories",
         "title": "Weaving Memories Into Graphs",
-        "summary": "A memorial knowledge graph preserving a family legacy in Neo4j.",
+        "summary": (
+            "A memorial knowledge graph preserving the professional legacy of Barbara's "
+            "late father, Domingo Hidalgo Lopez — a software developer and naval architect "
+            "whose systems still run in semiconductor fabs worldwide. It proves you can "
+            "apply rigorous knowledge engineering to something deeply personal."
+        ),
+        "design_insight": (
+            "This project bridges rigorous knowledge engineering methodology with deeply "
+            "personal subject matter. Every fact has provenance tracking (source + confidence), "
+            "and a semi-automated Wikidata enrichment pipeline adds external context — "
+            "showing that KG best practices aren't just for enterprise data."
+        ),
         "walkthrough_context": (
             "Weaving Memories Into Graphs is a memorial project for Barbara's late "
             "father, Domingo Hidalgo Lopez — a software developer and naval architect "
@@ -121,8 +174,6 @@ FEATURED_PROJECTS = [
             "context, with provenance tracking so every fact has a source. "
             "(4) Frontend — A React + Vite app with timeline, legacy, and network "
             "views served by a Flask REST API. "
-            "It proves you can apply rigorous knowledge engineering methodology to "
-            "something deeply personal. "
             "Stack: Python, Neo4j Aura, Claude, Flask, React + Vite, Wikidata API."
         ),
         "diagram_filename": "weaving_memories_diagram.png",
@@ -135,10 +186,22 @@ FEATURED_PROJECTS = [
         },
     },
 
-    # Academic Citation Platform
+    # ── Academic Citation Platform ────────────────────────────────
     {
+        "id": "academic-citation-platform",
         "title": "Academic Citation Platform",
-        "summary": "ML-powered research discovery using TransE embeddings on 12K+ academic papers.",
+        "summary": (
+            "ML-powered research discovery using TransE knowledge graph embeddings "
+            "trained on 12K+ academic papers. Predicts which papers are likely to cite "
+            "each other by learning citation relationships as vector translations in "
+            "embedding space."
+        ),
+        "design_insight": (
+            "The TransE model was implemented from scratch rather than using a library — "
+            "a deliberate choice to understand the embedding geometry deeply. A 4-notebook "
+            "research pipeline tells the complete data science story from exploration to "
+            "presentation, mirroring how Barbara approaches analytical projects."
+        ),
         "walkthrough_context": (
             "Academic Citation Platform predicts which papers are likely to cite "
             "each other using knowledge graph embeddings. "
@@ -162,12 +225,28 @@ FEATURED_PROJECTS = [
         "diagram_caption": "Academic Citation Platform — papers → TransE training → citation prediction → interactive analysis",
         "tags": ["knowledge-graph", "neo4j", "machine-learning", "TransE", "citation-prediction", "streamlit"],
         "mention_keywords": ["citation", "transe", "academic", "papers", "citation platform", "citation compass", "paper prediction"],
+        "links": {
+            "github": "https://github.com/dagny099/academic-citation-platform",
+        },
     },
 
-    # Poolula Platform
+    # ── Poolula Platform ─────────────────────────────────────────
     {
+        "id": "poolula-platform",
         "title": "Poolula Platform",
-        "summary": "AI-powered LLC management platform with RAG chatbot, structured data, and evaluation harness.",
+        "summary": (
+            "An AI-powered LLC management platform combining structured data, document "
+            "management, and a RAG chatbot with a built-in evaluation harness. Designed "
+            "as a personal 'LLC Operating System' — a turnkey, always-ready structure for "
+            "small property-holding businesses."
+        ),
+        "design_insight": (
+            "What makes this project distinctive is the evaluation harness: two specialized "
+            "evaluators (general business + Airbnb income with CSV ground truth) score tool "
+            "choice, content relevance, and numerical accuracy with a 90%+ target. It's a "
+            "demonstration that RAG systems need built-in quality measurement, not just "
+            "retrieval."
+        ),
         "walkthrough_context": (
             "Poolula Platform is a unified management system for a property-holding "
             "LLC, combining structured data, document management, and an AI chatbot. "
@@ -185,8 +264,9 @@ FEATURED_PROJECTS = [
             "management, and audit logging. "
             "(4) Evaluation Harness — Two specialized evaluators (5 general business "
             "questions + 15 Airbnb income questions with CSV ground truth) score "
-            "tool choice, content relevance, numerical accuracy, and completeness "
-            "with a 90%+ target. Supports multi-provider comparison. "
+            "tool choice (40%), content relevance (40%), numerical accuracy (50% for "
+            "income questions), and completeness with a 90%+ target. Supports "
+            "multi-provider comparison (Anthropic vs OpenAI vs Ollama). "
             "Stack: Python, FastAPI, SQLModel, ChromaDB, Anthropic/OpenAI/Ollama, "
             "Alembic, DSPy."
         ),
@@ -194,30 +274,51 @@ FEATURED_PROJECTS = [
         "diagram_caption": "Poolula Platform — business question → RAG retrieval → LLM answer → evaluation harness verification",
         "tags": ["rag", "fastapi", "llc-management", "evaluation", "chromadb", "multi-provider", "sqlmodel"],
         "mention_keywords": ["poolula", "llc", "property management", "evaluation harness"],
+        "links": {
+            "github": "https://github.com/dagny099/poolula-platform",
+        },
     },
 
-    # Beehive Monitor
+    # ── Beehive Monitor ──────────────────────────────────────────
     {
+        "id": "beehive-monitor",
         "title": "Beehive Monitor",
-        "summary": "Computer vision + weather correlation for backyard beekeeping sessions.",
+        "summary": (
+            "Computer vision + weather correlation for backyard beekeeping, built from "
+            "4+ years of Barbara's own hive inspection data. Turns unstructured inspection "
+            "photos into a structured, searchable knowledge base — a real AI project for a "
+            "problem she genuinely lives with, not a benchmark dataset."
+        ),
+        "design_insight": (
+            "This is a good example of building tools for problems you actually have. "
+            "The project combines image analysis, automated metadata extraction, color "
+            "palette analysis for honeycomb health indicators, and historical weather "
+            "correlation — all on a personal dataset she's been collecting for years. "
+            "It's domain-specific AI applied to a domain she knows firsthand."
+        ),
         "walkthrough_context": (
             "Beehive Monitor is a data collection and analysis tool for Barbara's "
-            "backyard beekeeping practice. "
+            "backyard beekeeping practice, built on 4+ years of self-tracked hive data. "
             "The pipeline works in four stages: "
             "(1) Capture — A calendar-based session scheduler lets you log hive "
-            "inspections with multi-photo uploads through a Streamlit UI, each "
-            "session date-stamped for longitudinal tracking. "
+            "inspections with multi-photo uploads through a Streamlit multi-page app, "
+            "each session date-stamped for longitudinal tracking. "
             "(2) Analyze — Google Cloud Vision API performs image label detection "
-            "and object/activity recognition on hive photos, while Open-Meteo "
-            "pulls temperature, humidity, and wind data for the session date "
-            "to correlate weather conditions with hive behavior. "
-            "(3) Dashboard — A Streamlit interface displays session history, "
-            "vision analysis results, and weather overlays for pattern spotting "
-            "across inspections. "
+            "and object/activity recognition on hive photos. A multi-library EXIF "
+            "extraction pipeline (with fallback mechanisms for diverse camera formats) "
+            "pulls metadata automatically. A color palette analysis pipeline extracts "
+            "and clusters bee-domain-specific colors for honeycomb health indicators. "
+            "Open-Meteo pulls temperature, humidity, and wind data for the session date "
+            "via a GPS validation pipeline that verifies coordinates before the weather "
+            "API call. "
+            "(3) Dashboard — A Streamlit interface with Plotly visualizations displays "
+            "session history, vision analysis results, weather overlays, and an "
+            "annotation system for beekeeper observations and hive state tracking. "
             "(4) Export + Deploy — Data exports to JSON/CSV for offline analysis. "
-            "The app is containerized with Docker and deployed to Google Cloud Run. "
+            "The app is containerized with Docker and deployed to Google Cloud Run, "
+            "with a pluggable storage abstraction layer (local → S3 → GCS ready). "
             "Stack: Python, Streamlit, Google Cloud Vision, Open-Meteo API, "
-            "Docker, Cloud Run."
+            "Plotly, Docker, Cloud Run."
         ),
         "diagram_filename": "beehive_metadata_tracker_diagram.png",
         "diagram_caption": "Beehive Monitor — photo capture → Cloud Vision + weather analysis → dashboard → containerized deployment",
@@ -226,14 +327,31 @@ FEATURED_PROJECTS = [
         "links": {
             "live demo": "https://beestory.barbhs.com/",
             "github": "https://github.com/dagny099/beehive-tracker",
-            "writeup": "https://www.barbhs.com/data-stories/hive-photo-metadata-tracker/",
         },
+        "blog_posts": [
+            {
+                "title": "Hive Photo Metadata Tracker — Data Story",
+                "url": "https://www.barbhs.com/data-stories/hive-photo-metadata-tracker/",
+            },
+        ],
     },
 
-    # ConvoScope
+    # ── ConvoScope ───────────────────────────────────────────────
     {
+        "id": "convoscope",
         "title": "ConvoScope",
-        "summary": "Multi-LLM conversation analysis and comparison platform.",
+        "summary": (
+            "A conversation intelligence platform for exploring how different AI models "
+            "think about the same questions. Parses conversation structure at the turn "
+            "level and runs analysis across multiple LLM providers to compare "
+            "interpretation patterns."
+        ),
+        "design_insight": (
+            "Born from genuine curiosity about how context shifts across AI providers. "
+            "The same question yields different insights depending on the model — "
+            "ConvoScope makes those differences visible and comparable rather than "
+            "anecdotal."
+        ),
         "walkthrough_context": (
             "ConvoScope is a conversation intelligence platform for exploring how "
             "different AI models think about the same questions. "
@@ -249,21 +367,34 @@ FEATURED_PROJECTS = [
             "how different models interpret the same conversation. "
             "(4) Report — Rich HTML reports with side-by-side model comparisons "
             "are generated and downloadable for offline review. "
-            "Born from curiosity about how context shifts across AI providers "
-            "and how the same question yields different insights depending on "
-            "the model. "
             "Stack: Python, Streamlit, OpenAI API, Anthropic (planned), HTML reports."
         ),
         "diagram_filename": "convoscope_chatbot_diagram.png",
         "diagram_caption": "ConvoScope — conversation input → analysis engine → multi-LLM comparison → HTML reports",
         "tags": ["multi-llm", "streamlit", "conversation-analysis", "openai", "anthropic", "nlp"],
         "mention_keywords": ["convoscope", "conversation analysis", "multi-llm comparison"],
+        "links": {
+            "github": "https://github.com/dagny099/convoscope",
+        },
     },
 
-    # Fitness Tracker
+    # ── Fitness Tracker ──────────────────────────────────────────
     {
+        "id": "fitness-tracker",
         "title": "Fitness Tracker",
-        "summary": "14+ years of self-tracked workout data turned into an interactive analytics dashboard.",
+        "summary": (
+            "A personal analytics dashboard built on 14+ years and 2,800+ sessions of "
+            "self-tracked workout data. Reveals behavioral patterns like the 4.5x "
+            "consistency increase that coincided with adopting a rescue dog — the kind "
+            "of insight that only emerges from long-horizon personal datasets."
+        ),
+        "design_insight": (
+            "This project demonstrates what happens when you apply data science "
+            "methods to your own life over a long enough time horizon. Fourteen years "
+            "of data makes patterns visible that shorter datasets can't reveal — "
+            "seasonal shifts, life-event correlations, and the compounding effects of "
+            "consistency."
+        ),
         "walkthrough_context": (
             "Fitness Tracker is a personal analytics platform built on 14+ years "
             "and 2,800+ sessions of self-tracked workout data. "
@@ -289,49 +420,132 @@ FEATURED_PROJECTS = [
         "links": {
             "live demo": "https://workouts.barbhs.com/",
             "github": "https://github.com/dagny099/fitness-dashboard",
-            "writeup": "https://www.barbhs.com/data-stories/exercise-dashboard/",
         },
+        "blog_posts": [
+            {
+                "title": "Exercise Dashboard — Data Story",
+                "url": "https://www.barbhs.com/data-stories/exercise-dashboard/",
+            },
+        ],
     },
 
-    # Concept Cartographer
+    # ── Concept Cartographer ─────────────────────────────────────
     {
         "id": "concept-cartographer",
         "title": "Concept Cartographer",
-        "summary": "Interactive knowledge mapping — chat and watch concepts emerge as a graph.",
+        "summary": (
+            "A Gradio app that makes implicit knowledge structure explicit: as you chat, "
+            "it extracts concepts and relationships from each turn and builds a persistent, "
+            "growing knowledge graph you can explore and export. A compact demonstration "
+            "of stateful LLM tooling that externalizes reasoning structure rather than "
+            "just generating text."
+        ),
+        "design_insight": (
+            "The architectural decision worth noting is the single-call design — one "
+            "LLM call per turn returns both a conversational response and structured "
+            "JSON simultaneously, rather than a separate extraction step. This is ~50% "
+            "faster and cheaper than a two-call approach. Above 30 nodes, a connectivity "
+            "filter keeps the graph coherent by only admitting concepts that connect to "
+            "existing ones."
+        ),
         "walkthrough_context": (
             "Concept Cartographer is a Gradio app that turns a conversation into a "
             "growing knowledge graph. As you chat, it extracts concepts and relationships "
             "and renders them as a color-coded, persistent map you can export. "
             "The key architectural decision is the single-call design: "
             "(1) Ask — Pick a domain lens (AI/ML, Cognitive Science, Philosophy, Biology, "
-            "or more) and ask a question through the Gradio interface. "
+            "or more) and ask a question through the Gradio interface. Domain selection "
+            "nudges extraction toward domain-relevant concepts and relation types. "
             "(2) Extract — A single LLM call (GPT-4o-mini) returns both a conversational "
             "narrative and a structured JSON ontology (concepts with categories like "
             "Entity, Process, Theory, Method, Property, plus relationship triples with "
             "typed edges like causes, requires, enables). This is ~50% faster and cheaper "
             "than a two-call approach that separates chat from extraction. "
-            "(3) Build — The graph accumulates across conversation turns. Above 30 nodes, "
-            "a connectivity filter ensures only concepts that connect to existing nodes "
-            "are admitted — preventing disconnected islands and keeping the map coherent. "
+            "(3) Build — The graph accumulates across conversation turns with a color-coded "
+            "legend by concept category. Above 30 nodes, a connectivity filter ensures only "
+            "concepts that connect to existing nodes are admitted — preventing disconnected "
+            "islands and keeping the map coherent. A 'Latest Connections' panel below the "
+            "chat shows a plain-language summary of what was just extracted. "
             "(4) Export — The current graph state exports as JSON (for downstream tools "
             "like Neo4j, Obsidian, or presentations) or PNG (for sharing). "
-            "It's intentionally a 'small, sharp demo' of stateful LLM tooling — the kind "
-            "of system that externalizes reasoning structure rather than just generating text. "
             "Stack: Python, Gradio, OpenAI API (GPT-4o-mini), NetworkX, Matplotlib."
         ),
         "diagram_filename": "architecture-diagram_concept_cartography.png",
         "diagram_caption": "Concept Cartographer — question → single LLM call → growing knowledge graph → export",
         "tags": ["knowledge-graph", "gradio", "llm", "ontology", "concept-extraction", "structured-output", "nlp"],
         "mention_keywords": [
-            "concept cartographer", "concept cartography",  # ← add alias
+            "concept cartographer", "concept cartography",
             "concept map", "concept graph",
             "concept extraction", "knowledge mapping"
-        ],        
+        ],
         "links": {
             "live demo": "https://concept-cartographer.com/",
             "github": "https://github.com/dagny099/concept-cartography-gradio",
         },
-    }
+    },
+
+    # ── ChronoScope ──────────────────────────────────────────────
+    {
+        "id": "chronoscope",
+        "title": "ChronoScope",
+        "summary": (
+            "Transforms documents into interactive timelines using AI event extraction. "
+            "The same career data that Resume Explorer models as a knowledge graph, "
+            "ChronoScope unfolds along a temporal axis — showing Barbara can approach "
+            "the same domain from fundamentally different structural perspectives."
+        ),
+        "design_insight": (
+            "ChronoScope treats time as the primary organizing principle. Where Resume "
+            "Explorer asks 'how do these skills and roles relate?', ChronoScope asks "
+            "'when did these things happen and what patterns emerge over time?' Together "
+            "they demonstrate that the same source material yields different insights "
+            "depending on which structural lens you apply — a core cognitive science idea."
+        ),
+        "walkthrough_context": (
+            "ChronoScope automatically extracts life events from resumes, cover letters, "
+            "and personal documents to create rich, interactive timelines. "
+            "The pipeline works in five stages: "
+            "(1) Upload — Drop in a resume (95%+ extraction accuracy) or try cover "
+            "letters and personal statements (70-80% accuracy, experimental). PDF "
+            "extraction uses a dual-library fallback (PyMuPDF + pdfplumber). "
+            "(2) Extract — OpenAI GPT identifies events, dates, locations, and people "
+            "from the document text. A date parsing pipeline handles vague dates "
+            "('Fall 2010' → '2010-08-15') using dateutil. Multi-document processing "
+            "includes hash-based deduplication. "
+            "(3) Validate — A quality validation system checks for missing data, "
+            "assigns confidence scores, and supports gold standard comparison. An "
+            "editable data table lets users verify, rate, tag, and annotate events. "
+            "(4) Visualize — An interactive Plotly-based Gantt chart with zoom, pan, "
+            "filter, and tooltips displays the timeline. A beta knowledge graph view "
+            "(NetworkX, optional Neo4j) shows entity relationships. "
+            "(5) Export — TimelineJS export with 6 color schemes and 10 font "
+            "combinations produces professional web timelines. Also exports to "
+            "Excel/JSON for downstream use. "
+            "Architecture: monolithic Streamlit (Python-only, rapid iteration) — "
+            "a deliberate contrast to Resume Explorer's decoupled Flask/React stack. "
+            "Stack: Python, Streamlit, OpenAI GPT, Plotly, PyMuPDF, pdfplumber, "
+            "TimelineJS, NetworkX, MkDocs."
+        ),
+        "diagram_filename": "chronoscope_diagram.png",
+        "diagram_caption": "ChronoScope — document upload → AI event extraction → validation → interactive timeline → export",
+        "tags": ["timeline", "streamlit", "openai", "nlp", "document-processing", "plotly", "visualization"],
+        "mention_keywords": [
+            "chronoscope", "chrono scope", "timeline",
+            "timeline extraction", "event extraction",
+            "document timeline", "career timeline"
+        ],
+        "links": {
+            "live demo": "https://chronoscope.barbhs.app",
+            "github": "https://github.com/dagny099/chronoscope",
+            "docs": "https://docs.barbhs.com/chronoscope",
+        },
+        "blog_posts": [
+            {
+                "title": "Comparing architectures: ChronoScope vs Resume Graph Explorer",
+                "url": "https://www.barbhs.com/blog/comparing-architectures-chronoscope-resume-explorer/",
+            },
+        ],
+    },
 ]
 
 
@@ -351,7 +565,7 @@ _PROJECT_NAMES = (
     "cartograph|explorer|digital\\s*twin|beehive|fitness|"
     "citation|poolula|convoscope|memories|weaving|chronoscope"
 )
- 
+
 def _is_walkthrough_request(message: str) -> bool:
     """
     Return True if the user message is asking for a project walkthrough.
@@ -522,20 +736,44 @@ def build_walkthrough_context_block(project: dict) -> str:
     This is injected as a SEPARATE context section (not appended to
     the user message), so RAG retrieval stays grounded in the user's
     actual question while the LLM still has the full walkthrough notes.
+
+    Structure:
+      - Title + summary (what it is)
+      - Design insight (why it's distinctive — gives the LLM a narrative lead)
+      - Walkthrough notes (how it works)
+      - Project links (operational: demo, github, docs)
+      - Related writing (blog posts / writeups — deeper context)
     """
+    parts = [
+        f"[WALKTHROUGH PROJECT: {project['title']}]",
+        f"Summary: {project['summary']}",
+    ]
+
+    # Design insight gives the LLM "stories before specs" material
+    if project.get("design_insight"):
+        parts.append(f"What makes it distinctive: {project['design_insight']}")
+
+    parts.append(f"Walkthrough notes: {project['walkthrough_context']}")
+
+    # Operational links (demo, github, docs)
     links = {k: v for k, v in project.get("links", {}).items() if v}
     if links:
         lines = "\n".join(f"  - {label}: {url}" for label, url in links.items())
-        links_block = f"\nProject links (use these exact URLs only, do not modify or invent others):\n{lines}"
-    else:
-        links_block = ""
+        parts.append(
+            f"Project links (use these exact URLs only, do not modify or invent others):\n{lines}"
+        )
 
-    return (
-        f"[WALKTHROUGH PROJECT: {project['title']}]\n"
-        f"Summary: {project['summary']}\n"
-        f"Walkthrough notes: {project['walkthrough_context']}"
-        f"{links_block}"
-    )
+    # Blog posts / writeups (separate from operational links)
+    blog_posts = project.get("blog_posts", [])
+    if blog_posts:
+        lines = "\n".join(
+            f'  - "{post["title"]}": {post["url"]}' for post in blog_posts
+        )
+        parts.append(
+            f"Related writing (link when visitors want the story behind the project):\n{lines}"
+        )
+
+    return "\n".join(parts)
 
 
 def enrich_message_for_walkthrough(message: str, project: dict) -> str:

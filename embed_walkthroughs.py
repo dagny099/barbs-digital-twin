@@ -2,8 +2,9 @@
 embed_walkthroughs.py — Ingest project walkthrough contexts into ChromaDB
 ═════════════════════════════════════════════════════════════════════════════
 
-Reads the walkthrough_context from each FEATURED_PROJECT and embeds it
-as a single chunk in the same ChromaDB collection used by app.py.
+Reads the walkthrough_context (and design_insight, summary, tags) from
+each FEATURED_PROJECT and embeds it as a single chunk in the same
+ChromaDB collection used by app.py.
 
 WHY:
   Previously, walkthrough content only existed in featured_projects.py
@@ -11,11 +12,18 @@ WHY:
   By embedding it in ChromaDB, normal RAG retrieval can also surface
   this content — so questions like "how does Resume Explorer normalize
   entities?" can pull from the walkthrough even without triggering the
-  walkthrough flow.
+  walkthrough flow. Including the design_insight means "why" questions
+  ("why did you use SKOS?", "what's distinctive about that project?")
+  also match against the embedded content.
 
 DESIGN DECISIONS:
-  - No chunking: each walkthrough_context is ~500-800 chars, already
-    within chunk_size. Splitting would break narrative coherence.
+  - No chunking: each combined doc_text is ~1400-2300 chars (well within
+    text-embedding-3-small's 8192-token limit). Splitting would break
+    narrative coherence.
+  - Doc structure: title + summary + design_insight + walkthrough_context
+    + tags. This ordering puts "what" and "why" before "how", which
+    gives the embedding a strong conceptual signal alongside the
+    technical details.
   - Source naming: "project-walkthrough:{title-slug}" for easy
     identification in retrieval logs and Collection Browser.
   - Idempotent: checks if source already exists before embedding.
@@ -103,16 +111,20 @@ def embed_walkthroughs(force: bool = False, dry_run: bool = False) -> int:
             continue
 
         # Build a retrieval-friendly document:
-        # Prepend the project title + summary so the embedding captures
-        # "what project is this about" alongside the technical details.
+        # Prepend the project title + summary + design_insight so the
+        # embedding captures "what project is this about" and "why it's
+        # distinctive" alongside the technical details.
         summary = project.get("summary", "")
+        insight = project.get("design_insight", "")
         tags    = project.get("tags", [])
 
-        doc_text = (
-            f"{title}: {summary}\n\n"
-            f"{context}\n\n"
-            f"Tags: {', '.join(tags)}"
-        )
+        # Structure: what → why → how → tags
+        doc_parts = [f"{title}: {summary}"]
+        if insight:
+            doc_parts.append(f"What makes it distinctive: {insight}")
+        doc_parts.append(context)
+        doc_parts.append(f"Tags: {', '.join(tags)}")
+        doc_text = "\n\n".join(doc_parts)
 
         chunks.append(doc_text)
         ids.append(str(uuid.uuid4()))

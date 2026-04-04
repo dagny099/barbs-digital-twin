@@ -233,7 +233,49 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
         i = j - backtrack
 
     return chunks
+
+
+def handle_vote(data: gr.LikeData, history):
+    """Called when a visitor clicks thumbs up or thumbs down.
+
+    Logs to the same query_log.jsonl as _log_query, enriched with:
+      - The user message that produced the voted-on response
+      - Model, temperature, and cost from the session tracker
+    """
+    try:
+        # Find the user message that preceded this assistant response.
+        # data.index is the position in the history list.
+        user_message = None
+        if history and isinstance(data.index, int):
+            # Walk backward from the voted message to find the preceding user turn
+            for i in range(data.index - 1, -1, -1):
+                msg = history[i]
+                if isinstance(msg, dict) and msg.get("role") == "user":
+                    user_message = msg.get("content", "")[:300]
+                    break
+
+        # Pull model/cost from the most recent session tracker entry
+        last_call = session_tracker.calls[-1] if session_tracker.calls else None
+
+        entry = {
+            "ts":               datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "event":            "vote",
+            "liked":            data.liked,
+            "message_index":    data.index,
+            "user_message":     user_message,
+            "response_snippet": str(data.value)[:300],
+            "model":            last_call.model if last_call else _current_settings.get("model"),
+            "temperature":      _current_settings.get("temperature"),
+            "cost_usd":         last_call.cost_usd if last_call else None,
+        }
+        with open(_QUERY_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+        print(f"{'👍' if data.liked else '👎'} message #{data.index}")
+    except Exception:
+        pass  # logging must NEVER break the app
+
 #----------------------
+
 
 # My favicon (local png)
 with open("assets/bee_barb.png", "rb") as f:
@@ -518,12 +560,6 @@ footer {
     opacity: 1.0;
 }
 """
-
-def vote(data: gr.LikeData):
-    if data.liked:
-        print("You upvoted this response: " + data.value["value"])
-    else:
-        print("You downvoted this response: " + data.value["value"])
 
 
 print(f"✅ Collection ready: {collection.count()} chunks loaded")
@@ -1111,7 +1147,9 @@ if __name__ == "__main__":
             max_height=700,
             autoscroll=True,
             render_markdown=True,
+            autofocus=True
         )
+        chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs the user message
 
         # ── SETTINGS PANEL (conditionally rendered) ──────────────────
         if SHOW_SETTINGS_PANEL:

@@ -17,9 +17,11 @@ NON-INTERACTIVE FLAGS:
     python ingest.py --source kb-biosketch --force   # Force re-embed one source
     python ingest.py --dry-run                   # Preview without embedding (all sources)
     python ingest.py --source kb-projects --dry-run
+    python ingest.py --source kb-answers --dry-run    # verify 13 unique sections parse
+    python ingest.py --source kb-origins --dry-run   
 
 SOURCE KEYS:
-    kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career,
+    kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career, kb-answers
     kb-publications, project-summaries, jekyll, project-walkthroughs
 """
 
@@ -154,6 +156,28 @@ SOURCES = [
         "force_arg":     "--force-reembed",
         "dry_run_arg":   "--dry-run",
         "source_prefix": "project-walkthrough:",
+    },
+    {
+        "key":           "kb-answers",
+        "label":         "KB: Answer Bank",
+        "description":   "inputs/kb_project_answer_bank.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_project_answer_bank.md",
+                          "--source-type", "kb-answers"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-answers:",
+    },
+    {
+        "key":           "kb-origins",
+        "label":         "KB: Personal Origin Stories",
+        "description":   "inputs/kb_personal_origin_stories.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_personal_origin_stories.md",
+                          "--source-type", "kb-origins"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-origins:",
     }
 ]
 
@@ -406,7 +430,7 @@ Examples:
   python ingest.py --source project-summaries --dry-run
 
 Source keys: kb-biosketch, kb-philosophy, kb-positioning, kb-projects,
-             kb-career, kb-publications, project-summaries, jekyll,
+             kb-career, kb-publications, kb-answers, kb-origins, project-summaries, jekyll,
              project-walkthroughs
         """
     )

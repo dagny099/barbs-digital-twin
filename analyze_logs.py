@@ -2,19 +2,21 @@
 """
 Query Log Analyzer for Digital Twin
 ====================================
-Analyzes query_log.jsonl to surface knowledge gaps, performance issues, and usage patterns.
+Analyzes query_log.jsonl to surface knowledge gaps, performance issues,
+usage patterns, and visitor satisfaction (thumbs up/down).
 
 Usage:
     python analyze_logs.py                    # Full report
     python analyze_logs.py --knowledge-gaps   # Only show knowledge gaps
     python analyze_logs.py --last 100         # Analyze last N queries
+    python analyze_logs.py --votes            # Vote / satisfaction analysis
     python analyze_logs.py --export summary.json  # Export to JSON
 """
 
 import json
 import sys
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -64,22 +66,38 @@ class QueryRecord:
         return self.response_chars > 2000
 
 
+@dataclass
+class VoteRecord:
+    """Parsed vote log entry (thumbs up/down from visitors)."""
+    ts: str
+    event: str
+    liked: bool
+    message_index: int
+    user_message: Optional[str] = None
+    response_snippet: Optional[str] = None
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+    cost_usd: Optional[float] = None
+
+
 class LogAnalyzer:
     """Analyzes query logs and generates insights."""
 
     def __init__(self, log_path: str = "query_log.jsonl"):
         self.log_path = Path(log_path)
         self.records: List[QueryRecord] = []
+        self.votes: List[VoteRecord] = []
         self._load_logs()
 
     def _load_logs(self):
-        """Load and parse JSONL log file."""
+        """Load and parse JSONL log file, splitting queries from votes."""
         if not self.log_path.exists():
             print(f"❌ Log file not found: {self.log_path}")
             print("   Run the app first to generate logs.")
             sys.exit(1)
 
         legacy_count = 0
+        skipped = 0
         with open(self.log_path, 'r', encoding='utf-8') as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
@@ -87,21 +105,28 @@ class LogAnalyzer:
                     continue
                 try:
                     data = json.loads(line)
-                    # Track if this is a legacy entry (missing new fields)
-                    if 'model' not in data:
-                        legacy_count += 1
-                    self.records.append(QueryRecord(**data))
+
+                    # Route by record type
+                    if data.get("event") == "vote":
+                        self.votes.append(VoteRecord(**data))
+                    else:
+                        if 'model' not in data:
+                            legacy_count += 1
+                        self.records.append(QueryRecord(**data))
+
                 except (json.JSONDecodeError, TypeError) as e:
+                    skipped += 1
                     print(f"⚠️  Skipping malformed entry at line {line_num}: {e}")
 
-        print(f"✅ Loaded {len(self.records)} query records")
+        print(f"✅ Loaded {len(self.records)} query records, {len(self.votes)} vote records")
         if legacy_count:
-            print(f"   ℹ️  {legacy_count} legacy entries (pre-enhanced logging)\n")
-        else:
-            print()
+            print(f"   ℹ️  {legacy_count} legacy entries (pre-enhanced logging)")
+        if skipped:
+            print(f"   ⚠️  {skipped} entries skipped (malformed)")
+        print()
 
     def filter_last_n(self, n: int):
-        """Keep only the last N records."""
+        """Keep only the last N query records."""
         self.records = self.records[-n:]
         print(f"📊 Analyzing last {len(self.records)} queries\n")
 
@@ -118,8 +143,9 @@ class LogAnalyzer:
         similarities = [r.chunk_similarity_avg for r in self.records]
         response_lens = [r.response_chars for r in self.records]
 
-        return {
+        stats = {
             "total_queries": len(self.records),
+            "total_votes": len(self.votes),
             "date_range": {
                 "first": self.records[0].ts,
                 "last": self.records[-1].ts,
@@ -147,6 +173,19 @@ class LogAnalyzer:
             },
         }
 
+        # Add vote summary if votes exist
+        if self.votes:
+            likes = sum(1 for v in self.votes if v.liked)
+            dislikes = len(self.votes) - likes
+            stats["votes"] = {
+                "total": len(self.votes),
+                "likes": likes,
+                "dislikes": dislikes,
+                "satisfaction_rate": round(100 * likes / len(self.votes), 1) if self.votes else 0,
+            }
+
+        return stats
+
     def print_summary(self):
         """Print high-level summary statistics."""
         stats = self.summary_stats()
@@ -159,7 +198,12 @@ class LogAnalyzer:
         print("╚═══════════════════════════════════════════════════════════╝\n")
 
         print(f"📊 Total queries: {stats['total_queries']}")
-        print(f"📅 Date range: {stats['date_range']['first'][:10]} → {stats['date_range']['last'][:10]}\n")
+        print(f"📅 Date range: {stats['date_range']['first'][:10]} → {stats['date_range']['last'][:10]}")
+        if "votes" in stats:
+            v = stats["votes"]
+            print(f"👍 Votes: {v['likes']} likes / {v['dislikes']} dislikes "
+                  f"({v['satisfaction_rate']}% satisfaction)")
+        print()
 
         print("⚡ LATENCY")
         print(f"   Mean:   {stats['latency_ms']['mean']:,}ms")
@@ -184,6 +228,72 @@ class LogAnalyzer:
         print(f"   Tool calls:     {stats['flags']['tool_calls']} "
               f"({100*stats['flags']['tool_calls']/stats['total_queries']:.1f}%)")
         print(f"   Errors:         {stats['flags']['errors']}\n")
+
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # VOTE ANALYSIS (new)
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    def print_vote_analysis(self):
+        """Analyze thumbs up/down patterns."""
+        print("╔═══════════════════════════════════════════════════════════╗")
+        print("║                  VOTE ANALYSIS                            ║")
+        print("╚═══════════════════════════════════════════════════════════╝\n")
+
+        if not self.votes:
+            print("   No votes recorded yet.\n")
+            return
+
+        likes = [v for v in self.votes if v.liked]
+        dislikes = [v for v in self.votes if not v.liked]
+        total = len(self.votes)
+
+        print(f"👍 Likes:    {len(likes):>4}  ({100*len(likes)/total:.1f}%)")
+        print(f"👎 Dislikes: {len(dislikes):>4}  ({100*len(dislikes)/total:.1f}%)")
+        print(f"   Total:    {total:>4}\n")
+
+        # Satisfaction by model
+        by_model = defaultdict(lambda: {"likes": 0, "dislikes": 0})
+        for v in self.votes:
+            model = v.model or "unknown"
+            if v.liked:
+                by_model[model]["likes"] += 1
+            else:
+                by_model[model]["dislikes"] += 1
+
+        if any(m != "unknown" for m in by_model):
+            print("Satisfaction by model:")
+            print(f"{'Model':<30} {'Likes':>6} {'Dislikes':>9} {'Rate':>8}")
+            print("─" * 60)
+            for model in sorted(by_model.keys()):
+                d = by_model[model]
+                t = d["likes"] + d["dislikes"]
+                rate = 100 * d["likes"] / t if t else 0
+                print(f"{model:<30} {d['likes']:>6} {d['dislikes']:>9} {rate:>6.1f}%")
+            print()
+
+        # Show disliked responses (most actionable)
+        if dislikes:
+            print("👎 Disliked responses (action items):\n")
+            for i, v in enumerate(dislikes[:10], 1):
+                user_msg = (v.user_message or "unknown")[:70]
+                snippet = (v.response_snippet or "")[:100]
+                print(f"  {i}. User asked: \"{user_msg}\"")
+                print(f"     Response: \"{snippet}...\"")
+                if v.model:
+                    print(f"     Model: {v.model}")
+                print()
+
+        # Show liked responses (what's working)
+        if likes and len(likes) <= 20:
+            print("👍 Liked responses (what's working):\n")
+            for i, v in enumerate(likes[:5], 1):
+                user_msg = (v.user_message or "unknown")[:70]
+                print(f"  {i}. \"{user_msg}\"")
+            print()
+
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # EXISTING REPORTS (unchanged)
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def print_knowledge_gaps(self, top_n: int = 20):
         """Identify queries with poor retrieval quality."""
@@ -342,6 +452,18 @@ class LogAnalyzer:
             for r in sorted(gaps, key=lambda r: r.chunk_similarity_avg)[:20]
         ]
 
+        # Disliked responses (actionable feedback)
+        if self.votes:
+            stats["disliked_responses"] = [
+                {
+                    "user_message": v.user_message,
+                    "response_snippet": v.response_snippet,
+                    "model": v.model,
+                    "ts": v.ts,
+                }
+                for v in self.votes if not v.liked
+            ]
+
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2)
 
@@ -362,8 +484,19 @@ class LogAnalyzer:
             print("❌ No model data available\n")
             return
 
-        print(f"{'Model':<30} {'Queries':>8} {'Avg Sim':>8} {'Avg Cost':>10} {'$/Query':>10} {'Latency':>9}")
-        print("─" * 95)
+        # Build satisfaction lookup by model from votes
+        vote_by_model = defaultdict(lambda: {"likes": 0, "total": 0})
+        for v in self.votes:
+            model = v.model or "unknown"
+            vote_by_model[model]["total"] += 1
+            if v.liked:
+                vote_by_model[model]["likes"] += 1
+
+        has_votes = any(d["total"] > 0 for d in vote_by_model.values())
+        sat_header = "  Satisf" if has_votes else ""
+
+        print(f"{'Model':<30} {'Queries':>8} {'Avg Sim':>8} {'Avg Cost':>10} {'$/Query':>10} {'Latency':>9}{sat_header}")
+        print("─" * (95 + (9 if has_votes else 0)))
 
         for model in sorted(by_model.keys(), key=lambda m: len(by_model[m]), reverse=True):
             records = by_model[model]
@@ -373,8 +506,13 @@ class LogAnalyzer:
             avg_cost_per_query = total_cost / count if count > 0 else 0
             avg_lat = statistics.mean([r.latency_ms for r in records])
 
+            sat_col = ""
+            if has_votes and vote_by_model[model]["total"] > 0:
+                vd = vote_by_model[model]
+                sat_col = f"  {100*vd['likes']/vd['total']:>5.0f}%"
+
             print(f"{model:<30} {count:>8} {avg_sim:>8.3f} ${total_cost:>9.4f} "
-                  f"${avg_cost_per_query:>9.5f} {int(avg_lat):>7,}ms")
+                  f"${avg_cost_per_query:>9.5f} {int(avg_lat):>7,}ms{sat_col}")
         print()
 
     def print_cost_analysis(self):
@@ -492,6 +630,8 @@ class LogAnalyzer:
         """Print admin-specific comprehensive analysis."""
         self.print_summary()
         print()
+        self.print_vote_analysis()
+        print()
         self.print_model_comparison()
         print()
         self.print_cost_analysis()
@@ -511,6 +651,8 @@ class LogAnalyzer:
     def full_report(self):
         """Print comprehensive analysis."""
         self.print_summary()
+        print()
+        self.print_vote_analysis()
         print()
         self.print_workflow_breakdown()
         print()
@@ -536,6 +678,7 @@ Examples:
   python analyze_logs.py                           # Full report
   python analyze_logs.py --knowledge-gaps          # Only knowledge gaps
   python analyze_logs.py --last 100                # Last 100 queries
+  python analyze_logs.py --votes                   # Vote / satisfaction analysis
 
   # Admin logs
   python analyze_logs.py --log query_log_admin.jsonl --admin
@@ -549,6 +692,7 @@ Examples:
     parser.add_argument("--export", metavar="FILE", help="Export summary to JSON")
     parser.add_argument("--knowledge-gaps", action="store_true", help="Show only knowledge gaps")
     parser.add_argument("--performance", action="store_true", help="Show only performance issues")
+    parser.add_argument("--votes", action="store_true", help="Show vote / satisfaction analysis")
     # Admin-specific reports
     parser.add_argument("--admin", action="store_true", help="Admin mode: full report with model/cost analysis")
     parser.add_argument("--compare-models", action="store_true", help="Compare models on quality, cost, latency")
@@ -567,6 +711,8 @@ Examples:
         analyzer.export_summary(args.export)
     elif args.admin:
         analyzer.admin_report()
+    elif args.votes:
+        analyzer.print_vote_analysis()
     elif args.compare_models:
         analyzer.print_model_comparison()
     elif args.cost_analysis:

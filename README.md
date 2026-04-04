@@ -412,6 +412,29 @@ python run_evals.py --category friendly
 python analyze_evals.py --export
 ```
 
+## Query Log Analyzer
+
+Every conversation turn and visitor vote (👍/👎) is logged to `query_log.jsonl`. The analyzer surfaces knowledge gaps, performance issues, cost trends, and visitor satisfaction.
+
+```bash
+python analyze_logs.py                  # Full report
+python analyze_logs.py --votes          # Satisfaction analysis (thumbs up/down)
+python analyze_logs.py --knowledge-gaps # Queries where retrieval was weak
+python analyze_logs.py --last 50        # Analyze only the last 50 queries
+python analyze_logs.py --export summary.json
+```
+
+**Admin mode** (for model comparison and cost analysis):
+```bash
+python analyze_logs.py --admin              # Full admin report
+python analyze_logs.py --compare-models     # Quality, cost, and latency by model
+python analyze_logs.py --cost-analysis      # ROI: similarity per dollar
+python analyze_logs.py --compare-providers  # OpenAI vs Anthropic vs Gemini vs Ollama
+python analyze_logs.py --config-experiments # Temperature and top-K impact
+```
+
+**What it tracks:** latency, retrieval similarity, response length, workflow type, tool calls, model/provider, cost, and thumbs up/down with the user question that triggered each vote.
+
 ## Roadmap
 
 - [ ] **Multi-modal support**: Integrate image understanding for project screenshots
