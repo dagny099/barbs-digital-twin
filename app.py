@@ -1147,7 +1147,6 @@ if __name__ == "__main__":
             max_height=700,
             autoscroll=True,
             render_markdown=True,
-            autofocus=True
         )
         chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs the user message
 
