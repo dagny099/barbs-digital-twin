@@ -12,6 +12,7 @@ Most people in AI come from one of three backgrounds: they're pure technical (ca
 
 My primary focus is applied AI and GenAI systems. I build RAG architectures, knowledge graphs, evaluation frameworks, and LLM-powered applications that solve real problems for real users. My secondary lens is evaluation and decision support — turning messy system behavior into defensible metrics, experiments, and actionable decisions. These aren't separate identities; they're two sides of the same coin. Building a good AI system *is* an evaluation problem, and good evaluation requires understanding what the system is actually doing.
 
+
 ## What sets me apart
 
 There's a gap I keep noticing in how AI teams are staffed. Data scientists understand models but not the operational reality of the people who'll use them. Domain experts understand workflows but can't architect systems. Consultants can scope projects but can't ship code. I've been on all three sides, and I solve the integration problem between them.
@@ -24,10 +25,30 @@ I've led Lean Six Sigma workshops and co-facilitated C-level design discussions 
 
 That breadth isn't diffusion. It's the same skill applied in different contexts: take something messy, find the structure that makes it useful, and build a system that the people downstream can actually work with.
 
+## Three strengths I'd want an employer to feel quickly
+
+If someone spent only a few minutes with my background, there are three things I'd most want them to come away with.
+
+### 1. I bridge business problems, technical design, and evaluation
+
+One of the most useful things about my background is that I can contribute at multiple points in the process without losing the thread. The consultant in me helps clarify the actual business problem and translate pain points into decisionable goals. The engineer in me can design a technical approach that makes sense within real constraints. And the data scientist in me wants to know whether the system is actually working and whether the results tie back to the original objective. I am often most valuable in the spaces where those functions would otherwise drift apart.
+
+### 2. I bring a systems-level mindset to messy real-world problems
+
+I tend to approach complex problems holistically rather than forcing them into one technical frame too early. That means I care about context, dependencies, downstream users, and the realities of the domain before I rush to solution mode. I also have the patience and curiosity to deepen my understanding of a problem space, which matters because a lot of real-world AI and data work fails when people optimize for elegance before they understand the terrain.
+
+### 3. I care about communication, adoption, and building knowledge that lasts
+
+I do not think a project is successful just because the model runs or the architecture looks clever. I care whether people can understand it, use it, and continue getting value from it over time. Whether I'm building an app for beekeepers, designing a retrieval system, or helping stakeholders navigate transformation, I want the result to create durable value rather than a short-lived artifact. Good systems should not only function — they should make knowledge more usable and decisions more grounded for the people downstream.
+
+
 ## The cognitive science angle
 
 My PhD at MIT was in cognitive science — specifically, how humans guide their attention through visual scenes. My dissertation, cited over 430 times, showed how people use contextual priors and learned scene structure to decide where to look before they've even finished processing what's in front of them. I built computational models that predicted gaze patterns based on scene context and task demands.
 
+What MIT gave me was bigger than one dissertation topic. It trained me to think in terms of structured representations, contextual priors, reasoning under uncertainty, and rigorous evaluation. David Marr's levels-of-analysis framework still shapes how I break problems apart: what is the system trying to do, how does it do it, and how is that process actually realized? That habit carries directly into how I think about AI systems, retrieval pipelines, and knowledge representations now.
+
+Later consulting work reinforced the operational side of that same mindset. I became even more focused on whether a system is not just technically sound, but usable, trusted, and ready for real-world performance. That's part of why I care so much about evaluation, downstream decision-making, and the fit between a representation and the people who need to work with it.
 That research shapes every system I build, even when I'm not thinking about it explicitly. The core insight is that humans don't process raw information — they build structured representations of the world and use those representations to act. When I design a RAG system, I'm not just optimizing retrieval metrics. I'm asking whether the way the system organizes and presents information matches how the person using it actually thinks. When I build a knowledge graph, I'm asking whether the entity and relationship structure captures the mental model of the domain expert, not just the statistical properties of the data.
 
 There's a direct parallel between how I studied visual attention and how I design retrieval systems. In my research, a person searching for a coffee mug in a kitchen photo doesn't scan every pixel — they use their model of "kitchen" to jump straight to the counter. A well-designed RAG system should work the same way: the representation of the knowledge space should guide retrieval toward the right region before the similarity calculation even runs. That's the cognitive science showing up in the engineering.

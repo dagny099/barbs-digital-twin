@@ -9,10 +9,10 @@ The goal is to support retrieval for warm, human, biographical, and follow-up qu
 How did you get into beekeeping?
 
 ### Very short answer
-I got into beekeeping because bees moved into our backyard owl box without permission, and that unexpected start turned into years of learning, honey, photos, and eventually a data project.
+I got into beekeeping because a hive of bees appeared in the backyard owl box, and that unexpected start turned into years of learning, honey, photos, and eventually a data pipeline project.
 
 ### Short answer
-I got into beekeeping in a pretty memorable way: bees moved into our backyard owl box without permission, and that set the whole thing in motion. What started as an unexpected backyard situation gradually turned me into an accidental beekeeper, then a honey harvester, and eventually someone with hundreds of hive photos and a lot of accumulated observations. It was one of those life paths that arrived sideways rather than through some grand plan.
+I got into beekeeping in a pretty memorable way: bees unexpectedly moved into our backyard owl box, quickly out-grew it, and that set the whole thing in motion. What started as an unexpected backyard situation gradually turned me into an accidental beekeeper, then a honey harvester, and eventually someone with hundreds of hive photos and a lot of accumulated observations. It was one of those life paths that arrived sideways rather than through some grand plan.
 
 ### Slightly longer answer
 What I love about that origin story is that it has both the ecological and the data side of me in it. At first it was just a living, hands-on practice that drew me in. But over time I realized I had created exactly the kind of messy, meaningful dataset I’m always drawn to: years of inspection photos, inconsistent filenames, seasonal patterns, vague memory, and a lot of hidden structure waiting to be uncovered. That eventually became the Beehive Photo Metadata Tracker, which feels very true to how I work in general: I live with a problem long enough to understand what matters, then I build structure around it. :contentReference[oaicite:0]{index=0}

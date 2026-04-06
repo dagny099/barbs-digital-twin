@@ -21,9 +21,13 @@ NON-INTERACTIVE FLAGS:
     python ingest.py --source kb-origins --dry-run   
 
 SOURCE KEYS:
-    kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career, kb-answers
-    kb-publications, project-summaries, jekyll, project-walkthroughs
-"""
+    kb-biosketch, kb-philosophy, kb-positioning, kb-projects, kb-career,
+    kb-publications, kb-answers, kb-origins,
+    kb-dissertation-overview, kb-dissertation-relevance,
+    kb-dissertation-philosophy, kb-intellectual-foundations,
+    kb-easter-eggs,
+    project-summaries, jekyll, project-walkthroughs
+    """
 
 import os
 import sys
@@ -55,7 +59,7 @@ COLLECTION  = "barb-twin"
 SOURCES = [
 
     # ── Structured KB documents (all use embed_kb_doc.py) ───────────────────
-    # These six markdown files form the core of the knowledge base.
+    # These structured markdown files form the core and extended knowledge base.
     # Each is parsed by ## H2 headers into named sections before chunking.
     {
         "key":           "kb-biosketch",
@@ -91,6 +95,50 @@ SOURCES = [
         "source_prefix": "kb-positioning:",
     },
     {
+        "key":           "kb-intellectual-foundations",
+        "label":         "KB: Intellectual Foundations",
+        "description":   "inputs/kb_intellectual_foundations.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_intellectual_foundations.md",
+                        "--source-type", "kb-intellectual-foundations"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-intellectual-foundations:",
+    },
+    {
+        "key":           "kb-dissertation-overview",
+        "label":         "KB: Dissertation Overview",
+        "description":   "inputs/kb_dissertation_overview.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_dissertation_overview.md",
+                        "--source-type", "kb-dissertation-overview"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-dissertation-overview:",
+    },
+    {
+        "key":           "kb-dissertation-relevance",
+        "label":         "KB: Dissertation Relevance",
+        "description":   "inputs/kb_dissertation_modern_relevance.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_dissertation_modern_relevance.md",
+                        "--source-type", "kb-dissertation-relevance"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-dissertation-relevance:",
+    },
+    {
+        "key":           "kb-dissertation-philosophy",
+        "label":         "KB: Dissertation Philosophy",
+        "description":   "inputs/kb_dissertation_philosophy.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_dissertation_philosophy.md",
+                        "--source-type", "kb-dissertation-philosophy"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-dissertation-philosophy:",
+    },
+    {
         "key":           "kb-projects",
         "label":         "KB: Project Portfolio",
         "description":   "inputs/kb_projects.md",
@@ -123,40 +171,6 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "kb-publications:",
     },
-
-
-    # ── Other sources ────────────────────────────────────────────────────────
-    {
-        "key":           "project-summaries",
-        "label":         "Project Summaries (PDFs)",
-        "description":   "inputs/project-summaries/ (one-page PDFs)",
-        "script":        "embed_project_summaries.py",
-        "base_args":     [],
-        "force_arg":     "--force-reembed",
-        "dry_run_arg":   "--dry-run",
-        "source_prefix": "project-summary:",
-    },
-    {
-        "key":           "jekyll",
-        "label":         "Jekyll Website",
-        "description":   "https://barbhs.com (via sitemap)",
-        "script":        "embed_jekyll.py",
-        "base_args":     [],
-        "force_arg":     "--force-reembed",
-        "dry_run_arg":   "--dry-run",
-        "source_prefix": "jekyll:",
-    },
-
-    {
-        "key":           "project-walkthroughs",
-        "label":         "Project Walkthroughs",
-        "description":   "Walkthrough contexts from featured_projects.py (1 chunk per project, no splitting)",
-        "script":        "embed_walkthroughs.py",
-        "base_args":     [],
-        "force_arg":     "--force-reembed",
-        "dry_run_arg":   "--dry-run",
-        "source_prefix": "project-walkthrough:",
-    },
     {
         "key":           "kb-answers",
         "label":         "KB: Answer Bank",
@@ -178,7 +192,49 @@ SOURCES = [
         "force_arg":     "--force-reembed",
         "dry_run_arg":   "--dry-run",
         "source_prefix": "kb-origins:",
-    }
+    },
+    {
+        "key":           "kb-easter-eggs",
+        "label":         "KB: Easter Eggs / Recognition",
+        "description":   "inputs/kb_easter_eggs.md",
+        "script":        "embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/kb_easter_eggs.md",
+                        "--source-type", "kb-easter-eggs"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "kb-easter-eggs:",
+    },
+
+    {
+        "key":           "project-walkthroughs",
+        "label":         "Project Walkthroughs",
+        "description":   "Walkthrough contexts from featured_projects.py (1 chunk per project, no splitting)",
+        "script":        "embed_walkthroughs.py",
+        "base_args":     [],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-walkthrough:",
+    },
+    {
+        "key":           "project-summaries",
+        "label":         "Project Summaries (PDFs)",
+        "description":   "inputs/project-summaries/ (one-page PDFs)",
+        "script":        "embed_project_summaries.py",
+        "base_args":     [],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-summary:",
+    },
+    {
+        "key":           "jekyll",
+        "label":         "Jekyll Website",
+        "description":   "https://barbhs.com (via sitemap)",
+        "script":        "embed_jekyll.py",
+        "base_args":     [],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "jekyll:",
+    },
 ]
 
 SOURCE_BY_KEY = {s["key"]: s for s in SOURCES}

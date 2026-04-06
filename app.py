@@ -361,7 +361,7 @@ div[role="log"][aria-label="chatbot conversation"] {
     background: linear-gradient(135deg, #EEF4F7 0%, #DAE8F0 100%) !important;
     border: 1px solid #B2C8D8 !important;
     border-radius: 8px !important;
-    color: #1a1f2e !important;
+    color: #679d98 !important;
     font-size: 0.92rem !important;
     font-weight: 500 !important;
     line-height: 1.4 !important;
@@ -1128,7 +1128,7 @@ def _build_title_html() -> str:
         '<h1>Barbara\'s Digital Twin</h1>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">'
-        'Ask about my professional background, technical projects, or personal interests</p>'
+        'My portfolio, in conversation form</p>'
     )
 
 if __name__ == "__main__":
@@ -1141,7 +1141,7 @@ if __name__ == "__main__":
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="<h3 style='text-align:center;color:#1a1f2e;margin-bottom:6px;'>Hola! I'm Barbara's Digital Twin.</h3><p style='text-align:center;color:#444;font-size:1.05rem;'>Ask me about her projects, background, or interests — or pick a topic below!</p>",
+            placeholder="<h3 style='text-align:center;margin-bottom:6px;'>Hola! I'm the next best thing to talking to Barbara directly.</h3><p style='text-align:center;font-size:1.05rem;'>I know her projects, her research, and why she builds the way she does. Ask me anything.</p>",
             height="65vh",
             min_height=320,
             max_height=700,

@@ -29,7 +29,7 @@ Full setup details below.
 
 ## Features
 
-- **Multi-Source Knowledge Base**: Six structured KB documents (biosketch, philosophy, positioning, projects, career narrative, publications) plus one-page project PDFs and the live website
+- **Multi-Source Knowledge Base**: A growing set of structured KB documents (biosketch, philosophy, positioning, projects, career narrative, publications) plus one-page project PDFs and the live website
 - **Semantic Search & RAG**: ChromaDB vector store with OpenAI embeddings for intelligent context retrieval
 - **Section-Aware Ingestion**: Each data source is parsed into named sections, giving the LLM precise provenance for every retrieved chunk
 - **Conversational Interface**: Gradio ChatInterface for natural conversations
@@ -212,7 +212,7 @@ python ingest.py --source kb-biosketch --force         # Force re-embed one sour
 python ingest.py --source project-summaries --dry-run  # Preview without embedding
 ```
 
-**Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-projects`, `kb-career`, `kb-publications`, `project-summaries`, `jekyll`
+**Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-intellectual-foundations`, `kb-dissertation-overview`, `kb-dissertation-relevance`, `kb-dissertation-philosophy`, `kb-projects`, `kb-career`, `kb-publications`, `kb-answers`, `kb-origins`, `kb-easter-eggs`, `project-summaries`, `jekyll`, `project-walkthroughs`
 
 ### Checking DB Contents
 
@@ -276,7 +276,7 @@ The knowledge base uses **section-aware metadata** so the LLM knows exactly wher
 - **Source key**: `kb-publications`
 - **Content**: Academic papers, conference posters, and dissertation with PDF links
 
-> All six KB documents above use `embed_kb_doc.py` — the same parsing logic (`##` headers → sections → `chunk_prose`).
+> All  KB documents above use `embed_kb_doc.py` — the same parsing logic (`##` headers → sections → `chunk_prose`).
 
 ### 7. Project Summaries
 - **Folder**: `inputs/project-summaries/` (one-page PDFs)
