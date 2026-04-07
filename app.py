@@ -70,6 +70,101 @@ MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 14))  # Last 14 tur
 SERVER_PORT = int(os.getenv("PORT", 7860))
 
 # ═══════════════════════════════════════════════════════════════════
+# SENSITIVITY GATING — Passphrase-based audience detection
+# ═══════════════════════════════════════════════════════════════════
+#
+# These phrases, when detected in the conversation, unlock progressively
+# more personal content from the knowledge base. Detection is
+# case-insensitive and checks the ENTIRE conversation history (not just
+# the current message), so a phrase said in turn 1 keeps content
+# unlocked for the rest of the session.
+#
+# Tier escalation: public → personal → inner_circle
+# Once a tier is unlocked, it stays unlocked for the session.
+
+# Inner circle: phrases that indicate close personal connection.
+# These unlock ALL content (public + personal + inner_circle).
+INNER_CIRCLE_PHRASES = [
+    "somos un equipo",
+    "ni casada, ni con hijos",
+    "baba",                        # family nickname
+    # Add more as needed — family sayings, insider references, etc.
+]
+
+# Personal: phrases that suggest familiarity (but not inner circle).
+# These unlock public + personal content.
+PERSONAL_PHRASES = [
+    "cvcl",
+    "easy button",
+    "bilingual lady communicators",
+    "daisy 5k",
+    "science academy",
+    "deans scholars",
+    "toastmasters"
+    # Add more — labmate names, Toastmasters references, etc.
+]
+
+
+def detect_audience_tier(message: str, history: list) -> str:
+    """Scan current message + conversation history for passphrase signals.
+
+    Returns the highest tier detected: 'inner_circle', 'personal', or 'public'.
+
+    The detection is deliberately simple: case-insensitive substring match.
+    This is NOT security — it's a content-appropriateness gate. A determined
+    person could guess the phrases, but the failure mode (seeing personal
+    content) is low-stakes compared to, say, authentication.
+
+    Args:
+        message: Current user message
+        history: Gradio conversation history (list of dicts with 'role' and 'content')
+
+    Returns:
+        One of 'public', 'personal', or 'inner_circle'
+    """
+    # Build a single lowercase string from all user messages in the conversation
+    all_user_text = message.lower()
+    for turn in history:
+        if turn.get("role") == "user":
+            content = turn.get("content", "")
+            if isinstance(content, str):
+                all_user_text += " " + content.lower()
+
+    # Check inner circle first (highest tier)
+    for phrase in INNER_CIRCLE_PHRASES:
+        if phrase.lower() in all_user_text:
+            return "inner_circle"
+
+    # Then personal
+    for phrase in PERSONAL_PHRASES:
+        if phrase.lower() in all_user_text:
+            return "personal"
+
+    return "public"
+
+
+def build_sensitivity_filter(tier: str) -> dict | None:
+    """Build a ChromaDB `where` filter for the given audience tier.
+
+    Tier escalation:
+        'public'       → only chunks with sensitivity='public'
+        'personal'     → chunks with sensitivity='public' OR 'personal'
+        'inner_circle' → all chunks (no filter needed)
+
+    Args:
+        tier: One of 'public', 'personal', 'inner_circle'
+
+    Returns:
+        A ChromaDB `where` dict, or None if no filtering is needed.
+    """
+    if tier == "inner_circle":
+        return None  # No filter — retrieve from everything
+    elif tier == "personal":
+        return {"sensitivity": {"$in": ["public", "personal"]}}
+    else:
+        return {"sensitivity": {"$eq": "public"}}
+
+# ═══════════════════════════════════════════════════════════════════
 # MULTI-PROVIDER MODEL REGISTRY
 # ═══════════════════════════════════════════════════════════════════
 
@@ -283,62 +378,358 @@ with open("assets/bee_barb.png", "rb") as f:
 FAVICON_HEAD = f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
 
 custom_css = """
-/* ── Explore accordion: category label spacing ─────────────────── */
-.sidebar-category {
-    margin-top: 10px !important;
-    margin-bottom: 4px !important;
-    font-size: 13px !important;
+/* ── Soft intelligent warmth palette ──────────────────────────── */
+:root {
+    --bg-card: #FFFDF9;
+    --bg-card-soft: #FCF7F0;
+    --bg-chat-top: #E8F2EE;
+    --bg-chat-bottom: #F3E8DA;
+    --bg-mid: #EDF2EC;
+    --bg-tint: #F3ECE2;
+    --text-main: #24313A;
+    --text-muted: #61707A;
+    --text-soft: #7D8B94;
+    --border-soft: #D9DDD6;
+    --border-strong: #BEC9C4;
+    --accent: #2F7F7B;
+    --accent-strong: #256B68;
+    --accent-deep: #1F565B;
+    --accent-soft: #E2F0EC;
+    --warm: #C88B4A;
+    --warm-soft: #F6E6D2;
+    --warm-glow: rgba(200, 139, 74, 0.14);
+    --teal-glow: rgba(47, 127, 123, 0.14);
+    --shadow-soft: 0 10px 28px rgba(40, 49, 56, 0.08);
+    --shadow-md: 0 14px 36px rgba(40, 49, 56, 0.12);
+    --shadow-hover: 0 16px 36px rgba(34, 42, 48, 0.14);
+    --radius-xl: 22px;
+    --radius-lg: 18px;
+    --radius-md: 14px;
+    --radius-sm: 12px;
 }
-/* ── Explore Topics question buttons ───────────────────────────── */
-.sidebar-btn {
-    width: 100% !important;
-    text-align: left !important;
-    padding: 5px 10px 5px 14px !important;
-    border-radius: 6px !important;
-    font-size: 14.5px !important;
-    line-height: 1.35 !important;
-    margin-bottom: 2px !important;
-    white-space: normal !important;
-    height: auto !important;
-    min-height: unset !important;
-    overflow: visible !important;
-    border: 1px solid rgba(0,0,0,0.12) !important;
-    transition: all 0.15s ease !important;
-}
-.sidebar-btn span {
-    overflow: visible !important;
-    display: block !important;
-}
-.sidebar-btn:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
-}
-/* ── Bold text — extra heavy so it reads clearly ───────────────── */
-.chatbot .prose strong, .chatbot .prose b {
-    font-weight: 900 !important;
-    color: #1B2D3A !important;
-}
-.dark .chatbot .prose strong, .dark .chatbot .prose b {
-    color: #D0E8F0 !important;
-}
-/* ── Chatbot area — pale steel blue (light) / deep steel blue (dark) */
-/* Light: same hue family as barbhs.com hero, quieter/softer register  */
-/* Dark:  deep version of that same hero — feels like the same "room"  */
-/* Height uses viewport units so it adapts across screen sizes          */
-div[role="log"][aria-label="chatbot conversation"] {
-    background-color: #EEF4F7 !important;
-    border-radius: 8px !important;
-}
-.dark div[role="log"][aria-label="chatbot conversation"] {
-    background-color: #1B2D3A !important;
-}
-/* ── Global font ────────────────────────────────────────────────── */
-* { font-family: 'IBM Plex Sans', sans-serif !important; }
 
-/* ── Example question buttons ───────────────────────────────────── */
-/* The real inner wrapper that controls icon/text alignment           */
+.dark {
+    --bg-card: #22313A;
+    --bg-card-soft: #2A3A44;
+    --bg-chat-top: #204845;
+    --bg-chat-bottom: #314037;
+    --bg-mid: #243532;
+    --bg-tint: #2A3942;
+    --text-main: #EAF0EE;
+    --text-muted: #B5C4C0;
+    --text-soft: #97AAA5;
+    --border-soft: rgba(226, 236, 232, 0.12);
+    --border-strong: rgba(226, 236, 232, 0.18);
+    --accent: #7DC7BC;
+    --accent-strong: #9AD9CF;
+    --accent-deep: #C1ECE5;
+    --accent-soft: rgba(125, 199, 188, 0.12);
+}    --warm: #E0A86A;
+    --warm-soft: rgba(224, 168, 106, 0.14);
+    --warm-glow: rgba(224, 168, 106, 0.16);
+    --teal-glow: rgba(114, 184, 175, 0.18);
+    --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 14px 36px rgba(0, 0, 0, 0.34);
+    --shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.42);
+}
+
+* { font-family: 'IBM Plex Sans', sans-serif !important; }
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100% !important;
+    background-color: var(--bg-chat-top) !important;
+    background-image: linear-gradient(180deg, var(--bg-chat-top) 0%, var(--bg-mid) 34%, var(--bg-chat-bottom) 100%) !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    color: var(--text-main) !important;
+}
+
+.gradio-container {
+    min-height: 100vh !important;
+    background: transparent !important;
+    margin: 0 auto !important;
+    padding: 20px 16px 24px !important;
+    position: relative;
+    z-index: 1;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 12% 8%, var(--warm-glow) 0%, transparent 32%),
+        radial-gradient(circle at 88% 10%, var(--teal-glow) 0%, transparent 28%);
+    z-index: 0;
+}
+
+.gr-block,
+.gr-box,
+.gr-panel,
+.block,
+.contain,
+#explore-accordion,
+.settings-accordion {
+    border-radius: var(--radius-xl) !important;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin: 0 !important;
+}
+.title-row img {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 3px solid rgba(47, 127, 123, 0.24) !important;
+    box-shadow: 0 8px 18px rgba(36, 49, 58, 0.18) !important;
+    flex-shrink: 0 !important;
+}
+.title-row h2 {
+    margin: 0 !important;
+    font-size: 2rem !important;
+    line-height: 1.0 !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+    color: var(--text-main) !important;
+}
+.title-subtitle {
+    margin: 0px !important;
+    color: var(--text-muted) !important;
+    font-size: 1.03rem !important;
+}
+
+/* ── Hide leftover chrome ─────────────────────────────────────── */
+.chatbot label,
+.chatbot .label-wrap,
+footer {
+    display: none !important;
+}
+
+/* ── Chatbot shell ────────────────────────────────────────────── */
+.chatbot {
+    position: relative !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+.chatbot .message,
+.chatbot .wrap,
+.chatbot .bubble-wrap,
+.chatbot .prose,
+.chatbot .prose p,
+.chatbot .prose li,
+.chatbot .prose span {
+    color: var(--text-main) !important;
+}
+.chatbot .prose strong,
+.chatbot .prose b {
+    font-weight: 800 !important;
+    color: var(--text-main) !important;
+}
+
+.chatbot.block {
+    padding-top: 0px !important;
+    margin-top: 0px !important;
+    border: none !important;
+    background: transparent !important;
+}
+.chatbot .wrapper,
+.chatbot > div {
+    background: transparent !important;
+}
+
+
+/* Main chat panel: this should own the cream background and the single border */
+div[role="log"][aria-label="chatbot conversation"] {
+    background: #FBF7F1 !important;
+    border: 1px solid rgba(190, 201, 196, 0.88) !important;
+    border-radius: 22px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Flatten inner conversation wrappers so they do not create a second card */
+div[role="log"][aria-label="chatbot conversation"] .bubble-wrap,
+div[role="log"][aria-label="chatbot conversation"] .message-wrap {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.dark div[role="log"][aria-label="chatbot conversation"] {
+    background: #F3EFE8 !important;
+    border-color: rgba(112, 135, 132, 0.38) !important;
+}
+
+/* Individual message bubbles */
+.chatbot .message-row .message {
+    border-radius: var(--radius-lg) !important;
+}
+/* Bot message bubble */
+.chatbot .bot.message-row .message {
+    background: rgba(255, 253, 249, 0.72) !important;
+    border: 1px solid var(--border-soft) !important;
+}
+.dark .chatbot .bot.message-row .message {
+    background: rgba(37, 49, 58, 0.58) !important;
+    border: 1px solid rgba(138, 164, 160, 0.18) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* User message bubble */
+.chatbot .user.message-row .message {
+    background: var(--accent-soft) !important;
+    border: 1px solid rgba(47, 127, 123, 0.18) !important;
+}
+.dark .chatbot .user.message-row .message {
+    background: rgba(125, 199, 188, 0.10) !important;
+    border: 1px solid rgba(125, 199, 188, 0.18) !important;
+}
+
+.chatbot-header {
+    text-align: center;
+    margin-bottom: 10px;
+    color: var(--text-main);
+    font-size: 1.65rem;
+    line-height: 1.14;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+.chatbot-subtitle {
+    text-align: center;
+    font-size: 1.15rem;
+    line-height: 1.68;
+    color: var(--text-muted);
+    max-width: 630px;
+    margin: 0 auto;
+}
+
+.dark .chatbot-header {
+    color: #2A3942 !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+.dark .chatbot-subtitle {
+    color: #61707A !important;
+    max-width: 580px !important;
+}
+
+/* ── Clean Consolidated Input Row ── */
+
+/* 1. The Parent "Pill" Container */
+.gradio-container form > div {
+    display: flex !important;
+    align-items: center !important;
+    background: rgba(255, 253, 249, 0.96) !important;
+    border-radius: 28px !important;
+    padding: 2px 14px 2px 4px !important;
+    border: 1px solid var(--border-strong) !important;
+    box-shadow: 0 6px 18px rgba(36, 49, 58, 0.06) !important;
+    gap: 0px !important;
+}
+
+/* 2. The Textarea Reset */
+.gradio-container textarea,
+.gradio-container input[type="text"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--text-main) !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;    
+    flex-grow: 1 !important;
+    padding-top: 16px !important;
+    padding-bottom: 12px !important;
+    padding-left: 16px !important;
+    min-height: 56px !important;
+    line-height: 1.5 !important;
+}
+
+/* Placeholder color */
+.gradio-container textarea::placeholder {
+    color: rgba(47, 127, 123, 0.65) !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em !important;
+}
+.dark .gradio-container textarea::placeholder {
+    color: rgba(154, 217, 207, 0.66) !important;
+}
+
+/* 3. The Submit Button */
+button[aria-label="Submit"],
+button.submit-button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--accent) !important;
+    border-radius: 50% !important;
+    height: 42px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.15s ease, color 0.15s ease !important;
+    box-shadow: none !important;
+}
+
+button[aria-label="Submit"]:hover {
+    transform: scale(1.1) !important;
+    color: var(--accent-strong) !important;
+}
+
+/* 4. Global Wrappers Reset */
+.gradio-container .gr-form,
+.gradio-container form {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0px !important;
+    margin-top: 16px !important;
+}
+
+/* 5. Dark Mode — input pill */
+.dark .gradio-container form > div {
+    background: linear-gradient(180deg, rgba(34, 47, 56, 0.96) 0%, rgba(29, 41, 49, 0.96) 100%) !important;
+    border: 1px solid rgba(125, 199, 188, 0.18) !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+.dark .gradio-container form > div:focus-within {
+    border-color: rgba(154, 217, 207, 0.44) !important;
+    box-shadow: 0 0 0 4px rgba(125, 199, 188, 0.10), 0 10px 26px rgba(0, 0, 0, 0.22) !important;
+}
+
+.dark .gradio-container textarea {
+    color: #E8F1EE !important;
+}
+
+.dark button[aria-label="Submit"] {
+    color: #8FD0C7 !important;
+}
+
+.dark button[aria-label="Submit"]:hover {
+    color: #B3E2DA !important;
+}
+
+/* ── Example cards ────────────────────────────────────────────── */
 .example-content {
     align-items: center !important;
+}
+.examples {
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    gap: 12px !important;
 }
 .examples .example {
     display: flex !important;
@@ -349,27 +740,28 @@ div[role="log"][aria-label="chatbot conversation"] {
     width: 24px !important;
     height: 24px !important;
     display: block !important;
-    margin: 0 auto 8px auto !important;
-    opacity: 0.75 !important;
+    margin: 0 auto 10px auto !important;
+    opacity: 0.84 !important;
 }
-/* Center text, near-black to match icon color                       */
 .examples button {
     text-align: center !important;
     justify-content: center !important;
     flex-direction: column !important;
     align-items: center !important;
-    background: linear-gradient(135deg, #EEF4F7 0%, #DAE8F0 100%) !important;
-    border: 1px solid #B2C8D8 !important;
-    border-radius: 8px !important;
-    color: #679d98 !important;
-    font-size: 0.92rem !important;
+    background: linear-gradient(180deg, rgba(255,253,249,0.96) 0%, rgba(250,244,236,0.96) 100%) !important;
+    border: 1px solid rgba(190, 201, 196, 0.95) !important;
+    border-radius: 18px !important;
+    color: var(--accent) !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-size: 1rem !important;
     font-weight: 500 !important;
-    line-height: 1.4 !important;
-    padding: 12px 14px !important;
+    line-height: 1.45 !important;
+    padding: 15px !important;
     white-space: normal !important;
     height: auto !important;
-    min-height: 56px !important;
-    transition: all 0.15s ease !important;
+    min-height: 85px !important;
+    box-shadow: 0 6px 14px rgba(44, 52, 57, 0.06) !important;
+    transition: all 0.16s ease !important;
 }
 .examples button span {
     display: block !important;
@@ -377,187 +769,178 @@ div[role="log"][aria-label="chatbot conversation"] {
     text-align: center !important;
 }
 .examples button:hover {
-    background: linear-gradient(135deg, #DAE8F0 0%, #C4D9E8 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+    border-color: rgba(47, 127, 123, 0.68) !important;
+    background: linear-gradient(180deg, #FFFDF9 0%, #F6EEE4 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-hover) !important;
 }
+/* Dark mode example cards */
 .dark .examples button {
-    background: linear-gradient(135deg, #1B2D3A 0%, #213547 100%) !important;
-    border: 1px solid rgba(144,184,212,0.3) !important;
-    color: #90B8D4 !important;
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-soft) 100%) !important;
+    border-color: var(--border-strong) !important;
+    color: var(--accent) !important;
 }
 .dark .examples button:hover {
-    background: linear-gradient(135deg, #213547 0%, #2a4560 100%) !important;
+    border-color: var(--accent) !important;
+    background: linear-gradient(180deg, var(--bg-card-soft) 0%, var(--bg-card) 100%) !important;
 }
-/* ── Explore Topics accordion label — bold and prominent ────────── */
+
+/* ── Explore topics ───────────────────────────────────────────── */
+#explore-accordion {
+    background: linear-gradient(180deg, rgba(255,253,249,0.96) 0%, rgba(250,246,240,0.96) 100%) !important;
+    border: 1px solid var(--border-soft) !important;
+    box-shadow: var(--shadow-soft) !important;
+    overflow: hidden !important;
+}
+/* Dark mode explore accordion */
+.dark #explore-accordion {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-soft) 100%) !important;
+}
 #explore-accordion .label-wrap span,
 #explore-accordion > div:first-child span {
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    letter-spacing: 0.01em !important;
-}
-/* ── Explore Topics accordion — tri-color gradient (light mode) ──── */
-/* Teal · Steel Blue · Warm Amber — mirrors button palette            */
-#explore-accordion {
-    background: linear-gradient(
-        135deg,
-        rgba(224, 245, 248, 0.5) 0%,
-        rgba(229, 237, 243, 0.5) 50%,
-        rgba(254, 243, 226, 0.5) 100%
-    ) !important;
-    border-radius: 8px !important;
-}
-/* ── Explore accordion dark mode ───────────────────────────────── */
-.dark #explore-accordion {
-    background: linear-gradient(
-        135deg,
-        rgba(10, 32, 40, 0.6) 0%,
-        rgba(27, 45, 58, 0.6) 50%,
-        rgba(45, 32, 10, 0.6) 100%
-    ) !important;
-}
-/* ── Title header with circular headshot ──────────────────────── */
-.title-row {
-    display: flex !important;
-    align-items: center !important;
-    gap: 16px !important;
-    margin-bottom: 4px !important;
-}
-.title-row img {
-    width: 64px !important;
-    height: 64px !important;
-    border-radius: 50% !important;
-    object-fit: cover !important;
-    border: 2px solid #B2E8EE !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
-    flex-shrink: 0 !important;
-}
-.title-row h1 {
-    margin: 0 !important;
-    font-size: 1.6rem !important;
     font-weight: 700 !important;
+    font-size: 1.03rem !important;
+    color: var(--text-main) !important;
+    letter-spacing: -0.01em !important;
 }
-.title-subtitle {
-    margin: 0 0 8px 0 !important;
-    color: #666 !important;
-    font-size: 0.95rem !important;
+.sidebar-category {
+    margin-top: 10px !important;
+    margin-bottom: 8px !important;
+    font-size: 13px !important;
+    color: var(--text-muted) !important;
 }
-.dark .title-subtitle {
-    color: #aaa !important;
+.sidebar-btn {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 11px 12px 11px 14px !important;
+    border-radius: 14px !important;
+    font-size: 14.5px !important;
+    line-height: 1.42 !important;
+    margin-bottom: 8px !important;
+    white-space: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+    border: 1px solid rgba(190, 201, 196, 0.86) !important;
+    background: rgba(255,253,249,0.96) !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 4px 12px rgba(44, 52, 57, 0.045) !important;
+    transition: all 0.15s ease !important;
 }
-/* ── Hide Gradio footer (Use via API · Built with Gradio · Settings) */
-footer {
-    display: none !important;
+.sidebar-btn span {
+    overflow: visible !important;
+    display: block !important;
 }
-/* ── Hide the "Chatbot" label in the top-left corner ───────────── */
-.chatbot label, .chatbot .label-wrap {
-    display: none !important;
+.sidebar-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 20px rgba(44, 52, 57, 0.09) !important;
 }
-/* ── Dark mode: invert black SVG icons → white ──────────────────── */
-/* brightness(0) crushes all pixels to black; invert(1) flips to white */
-/* Works for any monochrome Material Icon embedded as an <img> tag    */
-.dark .examples .example img {
-    filter: brightness(0) invert(1) !important;
-    opacity: 0.82 !important;
+/* Dark mode sidebar buttons */
+.dark .sidebar-btn {
+    background: var(--bg-card-soft) !important;
+    border-color: var(--border-soft) !important;
 }
-.dark .sidebar-category img {
-    filter: brightness(0) invert(1) !important;
-    opacity: 0.75 !important;
+.btn-professional {
+    border-left: 4px solid rgba(47, 127, 123, 0.55) !important;
 }
-/* ── "Get in touch" CTA — link-styled button below input ────────── */
+.btn-professional:hover {
+    border-color: rgba(47, 127, 123, 0.80) !important;
+    background: linear-gradient(90deg, rgba(226,240,236,0.92) 0%, rgba(255,253,249,0.98) 16%) !important;
+}
+.dark .btn-professional:hover {
+    background: linear-gradient(90deg, rgba(47,127,123,0.15) 0%, var(--bg-card-soft) 16%) !important;
+}
+.btn-bridge {
+    border-left: 4px solid rgba(70, 112, 128, 0.40) !important;
+}
+.btn-bridge:hover {
+    border-color: rgba(70, 112, 128, 0.65) !important;
+    background: linear-gradient(90deg, rgba(231,238,241,0.95) 0%, rgba(255,253,249,0.98) 16%) !important;
+}
+.dark .btn-bridge:hover {
+    background: linear-gradient(90deg, rgba(70,112,128,0.15) 0%, var(--bg-card-soft) 16%) !important;
+}
+.btn-personal {
+    border-left: 4px solid rgba(200, 139, 74, 0.55) !important;
+}
+.btn-personal:hover {
+    border-color: rgba(200, 139, 74, 0.82) !important;
+    background: linear-gradient(90deg, rgba(246,230,210,0.96) 0%, rgba(255,253,249,0.98) 16%) !important;
+}
+.dark .btn-personal:hover {
+    background: linear-gradient(90deg, rgba(200,139,74,0.15) 0%, var(--bg-card-soft) 16%) !important;
+}
+
+/* ── Contact CTA ─────────────────────────────────────────────── */
 .contact-cta-btn {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    color: #3B7A8C !important;
-    font-size: 0.84rem !important;
-    font-weight: 400 !important;
-    padding: 0 0 10px 0 !important;
-    margin: 0 auto !important;
+    color: var(--accent-strong) !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    padding: 6px 0 8px 0 !important;
+    margin: 6px auto 0 !important;
     display: block !important;
     width: auto !important;
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
-    text-decoration-color: rgba(59,122,140,0.4) !important;
+    text-decoration-color: rgba(47,127,123,0.42) !important;
     transition: color 0.15s ease !important;
 }
 .contact-cta-btn:hover {
-    color: #1B5F6F !important;
+    color: var(--accent) !important;
+    text-decoration-color: rgba(47,127,123,0.82) !important;
     background: transparent !important;
     box-shadow: none !important;
     transform: none !important;
-    text-decoration-color: rgba(27,95,111,0.7) !important;
 }
-.dark .contact-cta-btn {
-    color: #7EC8D8 !important;
-    text-decoration-color: rgba(126,200,216,0.4) !important;
-}
-.dark .contact-cta-btn:hover {
-    color: #A8DDE8 !important;
-    text-decoration-color: rgba(168,221,232,0.7) !important;
-}
-/* ── Hero avatar above the title ───────────────────────────────── */
-.hero-avatar {
-    display: block;
-    margin: 0 auto 8px auto;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-}
-/* ── Category button colors (light mode) ───────────────────────── */
-/* Professional: teal — matches barbhs.com CTA button accent         */
-.btn-professional {
-    background: linear-gradient(135deg, #E0F5F8 0%, #B2E8EE 100%) !important;
-    color: #0E7A8A !important;
-}
-/* Bridge: steel blue — matches barbhs.com hero background           */
-.btn-bridge {
-    background: linear-gradient(135deg, #E5EDF3 0%, #C4D9E8 100%) !important;
-    color: #3B5978 !important;
-}
-/* Personal: warm amber — complements the cool blues, adds warmth    */
-.btn-personal {
-    background: linear-gradient(135deg, #FEF3E2 0%, #FDDBA1 100%) !important;
-    color: #8B5E00 !important;
-}
-/* ── Sidebar buttons in dark mode ──────────────────────────────── */
-.dark .btn-professional {
-    background: linear-gradient(135deg, #0a2028 0%, #0e2e38 100%) !important;
-    color: #4DD0E1 !important;
-    border: 1px solid rgba(77,208,225,0.25) !important;
-}
-.dark .btn-bridge {
-    background: linear-gradient(135deg, #1B2D3A 0%, #213547 100%) !important;
-    color: #90B8D4 !important;
-    border: 1px solid rgba(144,184,212,0.25) !important;
-}
-.dark .btn-personal {
-    background: linear-gradient(135deg, #2d1f0a 0%, #3a2810 100%) !important;
-    color: #FFCC80 !important;
-    border: 1px solid rgba(255,204,128,0.25) !important;
-}
-/* ── Settings accordion ────────────────────────────────────────── */
+
 .settings-accordion {
-    border: 1px solid rgba(0,0,0,0.12) !important;
-    border-radius: 8px !important;
+    border: 1px solid var(--border-soft) !important;
     margin: 8px 0 !important;
-    background: linear-gradient(135deg, rgba(224, 245, 248, 0.3) 0%,
-                rgba(229, 237, 243, 0.3) 100%) !important;
+    background: linear-gradient(180deg, rgba(255,253,249,0.96) 0%, rgba(248,243,236,0.96) 100%) !important;
+    box-shadow: 0 4px 12px rgba(44, 52, 57, 0.04) !important;
 }
 .dark .settings-accordion {
-    background: linear-gradient(135deg, rgba(10, 32, 40, 0.4) 0%,
-                rgba(27, 45, 58, 0.4) 100%) !important;
-    border: 1px solid rgba(144,184,212,0.2) !important;
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-soft) 100%) !important;
 }
-/* ── Cost display ───────────────────────────────────────────────── */
 #cost-display {
-    opacity: 0.8;
+    opacity: 0.84;
     transition: opacity 0.2s ease;
 }
 #cost-display:hover {
     opacity: 1.0;
+}
+
+/* Dark mode icon inversion */
+.dark .examples .example img,
+.dark .sidebar-category img {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.84 !important;
+}
+
+@media (max-width: 768px) {
+    .gradio-container {
+        padding: 0px 12px 22px !important;
+    }
+    .title-row h1 {
+        font-size: 1.75rem !important;
+    }
+    .title-row img {
+        width: 58px !important;
+        height: 58px !important;
+    }
+    .chatbot-header {
+        font-size: 1.42rem;
+    }
+    .chatbot-subtitle {
+        font-size: 0.98rem;
+    }
+    .examples button {
+        min-height: 84px !important;
+        padding: 16px 12px !important;
+    }
 }
 """
 
@@ -632,7 +1015,7 @@ def _compute_similarity_stats(distances):
 def _log_query(message, project_title, walkthrough, tool_name, had_error,
                model, temperature, n_chunks_retrieved, response_chars,
                workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
-               provider, cost_usd, prompt_tokens, completion_tokens):
+               provider, cost_usd, prompt_tokens, completion_tokens, audience_tier="public"):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
@@ -641,6 +1024,7 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             "message":     message,
             "project":     project_title,
             "walkthrough": walkthrough,
+            "audience_tier":  audience_tier,
             "tool_called": tool_name is not None,
             "tool_name":   tool_name,
             "had_error":   had_error,
@@ -867,6 +1251,12 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
     if diagram_path and not walkthrough_project:
         print(f"WORKFLOW: Diagram only → {diagram_project['title']}")
  
+    # ── Step 2.5: Detect audience tier from conversation signals ──
+    audience_tier = detect_audience_tier(message, history)
+    sensitivity_filter = build_sensitivity_filter(audience_tier)
+    if audience_tier != "public":
+        print(f"SENSITIVITY: Tier escalated to '{audience_tier}'")
+
     # ── Step 3: RAG retrieval on the ORIGINAL message ───────────
     # (Not the enriched one — this is the key change for hybrid mode)
     response = client.embeddings.create(
@@ -874,10 +1264,15 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
         input=[message]   # ← user's actual question, unmodified
     )
     query_embedded = response.data[0].embedding
-    results = collection.query(
-        query_embeddings=[query_embedded],
-        n_results=actual_top_k
-    )
+
+    query_kwargs = {
+        "query_embeddings": [query_embedded],
+        "n_results": actual_top_k,
+    }
+    if sensitivity_filter:
+        query_kwargs["where"] = sensitivity_filter
+
+    results = collection.query(**query_kwargs)
 
     # ── Compute retrieval quality metrics (Phase 2 logging) ─────
     similarity_stats = _compute_similarity_stats(results.get('distances', [[]])[0])
@@ -982,10 +1377,16 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
                         if tc.function.arguments: acc["function"]["arguments"] += tc.function.arguments
         yield ("done", (collected, tool_calls_acc, finish_reason))
 
+
     collected = ""
     finish_reason = None
     tool_calls_acc = []
     _tool_name_called = None   # tracks first tool fired this turn (for logging)
+
+    # ── Easter egg greeting for inner circle ───────────────────
+    if audience_tier == "inner_circle":
+        collected = "🎉✨💛 ¡Familia! 💛✨🎉\n\n"
+        yield collected
 
     for event, payload in _stream_and_accumulate(msgs):
         if event == "content":
@@ -1079,11 +1480,14 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
         # Phase 2: Quality metrics
         chunk_similarity_avg = similarity_stats["avg"],
         chunk_similarity_max = similarity_stats["max"],
+        # # Audience tier
+        # audience_tier
         # Provider and cost tracking
         provider         = provider,
         cost_usd         = query_cost,
         prompt_tokens    = prompt_toks,
         completion_tokens = completion_toks,
+        audience_tier     = audience_tier,
     )
 #----------------------------------
 
@@ -1125,28 +1529,29 @@ def _build_title_html() -> str:
         img_tag = ""
     return (
         '<div class="title-row">'
-        '<h1>Barbara\'s Digital Twin</h1>'
+        '<h2>Barbara\'s Digital Twin</h2>'
         f'{img_tag}</div>'
-        '<p class="title-subtitle">'
-        'My portfolio, in conversation form</p>'
+        '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
     )
 
 if __name__ == "__main__":
     _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
-    with gr.Blocks(title="Barbara's Digital Twin") as demo:
+    with gr.Blocks(title="Barbara's Digital Twin", fill_width=True) as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
 
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
+            show_label=False,
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="<h3 style='text-align:center;margin-bottom:6px;'>Hola! I'm the next best thing to talking to Barbara directly.</h3><p style='text-align:center;font-size:1.05rem;'>I know her projects, her research, and why she builds the way she does. Ask me anything.</p>",
-            height="65vh",
+            placeholder="<h3 class='chatbot-header'>My portfolio, in conversation form</h3><p class='chatbot-subtitle'>Ask question or start with a prompt below :)</p>",
+            height="60vh",
             min_height=320,
-            max_height=700,
+            max_height=650,
             autoscroll=True,
             render_markdown=True,
+            container=False
         )
         chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs the user message
 
@@ -1185,7 +1590,7 @@ if __name__ == "__main__":
         chat = gr.ChatInterface(
             fn=respond_ai,
             chatbot=chatbot,
-            textbox=gr.Textbox(show_label=True, placeholder="Ask question", container=True, scale=7, submit_btn=True),
+            textbox=gr.Textbox(show_label=False, placeholder="Ask me a question", container=False, scale=7, submit_btn=True),
             examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
             example_icons=[
                            os.path.join(_assets_dir, "want-shine.svg"),
@@ -1197,7 +1602,7 @@ if __name__ == "__main__":
         
         # ── "GET IN TOUCH" CTA — fills textbox with contact trigger ──
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
-        with gr.Accordion("Explore Topics", open=False, elem_id="explore-accordion"):
+        with gr.Accordion("Explore Topics", open=True, elem_id="explore-accordion"):
             with gr.Row():
                 for category, questions in CURATED_EXAMPLES.items():
                     with gr.Column():
@@ -1244,11 +1649,11 @@ if __name__ == "__main__":
 
             chat.chatbot.change(fn=update_cost_display, outputs=cost_display)
 
-    # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
     # Gradio uses root_path to construct absolute URLs for theme.css, /config, etc.
     # Without the full https:// URL, Gradio generates http:// URLs which browsers
     # block as mixed content. Fix per gradio-app/gradio#9381: set root_path to
     # the full HTTPS URL so Gradio generates correct resource URLs.
+    # On HF Spaces the reverse-proxy terminates SSL and forwards HTTP internally.
     # Only set root_path when actually running inside HuggingFace Spaces.
     # SPACE_ID is present in .env for deploy config but shouldn't affect local dev.
     # HF Spaces always sets SYSTEM=spaces; local .env does not.

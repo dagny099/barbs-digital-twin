@@ -21,7 +21,7 @@ import html as html_lib
 import random
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -67,6 +67,61 @@ _ADMIN_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "que
 
 MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 14))  # Last 14 turns (7 user + 7 assistant)
 
+# ── Sensitivity gating — passphrase-based audience detection ────
+#
+# Tier escalation: public → personal → inner_circle
+# Once a tier is unlocked, it stays unlocked for the session.
+ 
+INNER_CIRCLE_PHRASES = [
+    "somos un equipo",
+    "ni casada, ni con hijos",
+    "baba",
+]
+ 
+PERSONAL_PHRASES = [
+    "cvcl",
+    "easy button",
+    "bilingual lady communicators",
+    "daisy 5k",
+    "lis wise",
+    "kealing",
+]
+ 
+ 
+def detect_audience_tier(message: str, history: list) -> str:
+    """Scan current message + conversation history for passphrase signals.
+ 
+    Returns the highest tier detected: 'inner_circle', 'personal', or 'public'.
+    """
+    all_user_text = message.lower()
+    for turn in history:
+        if turn.get("role") == "user":
+            content = turn.get("content", "")
+            if isinstance(content, str):
+                all_user_text += " " + content.lower()
+ 
+    for phrase in INNER_CIRCLE_PHRASES:
+        if phrase.lower() in all_user_text:
+            return "inner_circle"
+ 
+    for phrase in PERSONAL_PHRASES:
+        if phrase.lower() in all_user_text:
+            return "personal"
+ 
+    return "public"
+ 
+ 
+def build_sensitivity_filter(tier: str) -> dict | None:
+    """Build a ChromaDB `where` filter for the given audience tier."""
+    if tier == "inner_circle":
+        return None
+    elif tier == "personal":
+        return {"sensitivity": {"$in": ["public", "personal"]}}
+    else:
+        return {"sensitivity": {"$eq": "public"}}
+ 
+
+
 def _compute_similarity_stats(distances):
     """Convert L2 distances to cosine similarity scores. Returns avg and max."""
     if not distances:
@@ -82,12 +137,13 @@ def _compute_similarity_stats(distances):
 def _log_admin_query(message, project_title, walkthrough, tool_name, had_error,
                      model, temperature, n_chunks_retrieved, response_chars,
                      workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
-                     provider, cost_usd, prompt_tokens, completion_tokens, config_override):
+                     provider, cost_usd, prompt_tokens, completion_tokens, config_override,
+                     audience_tier="public"):
     """Append admin query record to separate JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
             # Production-equivalent fields
-            "ts":          datetime.now(datetime.timezone.utc).isoformat(),
+            "ts":          datetime.now(tz=timezone.utc).isoformat(),
             "message":     message,
             "project":     project_title,
             "walkthrough": walkthrough,
@@ -101,6 +157,7 @@ def _log_admin_query(message, project_title, walkthrough, tool_name, had_error,
             "response_chars": response_chars,
             "latency_ms":     latency_ms,
             "workflow":       workflow_type,
+            "audience_tier":  audience_tier,
             "chunk_similarity_avg": chunk_similarity_avg,
             "chunk_similarity_max": chunk_similarity_max,
 
@@ -385,21 +442,27 @@ session_tracker = SessionTracker()
 # RETRIEVAL ENGINE (OpenAI embeddings, pinned)
 # ═══════════════════════════════════════════════════════════════════
 
-def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE):
+def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE,
+                          sensitivity_filter=None):
+    """Embed query and retrieve top-K chunks, optionally filtered by sensitivity tier."""
     start = time.time()
-
+ 
     resp = openai_client.embeddings.create(
         model="text-embedding-3-small", input=[message],
     )
     session_tracker.log_embedding(resp)
     query_embedding = resp.data[0].embedding
-
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=n_results,
-        include=["metadatas", "documents", "distances"],
-    )
-
+ 
+    query_kwargs = {
+        "query_embeddings": [query_embedding],
+        "n_results": n_results,
+        "include": ["metadatas", "documents", "distances"],
+    }
+    if sensitivity_filter:
+        query_kwargs["where"] = sensitivity_filter
+ 
+    results = collection.query(**query_kwargs)
+ 
     return {
         "documents": results["documents"][0],
         "metadatas": results["metadatas"][0],
@@ -408,7 +471,7 @@ def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE):
         "retrieval_time_ms": (time.time() - start) * 1000,
         "n_results": n_results,
     }
-
+ 
 
 def l2_to_cosine_sim(l2_distance):
     sim = 1.0 - (l2_distance ** 2) / 2.0
@@ -459,7 +522,8 @@ def _card(value, label):
     )
 
 
-def format_metrics_html(ctx, active_config=None, query_cost=0.0, workflow="Standard"):
+def format_metrics_html(ctx, active_config=None, query_cost=0.0,
+                        workflow="Standard", audience_tier="public"):
     n = len(ctx["documents"])
     sims = [l2_to_cosine_sim(d) for d in ctx["distances"]]
     avg_sim = sum(sims) / n if n else 0
@@ -474,6 +538,7 @@ def format_metrics_html(ctx, active_config=None, query_cost=0.0, workflow="Stand
     return (
         '<div style="display:flex;gap:8px;margin:4px 0;flex-wrap:wrap;">'
         + _card(workflow, "Workflow")
+        + _card(audience_tier, "Tier")
         + _card(str(n), "Chunks")
         + _card(f"{avg_sim:.2f}", "Avg sim")
         + _card(f"{ctx['retrieval_time_ms']:.0f}ms", "Retrieval")
@@ -484,6 +549,12 @@ def format_metrics_html(ctx, active_config=None, query_cost=0.0, workflow="Stand
         + _card(f"${sess['total_cost_usd']:.4f}", "Session total")
         + '</div>'
     )
+
+SENSITIVITY_BADGE = {
+    "public":       ("", ""),                   # no badge needed
+    "personal":     ("#FAEEDA", "#854F0B"),      # amber
+    "inner_circle": ("#FCEBEB", "#A32D2D"),      # red
+}
 
 
 def format_chunks_html(ctx):
@@ -505,33 +576,43 @@ def format_chunks_html(ctx):
         bg, fg = SOURCE_COLORS.get(source_type, DEFAULT_SOURCE_COLOR)
         text_display = html_lib.escape(doc[:800]) + (" …" if len(doc) > 800 else "")
 
+        # Build sensitivity badge (only shown for non-public chunks)
+        sensitivity = meta.get("sensitivity", "public")
+        sens_bg, sens_fg = SENSITIVITY_BADGE.get(sensitivity, ("", ""))
+        sens_badge = (
+            f'<span style="font-size:10px;font-weight:500;padding:1px 8px;'
+            f'border-radius:99px;background:{sens_bg};color:{sens_fg};">'
+            f'{sensitivity}</span>'
+        ) if sensitivity != "public" else ""
+
         cards.append(f"""
         <div style="border:1px solid var(--border-color-primary, #ddd);border-radius:8px;
                     padding:10px 12px;margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <span style="font-size:11px;font-weight:500;padding:2px 10px;border-radius:99px;
-                         background:{bg};color:{fg};">{html_lib.escape(source_type)}</span>
+                        background:{bg};color:{fg};">{html_lib.escape(source_type)}</span>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:11px;color:#888;">#{i+1}</span>
-              <div style="width:80px;height:4px;border-radius:2px;
-                          background:var(--border-color-primary, #e0e0e0);position:relative;">
+            <span style="font-size:11px;color:#888;">#{i+1}</span>
+            <div style="width:80px;height:4px;border-radius:2px;
+                        background:var(--border-color-primary, #e0e0e0);position:relative;">
                 <div style="height:100%;border-radius:2px;position:absolute;left:0;top:0;
                             width:{pct:.0f}%;background:{bar_color};"></div>
-              </div>
-              <span style="font-size:12px;font-weight:500;min-width:32px;text-align:right;">{sim:.3f}</span>
             </div>
-          </div>
-          <div style="font-size:12px;font-family:monospace;padding:8px;
-                      background:var(--background-fill-secondary, #f7f7f5);
-                      border-radius:6px;line-height:1.5;max-height:140px;
-                      overflow-y:auto;white-space:pre-wrap;word-break:break-word;">{text_display}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:11px;
-                      color:var(--body-text-color-subdued, #999);">
+            <span style="font-size:12px;font-weight:500;min-width:32px;text-align:right;">{sim:.3f}</span>
+            </div>
+        </div>
+        <div style="font-size:12px;font-family:monospace;padding:8px;
+                    background:var(--background-fill-secondary, #f7f7f5);
+                    border-radius:6px;line-height:1.5;max-height:140px;
+                    overflow-y:auto;white-space:pre-wrap;word-break:break-word;">{text_display}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:11px;
+                    color:var(--body-text-color-subdued, #999);">
             <span>doc: {html_lib.escape(source_id)}</span>
             <span>section: {html_lib.escape(str(section))}</span>
             <span>chars: {len(doc)}</span>
             <span>chunk: #{chunk_idx}</span>
-          </div>
+            {sens_badge}
+        </div>
         </div>""")
 
     header = (
@@ -542,7 +623,8 @@ def format_chunks_html(ctx):
     return header + "\n".join(cards)
 
 
-def format_metadata_json(ctx, active_config=None, walkthrough_info=None):
+def format_metadata_json(ctx, active_config=None, walkthrough_info=None,
+                         audience_tier="public"):
     cfg = active_config or {}
     chunks = []
     for i, (doc, meta, dist) in enumerate(
@@ -557,6 +639,7 @@ def format_metadata_json(ctx, active_config=None, walkthrough_info=None):
             "char_count": len(doc),
         })
     return {
+        "audience_tier": audience_tier,    # ← NEW
         "walkthrough": walkthrough_info or {"triggered": False},
         "retrieval": {
             "n_results": ctx["n_results"],
@@ -838,6 +921,7 @@ def _initial_metrics():
     return (
         '<div style="display:flex;gap:8px;margin:4px 0;flex-wrap:wrap;">'
         + _card("—", "Workflow")
+        + _card("—", "Tier")
         + _card("—", "Chunks") + _card("—", "Avg sim")
         + _card("—", "Retrieval") + _card(f"k={N_CHUNKS_RETRIEVE}", "Top-K")
         + _card("1.0", "Temp") + _card(model_short, "Model")
@@ -913,8 +997,15 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     if diagram_path and not project:
         print(f"WORKFLOW: Diagram only → {diagram_project['title']}")
 
+    # ── Detect audience tier from conversation signals ─────────
+    audience_tier = detect_audience_tier(message_text, history)
+    sensitivity_filter = build_sensitivity_filter(audience_tier)
+    if audience_tier != "public":
+        print(f"SENSITIVITY: Tier escalated to '{audience_tier}'")
+ 
     # ── Retrieve on the ORIGINAL message ───────────────────────
-    ctx = retrieve_with_context(message_text, n_results=k)
+    ctx = retrieve_with_context(message_text, n_results=k,
+                                sensitivity_filter=sensitivity_filter)
 
     # ── Compute retrieval quality metrics ──────────────────────
     similarity_stats = _compute_similarity_stats(ctx.get('distances', []))
@@ -990,7 +1081,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     print(f"ADMIN QUERY: {message_text}")
     if project:
         print(f"WORKFLOW: Walkthrough → {project['title']}")
-    print(f"CONFIG: model={model}  k={k}  temp={temp}{tool_warning}")
+    print(f"CONFIG: model={model}  k={k}  temp={temp}  tier={audience_tier}{tool_warning}")
     print(f"Retrieved {len(ctx['documents'])} chunks in {ctx['retrieval_time_ms']:.0f}ms")
     for i, (doc, meta, dist) in enumerate(
         zip(ctx["documents"], ctx["metadatas"], ctx["distances"])
@@ -1002,9 +1093,9 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     # ── Stream the final answer ─────────────────────────────────
     active_config = {"top_k": k, "temperature": temp, "model": model}
-    metrics_val = format_metrics_html(ctx, active_config, query_cost=0.0, workflow=workflow_label)
+    metrics_val = format_metrics_html(ctx, active_config, query_cost=0.0, workflow=workflow_label, audience_tier=audience_tier)
     chunks_val = format_chunks_html(ctx)
-    metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
+    metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info, audience_tier=audience_tier)
     embed_val = EMBED_VIZ_PLACEHOLDER
 
     stream = litellm.completion(
@@ -1025,7 +1116,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     # Final yield with updated cost (+ diagram if walkthrough)
     query_cost = session_tracker.calls[-1].cost_usd if session_tracker.calls else 0.0
-    metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost, workflow=workflow_label)
+    metrics_val = format_metrics_html(ctx, active_config, query_cost=query_cost, workflow=workflow_label, audience_tier=audience_tier)
     metadata_val = format_metadata_json(ctx, active_config, walkthrough_info=walkthrough_info)
 
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")
@@ -1079,6 +1170,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
         prompt_tokens    = prompt_tokens,
         completion_tokens = completion_tokens,
         config_override  = config_override,
+        audience_tier    = audience_tier,
     )
 
 
@@ -1322,9 +1414,9 @@ if __name__ == "__main__":
                     "Download before redeploying — log resets on Space restart."
                 )
                 log_df = gr.Dataframe(
-                    headers=["ts", "message", "project", "walkthrough",
+                    headers=["ts", "message", "audience_tier", "project", "walkthrough",
                              "tool_called", "tool_name", "had_error"],
-                    datatype=["str", "str", "str", "bool", "bool", "str", "bool"],
+                    datatype=["str", "str", "str", "str", "bool", "bool", "str", "bool"],
                     label="Recent queries (newest last)",
                     wrap=True,
                     interactive=False,
@@ -1337,7 +1429,7 @@ if __name__ == "__main__":
                     import pandas as pd
                     try:
                         df = pd.read_json(_QUERY_LOG, lines=True)
-                        cols = ["ts", "message", "project", "walkthrough",
+                        cols = ["ts", "message", "audience_tier", "project", "walkthrough",
                                 "tool_called", "tool_name", "had_error"]
                         for c in cols:
                             if c not in df.columns:
@@ -1345,7 +1437,7 @@ if __name__ == "__main__":
                         return df[cols]
                     except (FileNotFoundError, ValueError):
                         import pandas as pd
-                        return pd.DataFrame(columns=["ts", "message", "project", "walkthrough",
+                        return pd.DataFrame(columns=["ts", "message", "audience_tier", "project", "walkthrough",
                                                      "tool_called", "tool_name", "had_error"])
 
                 def _download_log():

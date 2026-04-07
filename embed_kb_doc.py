@@ -54,6 +54,7 @@ from utils import (
     parse_markdown_sections,
     chunk_prose,
     build_metadata,
+    get_sensitivity,
     delete_chunks_by_source,
     section_already_embedded,
 )
@@ -182,6 +183,9 @@ def process_kb_doc(
     # Section summary table
     print(f"\n📋 Section Summary:")
     print(f"   {'Section Name':<50} {'Lines':<15} {'Chars'}")
+    # After the section summary table, show the sensitivity tier
+    sensitivity = get_sensitivity(source_type)
+    print(f"\n   🔒 Sensitivity tier: {sensitivity}")
     print(f"   {'-'*80}")
     for s in sections:
         line_range = f"{s['start_line']}-{s['end_line']}"

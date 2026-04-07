@@ -17,6 +17,61 @@ Usage:
 
 import re
 
+# ═══════════════════════════════════════════════════════════════════
+# SENSITIVITY TIER MAPPING
+# ═══════════════════════════════════════════════════════════════════
+#
+# Controls which chunks are retrieved for different audience levels.
+# Three tiers:
+#   "public"       → Always retrieved. Professional content safe for any visitor.
+#   "personal"     → Retrieved only after the visitor shows familiarity signals.
+#   "inner_circle" → Retrieved only after explicit self-identification (passphrase).
+#
+# The mapping is keyed by source-type prefix (the part before the colon
+# in ChromaDB's "source" field, e.g. "kb-biosketch" from "kb-biosketch:kb_biosketch.md").
+#
+# DEFAULT: Any source-type not listed here gets "public".
+# This is intentional — new sources are safe by default, and you
+# explicitly opt content INTO restricted tiers.
+
+SENSITIVITY_BY_SOURCE = {
+    # ── Public (professional portfolio content) ─────────────────
+    "kb-biosketch":                "public",
+    "kb-philosophy":               "public",
+    "kb-positioning":              "public",
+    "kb-projects":                 "public",
+    "kb-career":                   "public",
+    "kb-publications":             "public",
+    "kb-answers":                  "public",
+    "kb-dissertation-overview":    "public",
+    "kb-dissertation-relevance":   "public",
+    "kb-dissertation-philosophy":  "public",
+    "kb-intellectual-foundations":  "public",
+    "project-summaries":           "public",
+    "project-walkthroughs":        "public",
+    "jekyll":                      "public",
+
+    # ── Personal (shared after familiarity signals) ─────────────
+    "kb-origins":                  "personal",
+
+    # ── Inner circle (shared after self-identification) ─────────
+    "kb-easter-eggs":              "inner_circle",
+}
+
+DEFAULT_SENSITIVITY = "public"
+
+
+def get_sensitivity(source_type: str) -> str:
+    """Look up the sensitivity tier for a source-type key.
+
+    Args:
+        source_type: The source-type prefix (e.g. 'kb-biosketch', 'kb-easter-eggs')
+
+    Returns:
+        One of 'public', 'personal', or 'inner_circle'.
+    """
+    return SENSITIVITY_BY_SOURCE.get(source_type, DEFAULT_SENSITIVITY)
+
 
 # ═══════════════════════════════════════════════════════════════════
 # CORE TEXT PROCESSING
@@ -438,7 +493,6 @@ def parse_markdown_sections(
 # ═══════════════════════════════════════════════════════════════════
 # METADATA CONSTRUCTION
 # ═══════════════════════════════════════════════════════════════════
-
 def build_metadata(
     source_type: str,
     identifier: str,
@@ -452,28 +506,24 @@ def build_metadata(
     Ensures consistent metadata schema across all ingestion sources
     with support for optional section tracking and extensible fields.
 
+    Now auto-includes a 'sensitivity' field derived from the source_type,
+    using the SENSITIVITY_BY_SOURCE mapping. This field is used at retrieval
+    time to gate content based on visitor audience tier.
+
     Args:
-        source_type: Type of source (e.g., 'resume', 'biosketch', 'github-readme', 'mkdocs')
+        source_type: Type of source (e.g., 'kb-biosketch', 'kb-easter-eggs')
         identifier: Unique identifier (filename, repo name, site name, etc.)
-        section_name: Optional section name (e.g., 'Education', 'Summary').
-                      Use None for sources without section parsing. Default: None.
-        chunk_index: Position of chunk within section (or document if no sections).
-                     Resets to 0 for each new section. Default: 0.
-        **extra_fields: Additional metadata fields (e.g., page_url, title, site)
+        section_name: Optional section name. Default: None.
+        chunk_index: Position of chunk within section. Default: 0.
+        **extra_fields: Additional metadata fields. If 'sensitivity' is passed
+                        explicitly, it overrides the auto-lookup — this lets
+                        specialized embed scripts override the default tier
+                        for specific sections if needed.
 
     Returns:
-        Metadata dict conforming to standard schema:
-        {
-            'source': 'source-type:identifier',
-            'section': 'Section Name' or None,
-            'chunk_index': 0,
-            ...extra fields
-        }
+        Metadata dict with standard schema + sensitivity field.
 
     Examples:
-        >>> build_metadata('resume', '2026.txt', 'Education', 0)
-        {'source': 'resume:2026.txt', 'section': 'Education', 'chunk_index': 0}
-
         >>> build_metadata('biosketch', 'barbara.md', 'Family', 2)
         {'source': 'biosketch:barbara.md', 'section': 'Family', 'chunk_index': 2}
 
@@ -484,14 +534,16 @@ def build_metadata(
         ...                page_url='https://docs.example.com', site='beehive')
         {'source': 'mkdocs:beehive-tracker', 'section': 'User Guide', 'chunk_index': 0,
          'page_url': 'https://docs.example.com', 'site': 'beehive'}
-    """
+"""
     metadata = {
         'source': f'{source_type}:{identifier}',
         'section': section_name,
-        'chunk_index': chunk_index
+        'chunk_index': chunk_index,
+        'sensitivity': extra_fields.pop('sensitivity', get_sensitivity(source_type)),
     }
     metadata.update(extra_fields)
     return metadata
+
 
 
 # ═══════════════════════════════════════════════════════════════════
