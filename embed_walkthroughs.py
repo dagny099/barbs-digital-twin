@@ -54,31 +54,24 @@ COLLECTION    = "barb-twin"
 SOURCE_PREFIX = "project-walkthrough:"
 # ─────────────────────────────────────────────────────────────────────────
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise Exception("❌ OPENAI_API_KEY not set")
-
-client        = OpenAI(api_key=OPENAI_API_KEY)
-chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-collection    = chroma_client.get_or_create_collection(name=COLLECTION)
-
-
 def _slugify(title: str) -> str:
     """Convert project title to a URL-safe slug for source naming."""
     return re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
 
 
-def _existing_sources() -> set:
+def _existing_sources(collection) -> set:
     """Return the set of source values already in the collection."""
     all_meta = collection.get(include=["metadatas"])["metadatas"]
     return {m.get("source", "") for m in all_meta}
 
 
-def embed_walkthroughs(force: bool = False, dry_run: bool = False) -> int:
+def embed_walkthroughs(client, collection, force: bool = False, dry_run: bool = False) -> int:
     """
     Embed walkthrough contexts into ChromaDB.
 
     Args:
+        client:  OpenAI client for embeddings.
+        collection: ChromaDB collection to store embeddings.
         force:   If True, delete existing walkthrough chunks first and re-embed all.
         dry_run: If True, print what would be embedded without calling OpenAI.
 
@@ -90,7 +83,7 @@ def embed_walkthroughs(force: bool = False, dry_run: bool = False) -> int:
         delete_chunks_by_source(collection, SOURCE_PREFIX)
         existing = set()
     else:
-        existing = _existing_sources()
+        existing = _existing_sources(collection)
 
     chunks    = []
     ids       = []
@@ -156,7 +149,7 @@ def embed_walkthroughs(force: bool = False, dry_run: bool = False) -> int:
     return len(chunks)
 
 
-def print_summary():
+def print_summary(collection):
     """Show collection state after ingestion."""
     total = collection.count()
     print(f"\n{'─'*55}")
@@ -192,12 +185,34 @@ if __name__ == "__main__":
     print("=" * 55)
     print(f"\n📂 Loading {len(FEATURED_PROJECTS)} featured projects...\n")
 
-    n = embed_walkthroughs(force=args.force_reembed, dry_run=args.dry_run)
+    # Setup clients
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise Exception("❌ OPENAI_API_KEY not set")
 
-    if n > 0:
-        print(f"\n💾 Saved {n} new walkthrough chunks to ChromaDB")
-
+    chroma_client = None
     if not args.dry_run:
-        print_summary()
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+        collection = chroma_client.get_or_create_collection(name=COLLECTION)
+    else:
+        client = None
+        collection = None
 
-    print("🎉 Done! Walkthrough content is now retrievable via normal RAG.\n")
+    try:
+        n = embed_walkthroughs(client, collection, force=args.force_reembed, dry_run=args.dry_run)
+
+        if n > 0:
+            print(f"\n💾 Saved {n} new walkthrough chunks to ChromaDB")
+
+        if not args.dry_run:
+            print_summary(collection)
+
+        print("🎉 Done! Walkthrough content is now retrievable via normal RAG.\n")
+    finally:
+        # Explicitly close ChromaDB connection to release SQLite file locks
+        if chroma_client is not None:
+            del collection
+            del chroma_client
+            import gc
+            gc.collect()

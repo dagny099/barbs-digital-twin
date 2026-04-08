@@ -310,6 +310,7 @@ def main():
             "❌  OPENAI_API_KEY not set — check your environment variables"
         )
 
+    chroma_client = None
     if not args.dry_run:
         client        = OpenAI(api_key=OPENAI_API_KEY)
         chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
@@ -318,14 +319,22 @@ def main():
         client     = None
         collection = None
 
-    process_kb_doc(
-        filepath=args.file,
-        source_type=args.source_type,
-        collection=collection,
-        client=client,
-        force_reembed=args.force_reembed,
-        dry_run=args.dry_run,
-    )
+    try:
+        process_kb_doc(
+            filepath=args.file,
+            source_type=args.source_type,
+            collection=collection,
+            client=client,
+            force_reembed=args.force_reembed,
+            dry_run=args.dry_run,
+        )
+    finally:
+        # Explicitly close ChromaDB connection to release SQLite file locks
+        if chroma_client is not None:
+            del collection
+            del chroma_client
+            import gc
+            gc.collect()
 
     print("🎉 Done!\n")
 

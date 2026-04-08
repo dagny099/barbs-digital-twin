@@ -353,6 +353,7 @@ def main():
     if not OPENAI_API_KEY:
         raise Exception("❌ OPENAI_API_KEY not set — check your environment variables")
 
+    chroma_client = None
     if not args.dry_run:
         client = OpenAI(api_key=OPENAI_API_KEY)
         chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
@@ -361,34 +362,42 @@ def main():
         client = None
         collection = None
 
-    # ── Determine sites to process ────────────────────────────────
-    if args.site_url:
-        # Single site override from CLI
-        site_name = args.site_name or args.site_url.split("//")[-1].split(".")[0]
-        sites = [{"name": site_name, "base_url": args.site_url}]
-    else:
-        sites = JEKYLL_SITES
+    try:
+        # ── Determine sites to process ────────────────────────────────
+        if args.site_url:
+            # Single site override from CLI
+            site_name = args.site_name or args.site_url.split("//")[-1].split(".")[0]
+            sites = [{"name": site_name, "base_url": args.site_url}]
+        else:
+            sites = JEKYLL_SITES
 
-    # ── Process each site ─────────────────────────────────────────
-    total_embedded = 0
-    for site in sites:
-        n = process_site(
-            site_name=site["name"],
-            base_url=site["base_url"],
-            collection=collection,
-            client=client,
-            force_reembed=args.force_reembed,
-            dry_run=args.dry_run,
-            max_pages=args.max_pages,
-        )
-        total_embedded += n
+        # ── Process each site ─────────────────────────────────────────
+        total_embedded = 0
+        for site in sites:
+            n = process_site(
+                site_name=site["name"],
+                base_url=site["base_url"],
+                collection=collection,
+                client=client,
+                force_reembed=args.force_reembed,
+                dry_run=args.dry_run,
+                max_pages=args.max_pages,
+            )
+            total_embedded += n
 
-    if not args.dry_run:
-        print_summary(collection)
-        print(f"🎉 Done! {total_embedded} total new chunks added.")
-        print(f"   Launch app.py — Jekyll content is now in the knowledge base.\n")
-    else:
-        print(f"\n🎉 Dry run complete.\n")
+        if not args.dry_run:
+            print_summary(collection)
+            print(f"🎉 Done! {total_embedded} total new chunks added.")
+            print(f"   Launch app.py — Jekyll content is now in the knowledge base.\n")
+        else:
+            print(f"\n🎉 Dry run complete.\n")
+    finally:
+        # Explicitly close ChromaDB connection to release SQLite file locks
+        if chroma_client is not None:
+            del collection
+            del chroma_client
+            import gc
+            gc.collect()
 
 
 if __name__ == "__main__":

@@ -455,6 +455,7 @@ def main():
     if not OPENAI_API_KEY:
         raise Exception("❌ OPENAI_API_KEY not set — check your environment variables")
 
+    chroma_client = None
     if not args.dry_run:
         client        = OpenAI(api_key=OPENAI_API_KEY)
         chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
@@ -463,49 +464,57 @@ def main():
         client     = None
         collection = None
 
-    # ── Find PDFs ──────────────────────────────────────────────────
-    pattern = os.path.join(args.summaries_folder, "*.pdf")
-    pdf_files = sorted(glob.glob(pattern))
+    try:
+        # ── Find PDFs ──────────────────────────────────────────────────
+        pattern = os.path.join(args.summaries_folder, "*.pdf")
+        pdf_files = sorted(glob.glob(pattern))
 
-    if not pdf_files:
-        raise FileNotFoundError(
-            f"❌ No PDF files found in '{args.summaries_folder}/' — check your path"
-        )
+        if not pdf_files:
+            raise FileNotFoundError(
+                f"❌ No PDF files found in '{args.summaries_folder}/' — check your path"
+            )
 
-    print(f"\n📁 Found {len(pdf_files)} PDFs in: {args.summaries_folder}/")
-    if args.include_how_to_run:
-        print(f"   ℹ️  Including 'How to run' sections (--include-how-to-run)")
-    else:
-        print(f"   ℹ️  Skipping 'How to run' sections (use --include-how-to-run to embed)")
+        print(f"\n📁 Found {len(pdf_files)} PDFs in: {args.summaries_folder}/")
+        if args.include_how_to_run:
+            print(f"   ℹ️  Including 'How to run' sections (--include-how-to-run)")
+        else:
+            print(f"   ℹ️  Skipping 'How to run' sections (use --include-how-to-run to embed)")
 
-    # ── Handle force re-embed ──────────────────────────────────────
-    if args.force_reembed and not args.dry_run:
-        print(f"\n🔄 Force re-embed requested...")
-        delete_chunks_by_source(collection, "project-summary:")
+        # ── Handle force re-embed ──────────────────────────────────────
+        if args.force_reembed and not args.dry_run:
+            print(f"\n🔄 Force re-embed requested...")
+            delete_chunks_by_source(collection, "project-summary:")
 
-    # ── Process each PDF ───────────────────────────────────────────
-    print(f"\n⚙️  Processing {len(pdf_files)} PDFs...")
-    total_embedded = 0
+        # ── Process each PDF ───────────────────────────────────────────
+        print(f"\n⚙️  Processing {len(pdf_files)} PDFs...")
+        total_embedded = 0
 
-    for filepath in pdf_files:
-        n = process_pdf(
-            filepath=filepath,
-            collection=collection,
-            client=client,
-            force_reembed=args.force_reembed,
-            dry_run=args.dry_run,
-            include_how_to_run=args.include_how_to_run,
-        )
-        total_embedded += n
+        for filepath in pdf_files:
+            n = process_pdf(
+                filepath=filepath,
+                collection=collection,
+                client=client,
+                force_reembed=args.force_reembed,
+                dry_run=args.dry_run,
+                include_how_to_run=args.include_how_to_run,
+            )
+            total_embedded += n
 
-    # ── Final output ───────────────────────────────────────────────
-    if args.dry_run:
-        print(f"\n✅ Dry run complete — {len(pdf_files)} PDFs parsed, nothing embedded")
-    else:
-        if total_embedded > 0:
-            print(f"\n💾 Saved {total_embedded} new chunks to ChromaDB at '{CHROMA_PATH}/'")
-        print_summary(collection)
-        print("🎉 Done! Launch app.py — project summaries are in the knowledge base.\n")
+        # ── Final output ───────────────────────────────────────────────
+        if args.dry_run:
+            print(f"\n✅ Dry run complete — {len(pdf_files)} PDFs parsed, nothing embedded")
+        else:
+            if total_embedded > 0:
+                print(f"\n💾 Saved {total_embedded} new chunks to ChromaDB at '{CHROMA_PATH}/'")
+            print_summary(collection)
+            print("🎉 Done! Launch app.py — project summaries are in the knowledge base.\n")
+    finally:
+        # Explicitly close ChromaDB connection to release SQLite file locks
+        if chroma_client is not None:
+            del collection
+            del chroma_client
+            import gc
+            gc.collect()
 
 
 if __name__ == "__main__":

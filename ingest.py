@@ -34,6 +34,8 @@ import sys
 import subprocess
 import argparse
 import chromadb
+import time
+import gc
 from collections import Counter
 
 # ── CONFIG ────────────────────────────────────────────────────────────────
@@ -465,6 +467,14 @@ def cli_mode(args):
         sys.exit(1)
 
     if not args.dry_run:
+        # Wait for all embed subprocesses to fully release ChromaDB file locks
+        # before attempting to tar the database for HuggingFace upload.
+        # Without this delay, SQLite file handles may still be open, causing
+        # database corruption in the uploaded tarball.
+        print(f"\n⏳ Waiting for database file locks to release...")
+        time.sleep(3)
+        gc.collect()
+
         from db_sync import push_db
         push_db()
 
