@@ -15,11 +15,17 @@ This digital twin serves as an intelligent interface to explore Barbara's profes
 **For Visitors**: Chat with the twin at [twin.barbhs.com](https://twin.barbhs.com)     
 **For Developers**: Clone this repo to explore the RAG architecture, evaluation suite, and admin debugging tools
 
+## Screenshots
+
+| Landing page | Conversation in action |
+|---|---|
+| ![Landing page](assets/demo_screenshot.png) | ![Conversation](assets/demo_conversation.png) |
+
 ## Quick Start
 
 Want to run it locally in 5 minutes?
 
-1. Clone the repo: `git clone https://github.com/dagny099/digital-twin.git`
+1. Clone the repo: `git clone https://github.com/dagny099/barbs-digital-twin.git`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Set `OPENAI_API_KEY` in `.env` (copy from `.env.example`)
 4. Run: `python app.py`
@@ -44,7 +50,7 @@ Full setup details below.
 
 | Component | Technology |
 |-----------|------------|
-| **LLM** | Multi-provider support via LiteLLM (OpenAI, Anthropic, Google, Ollama)<br>Production default: OpenAI GPT-4.1-mini |
+| **LLM** | Multi-provider support via LiteLLM (OpenAI, Anthropic, Google, Ollama)<br>Model configurable via `LLM_MODEL` env var (see `.env.example`) |
 | **Embeddings** | OpenAI text-embedding-3-small (1536 dimensions) |
 | **Vector Database** | ChromaDB (persistent local storage) |
 | **UI Framework** | Gradio |
@@ -89,9 +95,9 @@ The system prompt is a core architectural component, not an afterthought. `SYSTE
 
 **Design Philosophy**: The prompt balances authenticity (Barbara's actual voice), accuracy (source-based only), and utility (helpful without overpromising). Each section addresses a specific failure mode observed during development and eval testing.
 
-**Validation**: The 92-question evaluation suite (see `evals/`) tests adherence to these guidelines across 8 categories.
+**Validation**: The evaluation suite (see `evals/`) tests adherence to these guidelines across 8 categories.
 
-[View the full system prompt →](SYSTEM_PROMPT.md) | [Read the design rationale →](PROMPT_DESIGN.md)
+[View the full system prompt →](SYSTEM_PROMPT.md) | [Read the design rationale →](docs/PROMPT_DESIGN.md)
 
 ## Installation & Setup
 
@@ -142,7 +148,7 @@ The Gradio interface will launch at `http://localhost:7860`
 ```
 digital-twin/
 ├── app.py                              # Main Gradio application (public-facing)
-├── app_admin.py                        # Admin/debug interface (local only, port 7861)
+├── app_admin.py                        # Admin/debug interface (local only, default port 7862, configurable via ADMIN_PORT)
 ├── featured_projects.py                # Project walkthrough logic and diagram serving
 ├── ingest.py                           # Master ingestion manager (start here)
 ├── embed_kb_doc.py                     # Generic: embed any inputs/kb_*.md document
@@ -361,7 +367,7 @@ See `.github/workflows/deploy-hf.yml` for details.
 A developer-focused debug interface that runs alongside the main app:
 
 ```bash
-python app_admin.py   # http://localhost:7862
+python app_admin.py   # http://localhost:7862  (or $ADMIN_PORT if set)
 ```
 
 **Shared features** (also in `app.py` when `SHOW_SETTINGS_PANEL=true`):
@@ -383,11 +389,11 @@ Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to 
 
 ## Evaluation
 
-The project includes an offline evaluation harness for systematically testing response quality. See `EVAL_QUICKSTART.md` for the 5-minute getting started guide and `EVAL_WORKFLOW.md` for full documentation.
+The project includes an offline evaluation harness for systematically testing response quality. See [`evals/EVAL_QUICKSTART.md`](evals/EVAL_QUICKSTART.md) for the 5-minute getting started guide and [`evals/EVAL_WORKFLOW.md`](evals/EVAL_WORKFLOW.md) for full documentation.
 
 ### Two-axis question design
 
-**92 seed questions** in `eval_questions.csv` organized around two perspectives:
+Seed questions in `eval_questions.csv` are organized around two perspectives:
 
 | Type | Categories | Purpose |
 |------|------------|---------|
@@ -444,9 +450,9 @@ python analyze_logs.py --config-experiments # Temperature and top-K impact
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries
 - [ ] **Automated updates**: GitHub Actions to re-embed on repo changes
-- [x] **Evaluation suite**: 91-question offline eval harness across 8 categories (see `EVAL_QUICKSTART.md`)
+- [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`evals/EVAL_QUICKSTART.md`](evals/EVAL_QUICKSTART.md))
 - [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
-- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see `LOGGING_GUIDE.md`, `ADMIN_LOGGING_GUIDE.md`)
+- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`docs/LOGGING_GUIDE.md`](docs/LOGGING_GUIDE.md), [`docs/ADMIN_LOGGING_GUIDE.md`](docs/ADMIN_LOGGING_GUIDE.md))
 
 ## Key Design Decisions
 
@@ -456,11 +462,11 @@ python analyze_logs.py --config-experiments # Temperature and top-K impact
 - **Python-native**: Seamless integration with OpenAI SDK
 - **Metadata filtering**: Supports source-based filtering and priority rules
 
-### Why multi-provider support (with GPT-4.1-mini as default)?
+### Why multi-provider support?
 - **Flexibility**: Test OpenAI, Anthropic, Google, and Ollama models without code changes
 - **Cost optimization**: Admin interface enables data-driven model selection via ROI analysis
 - **Provider resilience**: Swap providers if one experiences downtime or pricing changes
-- **GPT-4.1-mini default**: Cost-effective, fast, tool-calling support, sufficient for RAG + personality
+- **Configurable default**: Set `LLM_MODEL` in `.env` to choose your model; see `.env.example` for options and cost notes
 - **Local development**: Settings panel (`SHOW_SETTINGS_PANEL=true`) for experimentation; hidden in production
 
 ### Why 500-character chunks?

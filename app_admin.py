@@ -10,7 +10,7 @@ Provider architecture:
 
 Run locally:
     pip install litellm   # one new dependency
-    python app_admin.py   # runs on :7861 (separate from prod :7860)
+    python app_admin.py   # runs on :7862 by default (set ADMIN_PORT to override; prod runs on PORT, default :7860)
 """
 
 import os
