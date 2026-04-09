@@ -43,6 +43,7 @@ Fields per project:
 
 import os
 import re
+import random
 
 # ═══════════════════════════════════════════════════════════════════
 # PROJECT DATA
@@ -691,20 +692,39 @@ def select_project_for_walkthrough(user_message: str) -> dict | None:
     if mentioned:
         return mentioned
 
-    # Fallback: word overlap scoring (original logic)
-    words = set(re.findall(r'\w+', user_message.lower()))
-    best, best_score = projects[0], 0
+    # Fallback: Pure random for generic queries, word overlap for specific ones
+    # Extract meaningful words (filter out common stopwords and short words)
+    all_words = set(re.findall(r'\w+', user_message.lower()))
+    stopwords = {'the', 'through', 'project', 'walk', 'tell', 'about', 'me', 'a', 'an',
+                 'show', 'describe', 'explain', 'talk', 'of', 'for', 'to', 'in', 'on'}
+    meaningful_words = {w for w in all_words if len(w) > 2 and w not in stopwords}
+
+    # If query is too generic (fewer than 2 meaningful words), randomize
+    if len(meaningful_words) < 2:
+        return random.choice(projects)
+
+    # Otherwise, use word overlap scoring for relevance
+    # Use meaningful_words (not all_words) to avoid matching on noise like "a", "of", "the"
+    # Group projects by score to handle ties with randomization
+    score_groups = {}
     for project in projects:
         searchable = " ".join([
             project["title"].lower(),
             project["summary"].lower(),
             " ".join(project.get("tags", [])),
         ])
-        score = len(words & set(re.findall(r'\w+', searchable)))
-        if score > best_score:
-            best, best_score = project, score
+        score = len(meaningful_words & set(re.findall(r'\w+', searchable)))
+        score_groups.setdefault(score, []).append(project)
 
-    return best
+    # Return random choice from highest-scoring group
+    best_score = max(score_groups.keys())
+    return random.choice(score_groups[best_score])
+
+    # TODO (Future Enhancement - Option 4): Session-aware diversity
+    # Track shown_projects per session and boost scores for unseen projects (+10 bonus).
+    # This ensures users explore full portfolio over multiple queries instead of seeing
+    # the same project repeatedly for generic walkthrough requests.
+    # See MAINTAINER_GUIDE.md Roadmap for full design details.
 
 
 # ═══════════════════════════════════════════════════════════════════

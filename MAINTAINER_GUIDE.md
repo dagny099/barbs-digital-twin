@@ -470,6 +470,7 @@ Future enhancements and features under consideration:
 - [ ] **Multi-modal support**: Integrate image understanding for project screenshots
 - [ ] **Citation tracking**: Return source documents with responses
 - [ ] **Conversation memory**: Implement session-based memory across conversations
+- [ ] **Session-aware project diversity**: Track shown projects per session to avoid repetition in walkthrough mode (weighted random fallback that biases toward unseen projects)
 - [ ] **Voice interface**: Add speech-to-text/text-to-speech capabilities
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries

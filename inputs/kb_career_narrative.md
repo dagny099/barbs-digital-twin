@@ -73,7 +73,7 @@ In parallel and continuing after Inflective, I built a portfolio of GenAI applic
 
 **Concept Cartographer** — a Gradio app that extracts concepts and relationships from LLM conversations and visualizes them as knowledge graphs in real time. Optimized from a two-call to single structured JSON architecture, reducing token usage and latency significantly.
 
-**Poolula Platform** — a modular RAG system with a built-in evaluation harness. Local-first architecture combining structured data and document retrieval (ChromaDB) with tool-style routing. Provider-agnostic LLM backend (OpenAI, Anthropic), audit-friendly logging, ground-truth evaluation workflow. Built with FastAPI and SQLModel. This is where I developed my approach to RAG evaluation as a first-class design concern.
+**Poolula Platform** — a modular RAG system with a built-in evaluation harness. Inspired by an actual need to automate compliance tracking for a small, family-owned LLC. Local-first architecture combining structured data and document retrieval (ChromaDB) with tool-style routing. Provider-agnostic LLM backend (OpenAI, Anthropic), audit-friendly logging, ground-truth evaluation workflow. Built with FastAPI and SQLModel. This is where I developed my approach to RAG evaluation as a first-class design concern.
 
 **ConvoScope** — a multi-LLM conversation platform deployed on AWS EC2 with custom domain, SSL, and monitoring. Supports OpenAI, Anthropic, and Google providers with conversation management, real-time streaming, and topic extraction. Includes an evaluation framework with A/B testing methodology that achieved a 15% quality improvement. Captures latency and token-cost metrics to guide prompt compression tradeoffs.
 

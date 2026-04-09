@@ -1121,6 +1121,22 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
 
     print(f"<<ADMIN RESPONSE>> model={model} cost=${query_cost:.6f}\n{collected[:200]}...\n")
 
+    # ── Find project mentioned in response (Option D) ───────────
+    # Override query-based diagram with response-based one for better alignment
+    def find_project_in_response(response_text: str):
+        """Find first project title mentioned in the response text."""
+        from featured_projects import load_featured_projects
+        for project in load_featured_projects():
+            if project['title'].lower() in response_text.lower():
+                return project
+        return None
+
+    response_project = find_project_in_response(collected)
+    if response_project:
+        diagram_project = response_project
+        diagram_path = get_diagram_path(diagram_project)
+        print(f"DIAGRAM: Found in response → {diagram_project['title']}")
+
     # OPTIMIZATION: Serve diagram via URL instead of base64 encoding
     # Saves ~82k tokens per diagram response
     if diagram_path:

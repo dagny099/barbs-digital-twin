@@ -1000,6 +1000,31 @@ tools = [
 
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
 
+def _get_session_id(request: gr.Request | None) -> str | None:
+    """
+    Anonymous Gradio session identifier.
+    Good enough for grouping turns from the same browser session/tab.
+    It is lightweight, but not meant to identify a real person.
+    """
+    return getattr(request, "session_hash", None) if request else None
+
+
+def _get_turn_index(history) -> int:
+    """
+    Current user turn number.
+
+    Gradio passes prior chat history into respond_ai(), but the current
+    user message is NOT in history yet, so this is:
+        (# prior user messages) + 1
+    """
+    history = history or []
+    return sum(
+        1
+        for msg in history
+        if isinstance(msg, dict) and msg.get("role") == "user"
+    ) + 1
+
+
 def _compute_similarity_stats(distances):
     """Convert L2 distances to cosine similarity scores. Returns avg and max."""
     if not distances:
@@ -1015,12 +1040,15 @@ def _compute_similarity_stats(distances):
 def _log_query(message, project_title, walkthrough, tool_name, had_error,
                model, temperature, n_chunks_retrieved, response_chars,
                workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
-               provider, cost_usd, prompt_tokens, completion_tokens, audience_tier="public"):
+               provider, cost_usd, prompt_tokens, completion_tokens,
+               audience_tier="public", session_id=None, turn_index=None):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
             # Original fields
             "ts":          datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "session_id":  session_id,
+            "turn_index":  turn_index,
             "message":     message,
             "project":     project_title,
             "walkthrough": walkthrough,
@@ -1211,9 +1239,18 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 
 #------ MAIN RESPONSE FUNCTION ----
-def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
+def respond_ai(message, history, top_k=None, temperature=None, model_name=None, request: gr.Request = None):
     if not message or not message.strip():
         return
+
+    history = history or []
+
+    # Lightweight anonymous tracking for grouping turns into sessions
+    session_id = _get_session_id(request)
+    turn_index = _get_turn_index(history)
+
+    # Useful for quick EC2 log inspection while you're testing
+    print(f"SESSION: {session_id} | TURN: {turn_index}")
 
     # Use UI values if provided, otherwise read from current settings or env vars
     if SHOW_SETTINGS_PANEL:
@@ -1425,6 +1462,23 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
                 collected, tool_calls_acc, finish_reason = payload
  
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
+
+    # ── Step 8.5: Find project mentioned in response (Option D) ──
+    # Override query-based diagram with response-based one for better alignment
+    def find_project_in_response(response_text: str):
+        """Find first project title mentioned in the response text."""
+        from featured_projects import load_featured_projects
+        for project in load_featured_projects():
+            if project['title'].lower() in response_text.lower():
+                return project
+        return None
+
+    response_project = find_project_in_response(collected)
+    if response_project:
+        diagram_project = response_project
+        diagram_path = get_diagram_path(diagram_project)
+        print(f"DIAGRAM: Found in response → {diagram_project['title']}")
+
     print(f"<<FILES:>>\n{diagram_path}\n")
 
     # ── Log cost after streaming completes ──────────────────────
@@ -1488,6 +1542,8 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None):
         prompt_tokens    = prompt_toks,
         completion_tokens = completion_toks,
         audience_tier     = audience_tier,
+        session_id       = session_id,
+        turn_index       = turn_index,
     )
 #----------------------------------
 

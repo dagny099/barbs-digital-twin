@@ -14,11 +14,15 @@ ENV/
 env/
 
 # Saved outputs 
+query_log.jsonl
+query_log_admin.jsonl
 output/
 
 # ChromaDB vector database (too large, regenerated from source)
 .chroma_db_DT/
 .chroma_db_DT.bak/
+
+test_*
 
 # Environment variables (contains API keys - NEVER commit)
 .env
