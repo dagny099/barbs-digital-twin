@@ -100,6 +100,12 @@ Detailed documentation is organized by role:
 - Monitoring, troubleshooting, and maintenance schedules
 - Roadmap and contributing guidelines
 
+### 🧪 Evaluation
+**For prompt iteration, regression checks, and model comparison**
+- [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md) — Canonical reference for the evaluation system design
+- [EVAL_QUICKSTART.md](EVAL_QUICKSTART.md) — Quick commands for running the offline harness
+
+
 ## Project Structure
 
 ```
@@ -136,13 +142,12 @@ digital-twin/
 │   ├── kb_career_narrative.md          # Career story and trajectory
 │   ├── kb_publications.md              # Research papers and academic work
 │   └── project-summaries/              # One-page PDF summaries (20 projects)
-├── evals/                               # Offline evaluation harness for systematic quality testing
-│   ├── run_evals.py                    # Execute evaluation suite across all categories
-│   ├── analyze_evals.py                # Analyze results and export for manual grading
-│   ├── eval_questions.csv              # Seed questions organized by coverage & visitor type
-│   ├── EVAL_QUICKSTART.md              # 5-minute getting started guide
-│   └── EVAL_WORKFLOW.md                # Full evaluation workflow documentation
-├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
+├── evals/                              # Offline evaluation harness and review artifacts
+│   ├── run_evals.py                    # Execute evaluation suite
+│   ├── analyze_evals.py                # Analyze results and export for review
+│   ├── eval_questions.csv              # Question bank
+│   ├── EVALUATION_GUIDE.md             # Canonical evaluation design reference
+│   └── EVAL_QUICKSTART.md              # Quick run commands├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
 ├── .venv/                              # Virtual environment (gitignored)
 └── README.md                           # This file
 ```

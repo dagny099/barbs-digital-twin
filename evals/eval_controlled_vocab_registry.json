@@ -1,0 +1,205 @@
+{
+  "legacy_category_vocab": {
+    "type": "legacy_harness_category",
+    "terms": [
+      "bio",
+      "projects",
+      "technical",
+      "personality",
+      "tool",
+      "publication",
+      "recruiter",
+      "friendly"
+    ],
+    "description": "Legacy categories from the current offline harness."
+  },
+  "question_type_vocab": {
+    "type": "evaluation_logic",
+    "terms": [
+      "closed_fact",
+      "bounded_open",
+      "open_persona"
+    ],
+    "description": "Controls how tightly a response should be judged."
+  },
+  "audience_mode_vocab": {
+    "type": "persona",
+    "terms": [
+      "recruiter",
+      "technical_peer",
+      "curious_generalist",
+      "friend_or_colleague",
+      "unknown"
+    ],
+    "description": "Intended audience stance."
+  },
+  "difficulty_vocab": {
+    "type": "ordinal",
+    "terms": [
+      "easy",
+      "medium",
+      "hard"
+    ],
+    "description": "Relative challenge of the item."
+  },
+  "priority_vocab": {
+    "type": "ordinal",
+    "terms": [
+      "core",
+      "useful",
+      "stretch",
+      "regression_watch"
+    ],
+    "description": "Importance for ongoing monitoring."
+  },
+  "structure_vocab": {
+    "type": "rhetorical",
+    "terms": [
+      "single_paragraph",
+      "one_to_two_paragraphs",
+      "two_part_answer",
+      "brief_summary_plus_examples",
+      "brief_positioning_plus_bullets",
+      "numbered_principles",
+      "narrative_plus_light_bullets",
+      "short_intro_plus_examples",
+      "single_paragraph_or_light_bullets",
+      "short_paragraphs"
+    ],
+    "description": "Preferred answer shape."
+  },
+  "followup_behavior_vocab": {
+    "type": "conversation_design",
+    "terms": [
+      "none",
+      "optional_light_invite",
+      "light_invite",
+      "offer_more_detail",
+      "invite_deeper_dive",
+      "offer_concrete_walkthrough",
+      "ask_which_lane_is_most_relevant",
+      "light_opening_for_referral"
+    ],
+    "description": "How, if at all, the answer should open the next turn."
+  },
+  "grounding_expectation_vocab": {
+    "type": "grounding",
+    "terms": [
+      "strictly_grounded",
+      "grounded",
+      "semi_grounded",
+      "stylistic"
+    ],
+    "description": "Expected degree of fact-bound grounding."
+  },
+  "markdown_usage_vocab": {
+    "type": "derived",
+    "terms": [
+      "none",
+      "light",
+      "strong"
+    ],
+    "description": "Observed amount of markdown structure."
+  },
+  "issue_source_vocab": {
+    "type": "diagnosis",
+    "terms": [
+      "knowledge_gap",
+      "retrieval_gap",
+      "prompt_behavior",
+      "model_tendency",
+      "evaluation_item_needs_revision"
+    ],
+    "description": "Primary source of a weakness."
+  },
+  "fix_priority_vocab": {
+    "type": "ordinal",
+    "terms": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "description": "Priority for remediation."
+  },
+  "workflow_type_vocab": {
+    "type": "runtime",
+    "terms": [
+      "standard",
+      "walkthrough",
+      "diagram_only",
+      "tool",
+      "unknown"
+    ],
+    "description": "Execution path for the answer."
+  },
+  "strengths_tags_vocab": {
+    "type": "controlled_tags",
+    "terms": [
+      "concrete_not_generic",
+      "strong_opening",
+      "grounded_philosophy",
+      "good_markdown",
+      "good_bullets",
+      "natural_followup",
+      "nice_warmth",
+      "good_project_choice",
+      "concise_but_complete",
+      "strong_problem_framing",
+      "good_level_of_detail",
+      "good_links",
+      "balanced_personal_professional"
+    ],
+    "description": "Positive tags for manual review."
+  },
+  "weakness_tags_vocab": {
+    "type": "controlled_tags",
+    "terms": [
+      "too_wordy",
+      "repetitive",
+      "too_resumey",
+      "too_generic",
+      "too_abstract",
+      "missed_user_intent",
+      "weak_followup",
+      "weak_close",
+      "no_markdown",
+      "over_pushed_project",
+      "slightly_long",
+      "did_not_answer_both_parts",
+      "too_narrow",
+      "too_broad"
+    ],
+    "description": "Negative tags for manual review."
+  },
+  "failure_mode_tags_vocab": {
+    "type": "controlled_tags",
+    "terms": [
+      "knowledge_gap",
+      "retrieval_gap",
+      "hallucinated_detail",
+      "prompt_oversteer",
+      "wrong_audience_mode",
+      "overused_signature_theme",
+      "ignored_known_background",
+      "answered_too_narrowly",
+      "answered_too_broadly"
+    ],
+    "description": "Failure-mode taxonomy."
+  },
+  "intent_vocab": {
+    "type": "task_intent",
+    "terms": [
+      "project_walkthrough",
+      "personal_professional_bridge",
+      "playful_persona",
+      "current_energy",
+      "career_next_step",
+      "methodology",
+      "education_fact",
+      "career_history_fact",
+      "consulting_background",
+      "research_explanation"
+    ],
+    "description": "Starter intent list; should expand over time."
+  }
+}

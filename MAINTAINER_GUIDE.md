@@ -125,101 +125,57 @@ python db_sync.py --push  # If you want to push ChromaDB
 
 ## Evaluation
 
-### Evaluation Workflow
+The Digital Twin uses an offline evaluation harness to test response quality, retrieval behavior, and regression risk after prompt, model, or knowledge-base changes.
 
-```mermaid
-graph LR
-    subgraph "Input"
-        CSV[eval_questions.csv<br/>8 categories<br/>2 visitor types]
-    end
+For the conceptual design of the evaluation system — including question types, controlled vocabularies, scoring dimensions, and diagnosis categories — see [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md).
 
-    subgraph "Execution"
-        RUN[run_evals.py<br/>--category bio/projects/etc<br/>--all for full suite]
-        LLM[LLM as Judge<br/>Evaluates response quality]
-    end
+For quick run commands, see [EVAL_QUICKSTART.md](EVAL_QUICKSTART.md).
 
-    subgraph "Analysis"
-        ANALYZE[analyze_evals.py<br/>Pass/fail rates<br/>Cost & latency metrics]
-        EXPORT[Export to CSV<br/>for manual grading]
-    end
+### What the eval harness is for
 
-    subgraph "Output"
-        REPORT[Console Report<br/>Category scores<br/>Knowledge gaps]
-        TSFILE[Timestamped Results<br/>eval_results_YYYYMMDD_HHMMSS.json]
-    end
+Use the harness to answer three practical questions:
 
-    CSV --> RUN
-    RUN --> LLM
-    LLM --> TSFILE
-    TSFILE --> ANALYZE
-    ANALYZE --> REPORT
-    ANALYZE --> EXPORT
+1. Does the twin know the right things?
+2. Does it answer in the right way?
+3. If an answer is weak, why?
 
-    style RUN fill:#e1f5ff
-    style LLM fill:#ffe1f5
-    style ANALYZE fill:#fff4e1
-```
+The harness is most useful for:
+- regression checks after KB changes
+- quality checks after prompt or model changes
+- lightweight model comparisons
+- pre-deploy validation
 
-The project includes an offline evaluation harness for systematically testing response quality.
+### What it does not fully cover
 
-**Quick start:** See [`evals/EVAL_QUICKSTART.md`](evals/EVAL_QUICKSTART.md)
-**Full workflow:** See [`evals/EVAL_WORKFLOW.md`](evals/EVAL_WORKFLOW.md)
+The offline harness is primarily a single-turn evaluation system. It does not fully exercise:
+- tool calling
+- project walkthrough mode
+- multi-turn conversational behavior
 
-### Two-Axis Question Design
+Those should still be spot-checked in the running app.
 
-Seed questions in `eval_questions.csv` are organized around two perspectives:
+### Core evaluation artifacts
 
-| Type | Categories | Purpose |
-|------|------------|---------|
-| **Coverage** | `bio`, `projects`, `technical`, `personality`, `tool`, `publication` | Does the system retrieve and answer correctly? Run after knowledge base changes. |
-| **Visitor** | `recruiter`, `friendly` | Does the system satisfy real visitors? Simulates recruiter and casual visitor perspectives. |
+The evaluation system is built around four artifacts:
 
-### Common Eval Commands
+- **Question bank** — defines what a good answer should accomplish
+- **Review template** — captures what happened in a run and how it was judged
+- **Data dictionary** — defines the evaluation fields and their intended use
+- **Controlled vocabulary registry** — governs enums and review tags so analysis stays consistent over time
+
+### When to run evals
+
+Run evals after:
+- editing `SYSTEM_PROMPT.md`
+- changing or re-ingesting KB sources
+- changing model, temperature, or top-k
+- before deployment
+
+### Recommended workflow
 
 ```bash
-# Full evaluation (~$0.21, ~5 min)
 python run_evals.py
-
-# Coverage check after re-embedding (run each separately)
-python run_evals.py --category bio
-python run_evals.py --category publication
-
-# Visitor experience check after prompt changes
-python run_evals.py --category recruiter
-python run_evals.py --category friendly
-
-# Analyze and export for manual grading
 python analyze_evals.py --export
-```
-
-### When to Run Evals
-
-**After knowledge base changes:**
-```bash
-# Re-embed a source
-python ingest.py --source kb-biosketch --force
-
-# Test coverage categories
-python run_evals.py --category bio
-python run_evals.py --category projects
-```
-
-**After prompt changes:**
-```bash
-# Edit SYSTEM_PROMPT.md
-# Then test visitor categories
-python run_evals.py --category recruiter
-python run_evals.py --category friendly
-```
-
-**Before deployment:**
-```bash
-# Full suite
-python run_evals.py
-
-# Check for regressions
-python analyze_evals.py
-```
 
 ---
 
@@ -250,6 +206,19 @@ python analyze_logs.py --last 50
 # Export to JSON
 python analyze_logs.py --export summary.json
 ```
+
+Use the exported review sheet to score and diagnose weak responses.
+
+### Typical causes of weak answers
+
+A weak answer usually points to one of five causes:
+- knowledge gap  
+- retrieval gap  
+- prompt behavior  
+- model tendency  
+- evaluation item needs revision  
+
+Record the diagnosis in the review sheet so evaluation leads to concrete improvements rather than vague notes.
 
 ### Admin Analytics (Model Comparison & Cost Analysis)
 
