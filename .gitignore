@@ -91,3 +91,6 @@ eval_review.csv
 
 # Archive of old scripts (reference only, not for deployment)
 archive/
+
+# Local source inputs (large/private content; not tracked)
+inputs/
