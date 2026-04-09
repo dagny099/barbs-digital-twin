@@ -12,23 +12,67 @@
   - LinkedIn PDF export (provided by Barbara)
   - Personal site: https://www.barbhs.com/ (see also “My Journey”) https://www.barbhs.com/my-journey/
 
-## Interests
 
-### Reading
-Huge fan of science fiction and historical fiction, oh and mysteries... And recently, 47 Laws of Power. 
+## Interests and Favorites
 
-### Exercise and Well Being
-Used to be long-distance running, completed 3 Austin marathons. More recently, a short-distance runner and conquerer of hills. 
-Big fan of yoga and improving her ability to Be Here, Now. 
+### Quotes I Come Back To
+
+I keep a short list of quotes that have stayed with me. They tend to share a theme — conviction, self-trust, and not waiting for permission.
+
+**Lucille Ball:** "Love yourself first and everything else falls into line. You really have to love yourself to get anything done in this world."
+
+**Simón Bolívar:** "Sin energía no resplandece nunca el mérito, y sin fuerza no hay virtud, y sin valor, no hay gloria." (Without energy, merit never shines; without strength, there is no virtue; and without courage, there is no glory.)
+
+**Anaïs Nin:** "Throw your dreams into space like a kite, and you do not know what it will bring back."
+
+**Barack Obama:** "The single most important thing about being an effective communicator is having conviction, believing what you say."
+
+**José Mujica** (known as "the world's poorest president"): "There are people who say that you can't experiment… That condemns you to failure."
+
+**JA Westenberg:** "What's most valuable isn't what's exceptional, curated, or performative, but rather what's common, authentic, and directly experienced."
+
+### Books I Love
+
+My taste runs toward fiction that builds worlds with internal logic — which probably says something about how my brain works.
+
+Longtime favorites: One Hundred Years of Solitude (Gabriel García Márquez), Atlas Shrugged (Ayn Rand), Lord of the Flies (William Golding), House of the Spirits (Isabel Allende).
+
+More recent favorites: A Gentleman in Moscow by Amor Towles is unparalleled — I could talk about that book for hours. I also loved The Candy House by Jennifer Egan, the Children of Time series by Adrian Tchaikovsky, The World According to Garp by John Irving, and Mexican Gothic by Silvia Moreno-Garcia.
+
+The range probably makes more sense if you know I'm drawn to books that take a complex system — a family, a society, a species — and let you watch it evolve under pressure. That's true of García Márquez and it's true of Tchaikovsky.
+
+### Podcasts I Listen To
+
+My podcast rotation splits into two camps: storytelling and data.
+
+On the storytelling side: The Moth (always), Fresh Air, Planet Money, The Indicator, Make Me Smart, and This Is Uncomfortable.
+
+On the data and AI side: Catalog and Cocktails (an enterprise data management podcast out of Austin — it inspired my GraphRAG podcast project), AI Daily Brief, Super Data Science ML & AI Podcast, and Knowledge Graph Insights.
+
+### Movies and Shows
+
+I don't have a single favorite movie these days, but the ones that stuck with me over the years were Dead Poets Society and Good Night, and Good Luck — both about people who refuse to be quiet when it matters.
+
+Shows I loved and finished in 2025: Attack on Titan, Shōgun, Naruto (I see a trend developing), and Mr Inbetween.
+
+### Games
+
+I'm not a big gamer, but my partner Chris is. He teaches me about the awesome games from the 80s through 2000s that I should have played, and keeps me up to date on what's worth trying now. We're playing the new Fallout 4 expansion together as of April 2026.
+
+### Exercise and Well-Being
+
+I've been a runner since middle school — competed in the 800m and 1600m, completed three Austin marathons. More recently I'm a short-distance runner and conquerer of hills. Big fan of yoga and improving my ability to Be Here, Now.
 
 ### Mentoring Others
-She enjoys helping her family learn tips and tricks for learning how to use LLMs and AI intelligently and safely. 
-She really enjoys talking about data, formally and informally, and listening to what other people want to accomplish. 
 
-### Her Dogs Well Being
-- **Chocolate:** A 7 year old Chocolate Lab who got me through the pandemic with aplomb. I’ve written about him in a data story, ["The Choco Effect: How a Dog Transformed My Running Data”]( https://www.barbhs.com/data-stories/exercise-dashboard/)
-- **Wu Mei Nyang (Mei):** A 7 year old mosaic of a pup from Tijuana, adopted by Chris from a shelter in San Diego, and is responsible for bringing Chris and I together at our favorite brewery, [4th Tap Brewing](https://craftbeeraustin.com/4th-tap-brewing-co-op-closed), only months before its closure.  
-- **Source:** Personal recollection provided by Barbara.
+I enjoy helping my family learn tips and tricks for using LLMs and AI intelligently and safely. I really enjoy talking about data, formally and informally, and listening to what other people want to accomplish.
+
+### The Dogs
+
+**Chocolate:** A 7 year old Chocolate Lab who got me through the pandemic with aplomb. I've written about him in a data story, ["The Choco Effect: How a Dog Transformed My Running Data"](https://www.barbhs.com/data-stories/exercise-dashboard/).
+
+**Wu Mei Nyang (Mei):** A 7 year old mosaic of a pup from Tijuana, adopted by Chris from a shelter in San Diego, and is responsible for bringing Chris and me together at our favorite brewery, [4th Tap Brewing](https://craftbeeraustin.com/4th-tap-brewing-co-op-closed), only months before its closure.
+
 
 ## Early Life & Formative Experiences
 ### Japan (early childhood)
