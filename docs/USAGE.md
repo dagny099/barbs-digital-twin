@@ -48,18 +48,18 @@ Copy `.env.example` to `.env` and set values before running either app.
 The `ingest.py` script orchestrates all data sources. Always start here:
 
 ```bash
-python ingest.py              # Interactive menu with live DB status
-python ingest.py --status     # Show chunk counts per source and exit
+python scripts/ingest.py              # Interactive menu with live DB status
+python scripts/ingest.py --status     # Show chunk counts per source and exit
 ```
 
 ### Non-interactive commands
 
 ```bash
-python ingest.py --all                            # Embed all sources (skip existing)
-python ingest.py --all --force                    # Force re-embed everything
-python ingest.py --source kb-biosketch            # Embed one source
-python ingest.py --source kb-biosketch --force    # Force re-embed one source
-python ingest.py --source kb-projects --dry-run   # Preview without embedding
+python scripts/ingest.py --all                            # Embed all sources (skip existing)
+python scripts/ingest.py --all --force                    # Force re-embed everything
+python scripts/ingest.py --source kb-biosketch            # Embed one source
+python scripts/ingest.py --source kb-biosketch --force    # Force re-embed one source
+python scripts/ingest.py --source kb-projects --dry-run   # Preview without embedding
 ```
 
 **Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-projects`,
@@ -68,9 +68,9 @@ python ingest.py --source kb-projects --dry-run   # Preview without embedding
 ### Verifying the DB
 
 ```bash
-python ingest.py --status
-python verify_collection.py --show-sources
-python verify_collection.py --show-sections
+python scripts/ingest.py --status
+python scripts/verify_collection.py --show-sources
+python scripts/verify_collection.py --show-sections
 ```
 
 ---
@@ -121,7 +121,7 @@ cd evals && python run_evals.py --category recruiter --category friendly
 1. Create a markdown file in `inputs/` using `##` H2 headers for sections (e.g. `inputs/kb_mynewtopic.md`)
 2. Add an entry to the `SOURCES` list in `ingest.py` following the existing `kb-*` pattern
 3. Update source priority rules in `SYSTEM_PROMPT.md` if needed
-4. Embed it: `python ingest.py --source kb-mynewtopic`
+4. Embed it: `python scripts/ingest.py --source kb-mynewtopic`
 5. Update `docs/CLAUDE.md` and this file
 
 ---
@@ -181,9 +181,9 @@ and full chunk text for every query.
 **Standalone tools**:
 
 ```bash
-python ingest.py --source kb-biosketch --dry-run   # Preview section parsing
-python verify_collection.py --show-sources          # Per-source chunk counts
-python app_admin.py                                 # Semantic probe: "does the KB cover X?"
+python scripts/ingest.py --source kb-biosketch --dry-run   # Preview section parsing
+python scripts/verify_collection.py --show-sources          # Per-source chunk counts
+python app_admin.py                                         # Semantic probe: "does the KB cover X?"
 ```
 
 `chunk_inspector.py` is the most thorough local debugging tool. Run it after any re-ingest to

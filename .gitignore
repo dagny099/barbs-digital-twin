@@ -95,3 +95,4 @@ eval_review.csv
 
 # Archive of old scripts (reference only, not for deployment)
 archive/
+query_log_admin_SAMPLE.jsonl

@@ -29,14 +29,15 @@ jobs:
       - name: Stage files for deployment
         run: |
           # ── Core app ──────────────────────────────────────────────────────
-          cp app.py featured_projects.py utils.py ingest.py db_sync.py requirements.txt SYSTEM_PROMPT.md hf_space/
+          cp app.py featured_projects.py utils.py db_sync.py requirements.txt SYSTEM_PROMPT.md hf_space/
 
           # ── Embedding scripts ─────────────────────────────────────────────
           # embed_kb_doc.py handles all kb_*.md files (replaces the old per-source scripts).
-          cp embed_kb_doc.py \
-             embed_project_summaries.py \
-             embed_jekyll.py \
-             embed_walkthroughs.py \
+          cp scripts/ingest.py \
+             scripts/embed_kb_doc.py \
+             scripts/embed_project_summaries.py \
+             scripts/embed_jekyll.py \
+             scripts/embed_walkthroughs.py \
              hf_space/
 
           # ── Static assets (images, etc.) ──────────────────────────────────

@@ -124,7 +124,7 @@ The system prompt is a core architectural component, not an afterthought. `SYSTE
 
 **Validation**: The evaluation suite (see `evals/`) tests adherence to these guidelines across 8 categories.
 
-**Learn more:** [SYSTEM_PROMPT.md](SYSTEM_PROMPT.md) | [docs/PROMPT_DESIGN.md](docs/PROMPT_DESIGN.md)
+**Learn more:** [SYSTEM_PROMPT.md](../SYSTEM_PROMPT.md) | [PROMPT_DESIGN.md](PROMPT_DESIGN.md)
 
 ## Knowledge Base Management
 
@@ -174,7 +174,7 @@ graph TB
 The recommended way to manage all data sources. Run it with no arguments for an interactive menu that shows current DB status before asking you to do anything:
 
 ```bash
-python ingest.py
+python scripts/ingest.py
 ```
 
 The menu displays a live status table — chunk counts per source, so you can see at a glance what's embedded and what isn't:
@@ -195,12 +195,12 @@ Select a source by number → choose "Embed", "Force re-embed", or "Dry run".
 
 **Non-interactive flags** (for scripting or CI/CD):
 ```bash
-python ingest.py --status                              # Show DB status and exit
-python ingest.py --all                                 # Embed all sources
-python ingest.py --all --force                         # Force re-embed everything
-python ingest.py --source kb-biosketch                 # Embed one source
-python ingest.py --source kb-biosketch --force         # Force re-embed one source
-python ingest.py --source project-summaries --dry-run  # Preview without embedding
+python scripts/ingest.py --status                              # Show DB status and exit
+python scripts/ingest.py --all                                 # Embed all sources
+python scripts/ingest.py --all --force                         # Force re-embed everything
+python scripts/ingest.py --source kb-biosketch                 # Embed one source
+python scripts/ingest.py --source kb-biosketch --force         # Force re-embed one source
+python scripts/ingest.py --source project-summaries --dry-run  # Preview without embedding
 ```
 
 **Source keys**: `kb-biosketch`, `kb-philosophy`, `kb-positioning`, `kb-intellectual-foundations`, `kb-dissertation-overview`, `kb-dissertation-relevance`, `kb-dissertation-philosophy`, `kb-projects`, `kb-career`, `kb-publications`, `kb-answers`, `kb-origins`, `kb-easter-eggs`, `project-summaries`, `jekyll`, `project-walkthroughs`
@@ -208,10 +208,10 @@ python ingest.py --source project-summaries --dry-run  # Preview without embeddi
 ### Checking DB Contents
 
 ```bash
-python ingest.py --status                          # Quick chunk counts per source
-python verify_collection.py                        # Detailed stats + sample chunks
-python verify_collection.py --show-sources         # Per-source breakdown
-python verify_collection.py --show-sections        # All unique section names
+python scripts/ingest.py --status                      # Quick chunk counts per source
+python scripts/verify_collection.py                    # Detailed stats + sample chunks
+python scripts/verify_collection.py --show-sources     # Per-source breakdown
+python scripts/verify_collection.py --show-sections    # All unique section names
 ```
 
 ### Auditing Chunk Quality
@@ -236,7 +236,7 @@ python chunk_inspector.py --query "..." --n 12   # Retrieve N chunks
 ### Wiping the DB
 
 ```bash
-python clear_collection.py                         # Interactive confirmation required
+python scripts/clear_collection.py                 # Interactive confirmation required
 ```
 
 ---
@@ -402,8 +402,8 @@ To adapt this codebase for your own digital twin:
 
 4. **Re-embed the knowledge base**:
    ```bash
-   python clear_collection.py  # Wipe Barbara's data
-   python ingest.py --all      # Embed your content
+   python scripts/clear_collection.py  # Wipe Barbara's data
+   python scripts/ingest.py --all      # Embed your content
    ```
 
 5. **Test thoroughly**:
@@ -418,7 +418,7 @@ This is a personal project, but suggestions and ideas are welcome! Feel free to:
 - Submit PRs for improvements (especially documentation)
 - Fork the repo to create your own digital twin
 
-See the main [README.md](README.md) for contact information.
+See the main [README.md](../README.md) for contact information.
 
 ---
 

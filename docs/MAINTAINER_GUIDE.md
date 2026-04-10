@@ -127,9 +127,9 @@ python db_sync.py --push  # If you want to push ChromaDB
 
 The Digital Twin uses an offline evaluation harness to test response quality, retrieval behavior, and regression risk after prompt, model, or knowledge-base changes.
 
-For the conceptual design of the evaluation system — including question types, controlled vocabularies, scoring dimensions, and diagnosis categories — see [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md).
+For the conceptual design of the evaluation system — including question types, controlled vocabularies, scoring dimensions, and diagnosis categories — see [EVALUATION_GUIDE.md](../evals/EVALUATION_GUIDE.md).
 
-For quick run commands, see [EVAL_QUICKSTART.md](EVAL_QUICKSTART.md).
+For quick run commands, see [EVAL_QUICKSTART.md](../evals/EVAL_QUICKSTART.md).
 
 ### What the eval harness is for
 
@@ -186,25 +186,25 @@ Every conversation turn and visitor vote (👍/👎) is logged to `query_log.jso
 **Production logs:** `query_log.jsonl`
 **Admin logs:** `query_log_admin.jsonl` (separate for experimentation)
 
-**Learn more:** [`docs/LOGGING_GUIDE.md`](docs/LOGGING_GUIDE.md) | [`docs/ADMIN_LOGGING_GUIDE.md`](docs/ADMIN_LOGGING_GUIDE.md)
+**Learn more:** [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md) | [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md)
 
 ### Basic Analytics
 
 ```bash
 # Full report
-python analyze_logs.py
+python scripts/analyze_logs.py
 
 # Satisfaction analysis (thumbs up/down)
-python analyze_logs.py --votes
+python scripts/analyze_logs.py --votes
 
 # Queries where retrieval was weak
-python analyze_logs.py --knowledge-gaps
+python scripts/analyze_logs.py --knowledge-gaps
 
 # Analyze only the last N queries
-python analyze_logs.py --last 50
+python scripts/analyze_logs.py --last 50
 
 # Export to JSON
-python analyze_logs.py --export summary.json
+python scripts/analyze_logs.py --export summary.json
 ```
 
 Use the exported review sheet to score and diagnose weak responses.
@@ -224,19 +224,19 @@ Record the diagnosis in the review sheet so evaluation leads to concrete improve
 
 ```bash
 # Full admin report
-python analyze_logs.py --admin
+python scripts/analyze_logs.py --admin
 
 # Quality, cost, and latency by model
-python analyze_logs.py --compare-models
+python scripts/analyze_logs.py --compare-models
 
 # ROI: similarity per dollar
-python analyze_logs.py --cost-analysis
+python scripts/analyze_logs.py --cost-analysis
 
 # OpenAI vs Anthropic vs Gemini vs Ollama
-python analyze_logs.py --compare-providers
+python scripts/analyze_logs.py --compare-providers
 
 # Temperature and top-K impact
-python analyze_logs.py --config-experiments
+python scripts/analyze_logs.py --config-experiments
 ```
 
 ### What Gets Logged
@@ -257,7 +257,7 @@ python analyze_logs.py --config-experiments
 
 ```bash
 # View recent queries
-python analyze_logs.py --last 10
+python scripts/analyze_logs.py --last 10
 
 # Check if logging is working
 python -c "
@@ -297,13 +297,13 @@ Check what's in the database:
 
 ```bash
 # Basic stats
-python verify_collection.py
+python scripts/verify_collection.py
 
 # Per-source breakdown
-python verify_collection.py --show-sources
+python scripts/verify_collection.py --show-sources
 
 # All unique section names
-python verify_collection.py --show-sections
+python scripts/verify_collection.py --show-sections
 ```
 
 ### Audit Chunks
@@ -332,10 +332,10 @@ python chunk_inspector.py --all-chunks
 Wipe the entire database (with confirmation):
 
 ```bash
-python clear_collection.py
+python scripts/clear_collection.py
 ```
 
-**Warning:** This deletes all embeddings. You'll need to re-run `python ingest.py --all` to rebuild.
+**Warning:** This deletes all embeddings. You'll need to re-run `python scripts/ingest.py --all` to rebuild.
 
 ---
 
@@ -352,7 +352,7 @@ python clear_collection.py
 
 2. **Query logs** (check for errors or low satisfaction):
    ```bash
-   python analyze_logs.py --votes --last 50
+   python scripts/analyze_logs.py --votes --last 50
    ```
 
 3. **Disk space** (ChromaDB can grow):
@@ -364,17 +364,17 @@ python clear_collection.py
 
 1. **Knowledge gaps** (what are users asking that we can't answer?):
    ```bash
-   python analyze_logs.py --knowledge-gaps
+   python scripts/analyze_logs.py --knowledge-gaps
    ```
 
 2. **Cost trends**:
    ```bash
-   python analyze_logs.py --cost-analysis
+   python scripts/analyze_logs.py --cost-analysis
    ```
 
 3. **Model performance**:
    ```bash
-   python analyze_logs.py --compare-models
+   python scripts/analyze_logs.py --compare-models
    ```
 
 ### Monthly Maintenance
@@ -417,7 +417,7 @@ pip install -r requirements.txt
 cat .env | grep OPENAI_API_KEY
 
 # Check ChromaDB
-python verify_collection.py
+python scripts/verify_collection.py
 ```
 
 ### Empty responses or errors
@@ -430,14 +430,14 @@ tail -100 query_log.jsonl
 python chunk_inspector.py --query "test query"
 
 # Check DB contents
-python verify_collection.py
+python scripts/verify_collection.py
 ```
 
 ### High costs
 
 ```bash
 # Analyze cost by model
-python analyze_logs.py --cost-analysis
+python scripts/analyze_logs.py --cost-analysis
 
 # Check if you're using expensive models
 grep LLM_MODEL .env
@@ -458,7 +458,7 @@ python chunk_inspector.py --query "<failing query>"
 cat SYSTEM_PROMPT.md
 
 # Check knowledge gaps
-python analyze_logs.py --knowledge-gaps
+python scripts/analyze_logs.py --knowledge-gaps
 ```
 
 ---
@@ -475,9 +475,9 @@ Future enhancements and features under consideration:
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries
 - [ ] **Automated updates**: GitHub Actions to re-embed on repo changes
-- [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`evals/EVAL_QUICKSTART.md`](evals/EVAL_QUICKSTART.md))
+- [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`EVAL_QUICKSTART.md`](../evals/EVAL_QUICKSTART.md))
 - [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
-- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`docs/LOGGING_GUIDE.md`](docs/LOGGING_GUIDE.md), [`docs/ADMIN_LOGGING_GUIDE.md`](docs/ADMIN_LOGGING_GUIDE.md))
+- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md), [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md))
 
 ---
 
@@ -488,11 +488,11 @@ This is a personal project, but suggestions and ideas are welcome! Feel free to:
 - Submit PRs for improvements (especially documentation)
 - Share your own digital twin fork
 
-See the main [README.md](README.md) for contact information.
+See the main [README.md](../README.md) for contact information.
 
 ---
 
 **Related Guides:**
 - [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - Setup, architecture, and customization
 - [VISITOR_GUIDE.md](VISITOR_GUIDE.md) - How to use the twin
-- [README.md](README.md) - Project overview
+- [README.md](../README.md) - Project overview

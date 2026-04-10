@@ -193,7 +193,7 @@ collection = chroma_client.get_or_create_collection(name="barb-twin")
 
 if collection.count() == 0:
     print("Knowledge base empty — running ingest...")
-    subprocess.run(["python", "ingest.py", "--all"], check=True)
+    subprocess.run(["python", "scripts/ingest.py", "--all"], check=True)
     # from db_sync import push_db
     # push_db()
     # print("Ingestion complete.")

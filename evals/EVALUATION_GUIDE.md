@@ -287,7 +287,7 @@ This guide is the **canonical conceptual reference** for the evaluation system.
 Other evaluation docs should be narrower in scope:
 
 - **EVAL_QUICKSTART.md**: how to run the harness quickly
-- **MAINTAINER_GUIDE.md**: when and why maintainers should run evals in normal operations
+- **[MAINTAINER_GUIDE.md](../docs/MAINTAINER_GUIDE.md)**: when and why maintainers should run evals in normal operations
 - **Question bank / data dictionary / review template**: working artifacts used during evaluation
 
 ## Maintenance Guidance

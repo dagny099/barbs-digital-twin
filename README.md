@@ -31,7 +31,7 @@ Want to run it locally in 5 minutes?
 4. Run: `python app.py`
 5. Open http://localhost:7860
 
-**Need more details?** See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for full installation and setup instructions.
+**Need more details?** See [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for full installation and setup instructions.
 
 ## Features
 
@@ -67,13 +67,13 @@ This digital twin uses **RAG (Retrieval-Augmented Generation)** to combine seman
 4. **Response Generation**: Multi-provider LLM generates responses in Barbara's voice
 5. **Tool Integration**: Optional function calling for notifications and interactive features
 
-**Want the technical details?** See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for architecture diagrams, data flow, and design decisions.
+**Want the technical details?** See [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for architecture diagrams, data flow, and design decisions.
 
 ## Documentation
 
 Detailed documentation is organized by role:
 
-### 📘 [VISITOR_GUIDE.md](VISITOR_GUIDE.md)
+### 📘 [VISITOR_GUIDE.md](docs/VISITOR_GUIDE.md)
 **For everyone using the twin**
 - How to ask good questions
 - Example questions by category (recruiter, collaborator, curious visitor)
@@ -81,7 +81,7 @@ Detailed documentation is organized by role:
 - Understanding responses and project walkthroughs
 - Tips for better conversations
 
-### 🔧 [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+### 🔧 [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 **For developers building or customizing**
 - Installation & setup instructions
 - Architecture diagrams and data flow
@@ -91,7 +91,7 @@ Detailed documentation is organized by role:
 - Admin interface features
 - Customizing for your own digital twin
 
-### 🚀 [MAINTAINER_GUIDE.md](MAINTAINER_GUIDE.md)
+### 🚀 [MAINTAINER_GUIDE.md](docs/MAINTAINER_GUIDE.md)
 **For deployment and operations**
 - EC2 & Hugging Face Spaces deployment automation
 - Evaluation workflow and testing harness
@@ -102,8 +102,8 @@ Detailed documentation is organized by role:
 
 ### 🧪 Evaluation
 **For prompt iteration, regression checks, and model comparison**
-- [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md) — Canonical reference for the evaluation system design
-- [EVAL_QUICKSTART.md](EVAL_QUICKSTART.md) — Quick commands for running the offline harness
+- [EVALUATION_GUIDE.md](evals/EVALUATION_GUIDE.md) — Canonical reference for the evaluation system design
+- [EVAL_QUICKSTART.md](evals/EVAL_QUICKSTART.md) — Quick commands for running the offline harness
 
 
 ## Project Structure
@@ -124,16 +124,14 @@ digital-twin/
 ├── clear_collection.py                 # Wipe ChromaDB collection
 ├── requirements.txt                    # Python dependencies
 ├── SYSTEM_PROMPT.md                    # LLM system prompt (loaded by app.py)
-├── VISITOR_GUIDE.md                    # Usage guide for visitors
-├── DEVELOPER_GUIDE.md                  # Technical guide for developers
-├── MAINTAINER_GUIDE.md                 # Operations guide for maintainers
-├── docs/                               # Detailed info about setup and design choices
+├── docs/                               # Documentation organized by role
+│   ├── VISITOR_GUIDE.md                # Usage guide for visitors
+│   ├── DEVELOPER_GUIDE.md              # Technical guide for developers
+│   ├── MAINTAINER_GUIDE.md             # Operations guide for maintainers
 │   ├── PROMPT_DESIGN.md                # System prompt design rationale
 │   ├── LOGGING_GUIDE.md                # Production logging setup and query analytics
 │   ├── ADMIN_LOGGING_GUIDE.md          # Admin-mode logging for model comparison
-│   ├── USAGE.md                        # Usage patterns and best practices
-│   ├── CLAUDE.md                       # Claude Code integration notes
-│   └── IMPLEMENTATION_SUMMARY.md       # Architecture and implementation notes
+│   └── USAGE.md                        # Usage patterns and best practices
 ├── inputs/
 │   ├── kb_biosketch.md                 # Biographical sketch  ⭐ authoritative
 │   ├── kb_philosophy-and-approach.md   # Working philosophy and meaning-making
