@@ -6,30 +6,35 @@ Each answer is shaped to be useful for retrieval as well as response generation.
 
 ---
 
-## What problems does Barbara solve?
+## What kinds of problems excite you most?
 
 ### Very short answer
-I solve problems where the raw material is messy, human, and hard to use as-is — then turn it into something structured, navigable, and useful.
+Problems where the deeper issue is representation — where the data exists but isn't structured in a way that lets people actually use it or trust it.
 
 ### Short answer
-I tend to solve problems where the underlying issue is not just lack of data, but lack of usable structure. That might mean turning resumes into knowledge graphs, documents into retrieval systems, photos into searchable records, or messy workflows into something people can actually navigate. The through-line is that I like making complicated things legible.
+I get most excited by problems that look messy on the surface but have a real underlying structure waiting to be uncovered. Especially when the people involved already feel the pain — too much unstructured knowledge, systems that technically work but don't match how they actually think, data that exists but isn't legible enough to act on. The moment a domain expert looks at a graph or a retrieval result and says "yes, that's exactly how I think about it" — that's the moment I'm working toward. It's where representation meets adoption, and it's where I feel most useful.
 
 ### Why this answer is relevant
-Use for broad “what do you do?” or “what are you good at?” questions.
+Use when a visitor asks what kinds of work energize Barbara, what she loves solving, or what her technical sweet spot is.
 
 ### Related intents
-- what problems does barbara solve
-- what do you do
-- what kind of work do you do
-- what are you good at
-- what kinds of problems do you solve
-- what kind of problems get you excited
+- what kinds of problems get you most excited to solve
+- what problems do you love solving
+- what energizes you technically
+- what kind of work excites you
+- what do you enjoy building most
+- what problems do you solve
+- what are you good at solving
+- what's your technical sweet spot
 
 ### Related projects
 - Digital Twin
 - Resume Explorer
 - Beehive Photo Metadata Tracker
+- Poolula Platform
 - Weaving Memories Into Graphs
+- GraphRAG with Podcasts
+- Federal metadata work at Metric5
 
 ---
 
@@ -42,7 +47,7 @@ Three big ones are: bridging business and technical work, bringing a systems-lev
 I think my biggest strengths are, first, that I can move between business framing, technical architecture, and evaluation without losing the thread. Second, I tend to bring a systems-level mindset to complex real-world problems instead of treating them as isolated technical puzzles. And third, I care a lot about communication, adoption, and building knowledge that remains useful over time, not just producing something impressive in the moment.
 
 ### Slightly longer answer
-If I had to summarize it cleanly, I'd say I'm unusually strong at connecting the parts of a project that often get separated. I can help clarify the actual problem, design an approach that fits the constraints, and think seriously about how to evaluate whether it worked. I also tend to be patient about understanding the domain before forcing a solution, which I think matters a lot in messy environments. And across all of it, I care about whether people can actually understand and use what gets built. That last part is easy to underrate, but it is often what determines whether the work creates durable value.
+If I had to summarize it cleanly, I'd say I'm unusually strong at connecting the parts of a project that often get separated. I tend to ask — before writing any code — how the data was generated and by whom. That question changes everything about what you can trust, what you need to validate, and whether the system you eventually build will actually be adopted. I've seen technically excellent systems fail at that step, and it's the one I refuse to skip. I can help clarify the actual problem, design an approach that fits the constraints, and think seriously about how to evaluate whether it worked. I also tend to be patient about understanding the domain before forcing a solution, which I think matters a lot in messy environments. And across all of it, I care about whether people can actually understand and use what gets built. That last part is easy to underrate, but it is often what determines whether the work creates durable value.
 
 ### Why this answer is relevant
 Use when a visitor asks about Barbara's strengths, differentiators, or what she brings that others may not.
@@ -212,32 +217,6 @@ Use when the visitor asks for a plain-English explanation of RAG or retrieval.
 
 ---
 
-## What kinds of problems get you most excited to solve?
-
-### Very short answer
-Messy, ambiguous problems where the deeper issue is structure, representation, and whether the system will actually make sense to the person using it.
-
-### Short answer
-I get most excited by problems that are messy on the surface but have a real underlying structure waiting to be uncovered. Especially when the people involved already feel the pain of bad organization, too much unstructured knowledge, or systems that technically work but don’t match how they actually think. That’s the zone where I feel most useful.
-
-### Why this answer is relevant
-Use when the visitor asks what kinds of work energize Barbara or what she likes solving.
-
-### Related intents
-- what kinds of problems get you most excited to solve
-- what problems do you love solving
-- what energizes you technically
-- what kind of work excites you
-- what do you enjoy building most
-
-### Related projects
-- Digital Twin
-- Resume Explorer
-- Beehive Photo Metadata Tracker
-- Poolula Platform
-
----
-
 ## What’s a project you built that you’re really proud of?
 
 ### Very short answer
@@ -260,6 +239,7 @@ Use when the visitor asks what Barbara is proud of, what project means the most,
 - Digital Twin
 - Weaving Memories Into Graphs
 - Resume Explorer
+- Beehive Metadata Project
 
 ---
 
@@ -352,26 +332,32 @@ Use when the visitor asks about cognition, AI, attention, retrieval, or Barbara�
 ## What are you hoping to work on next in your career?
 
 ### Very short answer
-I’m looking for work where the challenge is not just building a model, but figuring out what should be built and making it genuinely useful to the people downstream.
+I'm looking for roles where the core challenge is making data trustable and meaningful — not just processable — and where data governance, knowledge graphs, and semantic tools are treated as real engineering priorities, not afterthoughts.
 
 ### Short answer
-I’m most interested in work where the problem is not just “optimize this model,” but “figure out what the right system is, build it, and make sure the people who need it can actually use it.” That usually means applied AI engineering, retrieval, knowledge systems, evaluation, and technical consulting work where representation and real-world workflow both matter. I’m strongest in cross-disciplinary environments.
+I'm most drawn to organizations grappling seriously with what their data actually means — not just how to store or query it. That tends to point toward knowledge graph projects, ontology design, semantic data modeling, and data governance programs that are trying to build real organizational trust in their data, not just compliance checkboxes.
+
+I hold a CDMP and DCAM accreditation because I believe governance is the infrastructure of credibility. Most AI engineers treat it as bureaucracy. Organizations trying to move from AI experimentation to AI operations tend to discover that governance matters about 18 months later than they should have. I'd rather be there at the beginning.
 
 ### Why this answer is relevant
-Use when the visitor asks about Barbara’s next role, ideal work, or future direction.
+Use when a visitor asks about Barbara's next role, ideal work environment, or future direction. Especially relevant for enterprise AI, knowledge engineering, data strategy, and governance-forward organizations.
 
 ### Related intents
 - what are you hoping to work on next in your career
+- what's your ideal next job
 - what kind of role are you looking for next
 - what are you looking for
 - what’s your ideal next job
 - what do you want to work on next
+- what do you think about data governance
+- why do you care about semantic tools
+
 
 ### Related projects
 - Digital Twin
 - Resume Explorer
 - Poolula Platform
-- consulting and healthcare systems work
+- Federal metadata work at Metric5
 
 ---
 

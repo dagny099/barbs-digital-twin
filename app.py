@@ -1463,21 +1463,52 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
  
     print(f"<<LLM RESPONSE RAW>>\n{collected}\n")
 
-    # ── Step 8.5: Find project mentioned in response (Option D) ──
-    # Override query-based diagram with response-based one for better alignment
-    def find_project_in_response(response_text: str):
-        """Find first project title mentioned in the response text."""
+    # ── Step 8.5: Smart diagram filtering (Option C: Intent + Prominence) ──
+    # Only show diagrams when user asked about projects AND project is prominent in response
+    def find_prominent_project(response_text: str):
+        """
+        Find project if prominently featured in response.
+        Prominence = mentioned in first 300 chars OR mentioned 2+ times.
+        """
         from featured_projects import load_featured_projects
+
+        first_part = response_text[:300].lower()
+        full_text_lower = response_text.lower()
+
         for project in load_featured_projects():
-            if project['title'].lower() in response_text.lower():
+            title_lower = project['title'].lower()
+
+            # Check if mentioned in opening (high prominence)
+            if title_lower in first_part:
                 return project
+
+            # Or mentioned 2+ times throughout (clearly focused on it)
+            if full_text_lower.count(title_lower) >= 2:
+                return project
+
         return None
 
-    response_project = find_project_in_response(collected)
-    if response_project:
-        diagram_project = response_project
-        diagram_path = get_diagram_path(diagram_project)
-        print(f"DIAGRAM: Found in response → {diagram_project['title']}")
+    # Intent check: Did user ask about projects?
+    user_asked_about_projects = (
+        walkthrough_project is not None or  # Walkthrough request detected
+        find_mentioned_project(message) is not None  # User mentioned specific project
+    )
+
+    # Only override diagram if user intended to discuss projects AND project is prominent
+    if user_asked_about_projects:
+        response_project = find_prominent_project(collected)
+        if response_project:
+            diagram_project = response_project
+            diagram_path = get_diagram_path(diagram_project)
+            print(f"DIAGRAM: Prominent in response → {diagram_project['title']}")
+        elif diagram_project:
+            print(f"DIAGRAM: Query-based (no prominent match) → {diagram_project['title']}")
+    else:
+        # User didn't ask about projects - clear any diagram
+        if diagram_project:
+            print(f"DIAGRAM: Suppressed (no project intent)")
+        diagram_project = None
+        diagram_path = None
 
     print(f"<<FILES:>>\n{diagram_path}\n")
 

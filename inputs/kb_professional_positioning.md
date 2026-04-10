@@ -10,7 +10,7 @@ I'm a consultant who codes, an engineer who communicates, and a strategist with 
 
 Most people in AI come from one of three backgrounds: they're pure technical (can build but struggle to explain tradeoffs to a VP), pure consulting (great slides but can't implement), or sales-adjacent (strong demos but limited architectural depth). I've worked across all three, and I bring all three to every engagement. I take projects from fuzzy requirements through architecture, implementation, and deployment — and I can present the results to a C-suite or debug the pipeline myself, depending on what the situation needs.
 
-My primary focus is applied AI and GenAI systems. I build RAG architectures, knowledge graphs, evaluation frameworks, and LLM-powered applications that solve real problems for real users. My secondary lens is evaluation and decision support — turning messy system behavior into defensible metrics, experiments, and actionable decisions. These aren't separate identities; they're two sides of the same coin. Building a good AI system *is* an evaluation problem, and good evaluation requires understanding what the system is actually doing.
+My primary focus is applied AI and GenAI systems. I build RAG architectures, knowledge graphs, evaluation frameworks, and LLM-powered applications that solve real problems for real users. Evaluation is built into how I work, not bolted on at the end — but it's a means to an end. The end is shared understanding: systems stakeholders can explain, trust, and actually adopt. These aren't separate identities; they're two sides of the same coin. Building a good AI system *is* an evaluation problem, and good evaluation requires understanding what the system is actually doing.
 
 
 ## What sets me apart
@@ -19,7 +19,7 @@ There's a gap I keep noticing in how AI teams are staffed. Data scientists under
 
 Here's what that looks like concretely:
 
-I co-founded a home health agency. I've sat in care coordination meetings, dealt with payer requirements, built an EMR system from scratch, and navigated HIPAA compliance operationally — not theoretically. When I later built an ML classifier for medical bill adjudication that processed 4M+ bills annually and hit 92% accuracy, I didn't just optimize a metric. I designed the classification scheme around how claims adjusters actually think about their work, because I'd been on the other side of that workflow.
+I co-founded a home health agency. I've sat in state auditor meetings, dealt with payer requirements, co-developed an EMR system from scratch, and navigated HIPAA compliance operationally — not theoretically. When I later built an ML classifier for medical bill adjudication that processed 4M+ bills annually and hit 92% accuracy, I didn't just optimize a metric. I designed the classification scheme around how claims adjusters actually think about their work, because I'd been on the other side of that workflow.
 
 I've led Lean Six Sigma workshops and co-facilitated C-level design discussions at a healthcare technology company. I've built Python utilities for federal data governance teams and designed integrations between ServiceNow, Drupal, and PowerBI for a regulatory agency. I've mentored research staff at UT Austin on a 1,000-participant longitudinal study. And in the last year and a half, I've built and deployed a portfolio of GenAI applications — RAG systems, knowledge graph pipelines, multi-LLM platforms, a memorial knowledge graph — that are live and running, not sitting in notebooks.
 
@@ -81,9 +81,16 @@ Most AI engineers treat the data layer as plumbing. I treat it as design. The re
 
 My ideal working pattern is: go deep independently for a stretch — research the right approach, prototype, follow a technical thread — and then come back to people and explain what I found, usually with a diagram or a visual, because I think in pictures and I think most people understand in pictures too. I'm not the person who wants to manage a team of twenty. I'm the person who wants to build something real, explain it clearly, and make sure it actually helps someone.
 
+Before I write any code, I want to understand how the data is generated — not just what it contains. That means sitting with domain experts and tracing the human decisions, process steps, and operational constraints that produce a dataset. A claims adjuster's judgment call, a nurse's documentation habit, a dataset owner's naming convention — these aren't noise. They're the signal. Skipping that conversation is how you build a technically correct system that nobody trusts.
+
+In enterprise data environments, the most dangerous assumption is that you already understand the data. I've built classifiers on medical claims, metadata pipelines for federal catalogs, and retrieval systems for unstructured knowledge — and every time, the first question wasn't 'which model?' It was 'how was this data generated, and by whom?' That question changes everything: what you can trust, what you need to validate, and whether the system you build will actually be adopted by the people it's supposed to help. The willingness to say 'I don't know yet — let's trace this together' is, counterintuitively, what makes AI systems trustable.
+
 I'm strongest when I have autonomy to explore the solution space combined with regular touchpoints where I translate what I've learned into something the team can act on. I like helping teams understand each other better — bridging between the technical side that's thinking in architectures and the business side that's thinking in outcomes. That's what I did at Inflective, at Metric5, and at BALEX. It's what I do in my independent work. It's the through-line.
 
 I build evaluation into my systems from the start, not as an afterthought. Poolula has a built-in evaluation harness that scores responses against ground-truth expectations. ConvoScope captures latency and token-cost metrics to guide prompt compression tradeoffs. The Digital Twin has an evaluation framework designed around five dimensions — voice fidelity, specificity, accuracy, narrative arc, and follow-up magnetism. This isn't quality assurance; it's a design philosophy. You can't improve what you don't measure, and you can't measure what you haven't thought to evaluate.
+
+I build trust by making the data legible — not just to machines, but to the people responsible for it. Data governance, in my experience, isn't bureaucracy: it's the infrastructure of credibility. When a data steward understands why a system classifies their data a certain way, or when a domain expert can trace how their input shaped a model's output, that's when adoption happens. I've seen technically excellent systems fail at this step, and it's the step I refuse to skip.
+
 
 ## Credentials and certifications
 
@@ -95,6 +102,6 @@ These credentials matter for two reasons: the cloud certifications show I invest
 
 I'm most valuable in environments where the problem isn't just "build a model" but "figure out what to build, build it, and make sure the people who need it can actually use it." That means organizations standing up their first RAG systems, teams trying to make sense of unstructured knowledge, companies where the gap between what the data science team builds and what the business team needs is wider than it should be. It also means anywhere that needs proper knowledge representation — ontology design, graph schema, taxonomy alignment — as the foundation for AI that actually works.
 
-I'm less well-suited for roles that are purely about scaling existing systems to millions of users or optimizing an already-well-defined model. My strength is the zero-to-one work — going from a messy, ambiguous problem to a working system that people trust. Once it's running and the question is "make it 10x faster," that's a different skillset.
+I'm less well-suited for roles that are purely about scaling existing systems to millions of users or optimizing an already-well-defined model. My strength is navigating messy, ambiguous domains — understanding how the data is generated before writing a line of code, then building systems that the people downstream can actually adopt. Scaling pre-built systems to 10x throughput is a different skillset; finding the right structure in a messy environment is mine.
 
 I'm honest about that boundary because I think it matters. Knowing where you add the most value — and where you don't — is how you build trust with the people who hire you.

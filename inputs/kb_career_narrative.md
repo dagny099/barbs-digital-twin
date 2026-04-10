@@ -32,12 +32,6 @@ BALEX taught me healthcare from the inside — not the data science version, but
 
 During this same period, I worked with Persis Consulting (2014–2017) documenting software requirements and supporting Agile delivery for healthcare and private-sector clients. I managed QA/QC testing and created end-user training materials to improve reliability and adoption of EMR software. This was the less glamorous side of healthcare technology — alignment between technical implementation and business needs, training materials that actually help people, testing that catches problems before users do. It reinforced the same lesson BALEX was teaching me: the gap between building something and making it work for real people is where the real engineering happens.
 
-Here is a revised version of Chapter 3 that brings your recent Inflective experience into the spotlight while significantly dialing back the detail on Accuro. 
-
-By shrinking the Accuro paragraph and expanding Inflective, your digital twin's semantic search will naturally prioritize your ML, change management, and analytics work over the vendor integration role.
-
-***
-
 ## Chapter 3: Consulting and transformation (Inflective + MediaScience + Accuro)
 
 **At Inflective (2017–2019; 2024–2025)**, my work spanned from applied machine learning to enterprise change management. During my first engagement, I led a digital transformation project optimizing medical bill adjudication for a third-party administrator processing 4M+ bills annually. I designed a Python/scikit-learn classification model that automated medical bill categorization at 92% accuracy — matching human coder performance. I co-led Lean Six Sigma workshops to identify process inefficiencies, reducing error rates by roughly 25% and improving processing throughput by 30%. The key insight from this work wasn't the model accuracy. It was that I designed the classification scheme around how claims adjusters actually think about their work, because I'd been on the other side of that workflow at BALEX. The cognitive science and the healthcare operations experience converged in a way that made the model not just accurate but adoptable.
@@ -103,6 +97,8 @@ The one gap in how I present this: my cognitive science research methodology —
 
 I'm looking for roles where the problem isn't just "build a model" but "figure out what to build, build it, and make sure the people who need it can actually use it." Applied AI engineering, solutions architecture, technical consulting — roles that value the combination of technical depth, stakeholder communication, and domain adaptability.
 
-I'm strongest in zero-to-one environments: standing up first RAG systems, designing knowledge representations for new domains, bridging the gap between what data science teams build and what business teams need. I'm based in Austin, TX, open to remote work, and comfortable with up to 30% travel. I'm fluent in both English and Spanish — native in both.
+I'm strongest when the problem hasn't been cleanly defined yet — when I need to understand a messy domain, find the right representation for it, and build something the people inside it can actually use and trust. I'm based in Austin, TX, open to remote work, and comfortable with travel. I'm fluent in both English and Spanish — native in both.
 
-My salary expectations start at $140K, with total compensation targets depending on company stage, equity, and role scope. I'm not desperate — I'm actively building and shipping, and I take my time to find the right fit. The right role is one where my specific combination of cognitive science, healthcare operations, consulting delivery, and GenAI engineering is a genuine asset, not a compromise.
+I'm excited to find my next role, I'm actively building and shipping, and I take my time to find the right fit. The right role is one where my specific combination of cognitive science, healthcare operations, consulting delivery, and GenAI engineering is a genuine asset, not a compromise.
+
+I'm looking for an organization where making data legible to the people responsible for it is understood as the core engineering challenge, not a soft skill layered on top.
