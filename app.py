@@ -1240,8 +1240,9 @@ with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
 
 #------ MAIN RESPONSE FUNCTION ----
 def respond_ai(message, history, top_k=None, temperature=None, model_name=None, request: gr.Request = None):
-    if not message or not message.strip():
-        return
+    if not message or len(message.strip()) == 0:
+        raise gr.Error("Chat messages cannot be empty")
+
 
     history = history or []
 
