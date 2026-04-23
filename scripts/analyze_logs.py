@@ -8,6 +8,7 @@ usage patterns, and visitor satisfaction (thumbs up/down).
 Usage:
     python analyze_logs.py                    # Full report
     python analyze_logs.py --knowledge-gaps   # Only show knowledge gaps
+    python analyze_logs.py --exclude-owner    # Ignore Barbara's own sessions
     python analyze_logs.py --last 100         # Analyze last N queries
     python analyze_logs.py --votes            # Vote / satisfaction analysis
     python analyze_logs.py --export summary.json  # Export to JSON
@@ -18,7 +19,7 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import List, Dict, Optional
 import statistics
 
@@ -30,9 +31,13 @@ class QueryRecord:
     message: str
     project: Optional[str]
     walkthrough: bool
-    tool_called: bool
-    tool_name: Optional[str]
-    had_error: bool
+    session_id: Optional[str] = None
+    turn_index: Optional[int] = None
+    audience_tier: str = "public"
+    is_owner_traffic: bool = False
+    tool_called: bool = False
+    tool_name: Optional[str] = None
+    had_error: bool = False
     # New fields (optional for backward compatibility)
     model: str = "unknown"
     temperature: float = 0.0
@@ -73,11 +78,20 @@ class VoteRecord:
     event: str
     liked: bool
     message_index: int
+    session_id: Optional[str] = None
     user_message: Optional[str] = None
     response_snippet: Optional[str] = None
     model: Optional[str] = None
     temperature: Optional[float] = None
     cost_usd: Optional[float] = None
+    is_owner_traffic: bool = False
+
+
+def _parse_dataclass(cls, data: dict):
+    """Ignore unexpected keys so the analyzer survives schema evolution."""
+    allowed_fields = {field.name for field in fields(cls)}
+    filtered = {k: v for k, v in data.items() if k in allowed_fields}
+    return cls(**filtered)
 
 
 class LogAnalyzer:
@@ -87,6 +101,7 @@ class LogAnalyzer:
         self.log_path = Path(log_path)
         self.records: List[QueryRecord] = []
         self.votes: List[VoteRecord] = []
+        self.owner_filter_summary: Optional[Dict] = None
         self._load_logs()
 
     def _load_logs(self):
@@ -108,11 +123,11 @@ class LogAnalyzer:
 
                     # Route by record type
                     if data.get("event") == "vote":
-                        self.votes.append(VoteRecord(**data))
+                        self.votes.append(_parse_dataclass(VoteRecord, data))
                     else:
                         if 'model' not in data:
                             legacy_count += 1
-                        self.records.append(QueryRecord(**data))
+                        self.records.append(_parse_dataclass(QueryRecord, data))
 
                 except (json.JSONDecodeError, TypeError) as e:
                     skipped += 1
@@ -129,6 +144,44 @@ class LogAnalyzer:
         """Keep only the last N query records."""
         self.records = self.records[-n:]
         print(f"📊 Analyzing last {len(self.records)} queries\n")
+
+    def exclude_owner_traffic(self):
+        """Exclude Barbara-marked traffic, expanding to the whole session when possible."""
+        owner_session_ids = {
+            record.session_id
+            for record in self.records
+            if record.is_owner_traffic and record.session_id
+        }
+
+        original_query_count = len(self.records)
+        original_vote_count = len(self.votes)
+
+        self.records = [
+            record
+            for record in self.records
+            if not record.is_owner_traffic and record.session_id not in owner_session_ids
+        ]
+        self.votes = [
+            vote
+            for vote in self.votes
+            if not vote.is_owner_traffic and vote.session_id not in owner_session_ids
+        ]
+
+        removed_queries = original_query_count - len(self.records)
+        removed_votes = original_vote_count - len(self.votes)
+        self.owner_filter_summary = {
+            "removed_queries": removed_queries,
+            "removed_votes": removed_votes,
+            "owner_sessions": len(owner_session_ids),
+        }
+
+        print(
+            f"🚫 Excluded {removed_queries} owner-marked queries "
+            f"across {len(owner_session_ids)} session(s)"
+        )
+        if removed_votes:
+            print(f"   Also excluded {removed_votes} vote record(s)")
+        print()
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # ANALYSIS REPORTS
@@ -199,10 +252,18 @@ class LogAnalyzer:
 
         print(f"📊 Total queries: {stats['total_queries']}")
         print(f"📅 Date range: {stats['date_range']['first'][:10]} → {stats['date_range']['last'][:10]}")
+        owner_queries = sum(1 for r in self.records if r.is_owner_traffic)
+        if owner_queries:
+            print(f"🙋 Owner-marked queries: {owner_queries} ({100 * owner_queries / stats['total_queries']:.1f}%)")
         if "votes" in stats:
             v = stats["votes"]
             print(f"👍 Votes: {v['likes']} likes / {v['dislikes']} dislikes "
                   f"({v['satisfaction_rate']}% satisfaction)")
+        if self.owner_filter_summary:
+            print(
+                f"🚫 Owner filter removed {self.owner_filter_summary['removed_queries']} queries "
+                f"across {self.owner_filter_summary['owner_sessions']} session(s)"
+            )
         print()
 
         print("⚡ LATENCY")
@@ -676,6 +737,7 @@ def main():
 Examples:
   # Production logs
   python analyze_logs.py                           # Full report
+  python analyze_logs.py --exclude-owner          # Drop Barbara's own sessions
   python analyze_logs.py --knowledge-gaps          # Only knowledge gaps
   python analyze_logs.py --last 100                # Last 100 queries
   python analyze_logs.py --votes                   # Vote / satisfaction analysis
@@ -688,6 +750,7 @@ Examples:
         """,
     )
     parser.add_argument("--log", default="query_log.jsonl", help="Path to JSONL log file")
+    parser.add_argument("--exclude-owner", action="store_true", help="Exclude Barbara-marked traffic and any sessions containing it")
     parser.add_argument("--last", type=int, metavar="N", help="Analyze only last N queries")
     parser.add_argument("--export", metavar="FILE", help="Export summary to JSON")
     parser.add_argument("--knowledge-gaps", action="store_true", help="Show only knowledge gaps")
@@ -703,6 +766,9 @@ Examples:
     args = parser.parse_args()
 
     analyzer = LogAnalyzer(args.log)
+
+    if args.exclude_owner:
+        analyzer.exclude_owner_traffic()
 
     if args.last:
         analyzer.filter_last_n(args.last)

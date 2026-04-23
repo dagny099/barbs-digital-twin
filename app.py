@@ -330,7 +330,7 @@ def chunk_prose(raw_text, chunk_size=500, overlap=50):
     return chunks
 
 
-def handle_vote(data: gr.LikeData, history):
+def handle_vote(data: gr.LikeData, history, request: gr.Request = None):
     """Called when a visitor clicks thumbs up or thumbs down.
 
     Logs to the same query_log.jsonl as _log_query, enriched with:
@@ -355,6 +355,7 @@ def handle_vote(data: gr.LikeData, history):
         entry = {
             "ts":               datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "event":            "vote",
+            "session_id":       _get_session_id(request),
             "liked":            data.liked,
             "message_index":    data.index,
             "user_message":     user_message,
@@ -362,6 +363,7 @@ def handle_vote(data: gr.LikeData, history):
             "model":            last_call.model if last_call else _current_settings.get("model"),
             "temperature":      _current_settings.get("temperature"),
             "cost_usd":         last_call.cost_usd if last_call else None,
+            "is_owner_traffic": _get_owner_flag(request),
         }
         with open(_QUERY_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
@@ -896,6 +898,54 @@ button[aria-label="Submit"]:hover {
     transform: none !important;
 }
 
+.owner-traffic-row {
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: 16px !important;
+    opacity: 0.18 !important;
+    transition: opacity 0.16s ease !important;
+}
+
+.owner-traffic-toggle {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: unset !important;
+}
+
+.owner-traffic-toggle label,
+.owner-traffic-toggle .wrap {
+    gap: 6px !important;
+}
+
+.owner-traffic-toggle span,
+.owner-traffic-toggle label {
+    color: var(--text-soft) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px !important;
+    text-decoration-color: rgba(97, 112, 122, 0.35) !important;
+}
+
+.owner-traffic-toggle input[type="checkbox"] {
+    accent-color: var(--accent) !important;
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.68 !important;
+}
+
+.owner-traffic-row:hover,
+.owner-traffic-row:focus-within {
+    opacity: 0.52 !important;
+}
+
+.dark .owner-traffic-toggle span,
+.dark .owner-traffic-toggle label {
+    text-decoration-color: rgba(181, 196, 192, 0.3) !important;
+}
+
 .settings-accordion {
     border: 1px solid var(--border-soft) !important;
     margin: 8px 0 !important;
@@ -999,6 +1049,7 @@ tools = [
 
 
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
+_session_owner_flags: dict[str, bool] = {}
 
 def _get_session_id(request: gr.Request | None) -> str | None:
     """
@@ -1025,6 +1076,28 @@ def _get_turn_index(history) -> int:
     ) + 1
 
 
+def _set_owner_flag(value, request: gr.Request | None = None):
+    """Persist the current session's owner-traffic flag in server memory."""
+    owner_flag = bool(value)
+    session_id = _get_session_id(request)
+    if session_id:
+        _session_owner_flags[session_id] = owner_flag
+    return owner_flag
+
+
+def _reset_owner_flag(request: gr.Request | None = None):
+    """Reset the current session's owner-traffic flag on page load."""
+    return _set_owner_flag(False, request)
+
+
+def _get_owner_flag(request: gr.Request | None = None) -> bool:
+    """Return the owner-traffic flag for the current Gradio session."""
+    session_id = _get_session_id(request)
+    if not session_id:
+        return False
+    return bool(_session_owner_flags.get(session_id, False))
+
+
 def _compute_similarity_stats(distances):
     """Convert L2 distances to cosine similarity scores. Returns avg and max."""
     if not distances:
@@ -1041,7 +1114,8 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
                model, temperature, n_chunks_retrieved, response_chars,
                workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
                provider, cost_usd, prompt_tokens, completion_tokens,
-               audience_tier="public", session_id=None, turn_index=None):
+               audience_tier="public", session_id=None, turn_index=None,
+               is_owner_traffic=False):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
@@ -1053,6 +1127,7 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             "project":     project_title,
             "walkthrough": walkthrough,
             "audience_tier":  audience_tier,
+            "is_owner_traffic": bool(is_owner_traffic),
             "tool_called": tool_name is not None,
             "tool_name":   tool_name,
             "had_error":   had_error,
@@ -1249,9 +1324,10 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
     # Lightweight anonymous tracking for grouping turns into sessions
     session_id = _get_session_id(request)
     turn_index = _get_turn_index(history)
+    is_owner_traffic = _get_owner_flag(request)
 
     # Useful for quick EC2 log inspection while you're testing
-    print(f"SESSION: {session_id} | TURN: {turn_index}")
+    print(f"SESSION: {session_id} | TURN: {turn_index} | OWNER: {is_owner_traffic}")
 
     # Use UI values if provided, otherwise read from current settings or env vars
     if SHOW_SETTINGS_PANEL:
@@ -1576,6 +1652,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
         audience_tier     = audience_tier,
         session_id       = session_id,
         turn_index       = turn_index,
+        is_owner_traffic = is_owner_traffic,
     )
 #----------------------------------
 
@@ -1628,6 +1705,13 @@ if __name__ == "__main__":
     with gr.Blocks(title="Barbara's Digital Twin", fill_width=True) as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
+        owner_toggle = gr.Checkbox(
+            label="exclude my traffic",
+            value=False,
+            container=False,
+            elem_classes=["owner-traffic-toggle"],
+            render=False,
+        )
 
         # ── CHAT INTERFACE (restores animated thinking dots) ──────
         chatbot = gr.Chatbot(
@@ -1641,7 +1725,6 @@ if __name__ == "__main__":
             render_markdown=True,
             container=False
         )
-        chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs the user message
 
         # ── SETTINGS PANEL (conditionally rendered) ──────────────────
         if SHOW_SETTINGS_PANEL:
@@ -1687,6 +1770,9 @@ if __name__ == "__main__":
                            os.path.join(_assets_dir, "psychology-icon.svg"),
                            ],
         )
+        demo.load(_reset_owner_flag, outputs=owner_toggle)
+        owner_toggle.change(_set_owner_flag, inputs=owner_toggle, outputs=owner_toggle)
+        chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs can map to the current session
         
         # ── "GET IN TOUCH" CTA — fills textbox with contact trigger ──
         # ── EXPLORE ACCORDION (always open on load, collapsible) ──
@@ -1716,6 +1802,9 @@ if __name__ == "__main__":
             fn=lambda: "I'd like to get in touch with Barbara",
             outputs=chat.textbox,
         )
+
+        with gr.Row(elem_classes=["owner-traffic-row"]):
+            owner_toggle.render()
 
         # ── COST DISPLAY (conditionally shown with settings panel) ──
         if SHOW_SETTINGS_PANEL:

@@ -23,6 +23,9 @@ Every user query now captures:
 - **workflow**: "walkthrough" | "diagram_only" | "standard"
 - **chunk_similarity_avg**: Average cosine similarity (0-1)
 - **chunk_similarity_max**: Best chunk match (0-1)
+- **session_id**: Anonymous browser session id for grouping related turns
+- **turn_index**: Turn number inside that session
+- **is_owner_traffic**: Whether Barbara marked the session as her own traffic
 
 ---
 
@@ -40,6 +43,15 @@ Shows:
 - Tool usage patterns
 - Knowledge gaps (low similarity queries)
 - Performance outliers (slow queries)
+
+### Exclude Barbara's Own Traffic
+```bash
+python analyze_logs.py --exclude-owner
+```
+
+Drops any query explicitly marked via the UI toggle, and if that query has a
+`session_id`, drops the rest of that session too. This keeps your review clean
+even if you toggle "I'm Barbara" partway through a conversation.
 
 ### Focus on Knowledge Gaps
 ```bash
