@@ -9,6 +9,7 @@ import gradio as gr
 import litellm
 import chromadb
 import json
+import re
 import requests
 import random
 import base64
@@ -358,8 +359,8 @@ def handle_vote(data: gr.LikeData, history, request: gr.Request = None):
             "session_id":       _get_session_id(request),
             "liked":            data.liked,
             "message_index":    data.index,
-            "user_message":     user_message,
-            "response_snippet": str(data.value)[:300],
+            "user_message":     _redact_log_text(user_message),
+            "response_snippet": _build_response_preview(_redact_log_text(str(data.value)), n=300),
             "model":            last_call.model if last_call else _current_settings.get("model"),
             "temperature":      _current_settings.get("temperature"),
             "cost_usd":         last_call.cost_usd if last_call else None,
@@ -426,7 +427,7 @@ custom_css = """
     --accent-strong: #9AD9CF;
     --accent-deep: #C1ECE5;
     --accent-soft: rgba(125, 199, 188, 0.12);
-}    --warm: #E0A86A;
+    --warm: #E0A86A;
     --warm-soft: rgba(224, 168, 106, 0.14);
     --warm-glow: rgba(224, 168, 106, 0.16);
     --teal-glow: rgba(114, 184, 175, 0.18);
@@ -1000,9 +1001,39 @@ print(f"✅ Collection ready: {collection.count()} chunks loaded")
 #------ Tools -----------
 # Function that sends notification via pushover app
 def send_notification(message: str):
-    payload = {'user': pushover_user, 'token': pushover_token, 'device': 'oneplusnordn2005g', 'message': message}
-    requests.post(pushover_url, data=payload)
-    return f"Notification message was sent: {message}"
+    """Send a Pushover notification and return an observable tool result.
+
+    The optional PUSHOVER_DEVICE env var can target one device. If it is not
+    set, Pushover delivers to the user's active/default devices. Returning a
+    structured success/failure string lets the LLM continue gracefully and lets
+    the app mark tool-related failures in the query log via `_tool_error`.
+    """
+    if not pushover_user or not pushover_token:
+        return "Notification failed: missing PUSHOVER_USER or PUSHOVER_TOKEN"
+
+    payload = {
+        "user": pushover_user,
+        "token": pushover_token,
+        "message": message,
+    }
+
+    pushover_device = os.getenv("PUSHOVER_DEVICE")
+    if pushover_device:
+        payload["device"] = pushover_device
+
+    try:
+        resp = requests.post(pushover_url, data=payload, timeout=10)
+        try:
+            data = resp.json()
+        except ValueError:
+            return f"Notification failed: HTTP {resp.status_code}; non-JSON response"
+
+        if not resp.ok or data.get("status") != 1:
+            return f"Notification failed: HTTP {resp.status_code}; errors={data.get('errors', [])}"
+
+        return f"Notification message was sent. Pushover request_id={data.get('request')}"
+    except requests.RequestException as e:
+        return f"Notification failed: {type(e).__name__}: {e}"
 
 # Function simulating roling a single six-sided die
 def dice_roll():
@@ -1110,12 +1141,33 @@ def _compute_similarity_stats(distances):
         "max": round(max(sims), 3),
     }
 
-def _log_query(message, project_title, walkthrough, tool_name, had_error,
+
+def _redact_log_text(text: str | None) -> str:
+    """Lightweight redaction for log storage: emails and phone numbers."""
+    if not text:
+        return ""
+    text = re.sub(r'[\w\.-]+@[\w\.-]+\.\w+', '[EMAIL]', text)
+    text = re.sub(
+        r'\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b',
+        '[PHONE]',
+        text,
+    )
+    return text
+
+
+def _build_response_preview(text: str | None, n: int = 300) -> str:
+    """Compact preview stored with the log row for quick scanning."""
+    if not text:
+        return ""
+    text = text.replace("\n", " ").strip()
+    return text if len(text) <= n else text[: n - 1] + "…"
+
+def _log_query(message, project_title, walkthrough, tool_name, had_error, 
                model, temperature, n_chunks_retrieved, response_chars,
                workflow_type, latency_ms, chunk_similarity_avg, chunk_similarity_max,
                provider, cost_usd, prompt_tokens, completion_tokens,
-               audience_tier="public", session_id=None, turn_index=None,
-               is_owner_traffic=False):
+               audience_tier="public", session_id=None, turn_index=None, empty_response=False,
+               is_owner_traffic=False, assistant_response=None):
     """Append one query record to the JSONL log. Fails silently — must never affect the user."""
     try:
         entry = {
@@ -1123,7 +1175,9 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             "ts":          datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "session_id":  session_id,
             "turn_index":  turn_index,
-            "message":     message,
+            "message":     _redact_log_text(message),
+            "assistant_response": _redact_log_text(assistant_response),
+            "assistant_response_preview": _build_response_preview(_redact_log_text(assistant_response)),
             "project":     project_title,
             "walkthrough": walkthrough,
             "audience_tier":  audience_tier,
@@ -1131,6 +1185,7 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             "tool_called": tool_name is not None,
             "tool_name":   tool_name,
             "had_error":   had_error,
+            "empty_response": bool(empty_response),
 
             # Phase 1: Model & config
             "model":       model,
@@ -1169,8 +1224,8 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
 class CallRecord:
     timestamp: str
     model: str
-    prompt_tokens: int
-    completion_tokens: int
+    prompt_tokens: int | None
+    completion_tokens: int | None
     cost_usd: float
     call_type: str  # "chat", "tool_loop", "chat_stream", "embedding"
 
@@ -1225,15 +1280,17 @@ class SessionTracker:
         self.calls.append(CallRecord(
             timestamp=dt.now().isoformat(),
             model=model,
-            prompt_tokens=0,
-            completion_tokens=0,
+            prompt_tokens=None,
+            completion_tokens=None,
             cost_usd=cost,
             call_type="chat_stream",
         ))
 
     def summary(self) -> dict:
-        total_prompt = sum(c.prompt_tokens for c in self.calls)
-        total_completion = sum(c.completion_tokens for c in self.calls)
+        # Streamed LiteLLM calls currently have unknown token counts, represented
+        # as None. Treat them as zero for display-only session totals.
+        total_prompt = sum(c.prompt_tokens or 0 for c in self.calls)
+        total_completion = sum(c.completion_tokens or 0 for c in self.calls)
         total_cost = sum(c.cost_usd for c in self.calls)
         return {
             "total_prompt_tokens": total_prompt,
@@ -1496,6 +1553,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
     finish_reason = None
     tool_calls_acc = []
     _tool_name_called = None   # tracks first tool fired this turn (for logging)
+    _tool_error = False
 
     # ── Easter egg greeting for inner circle ───────────────────
     if audience_tier == "inner_circle":
@@ -1524,6 +1582,9 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
             for tc in tool_calls_acc
         ]
         tool_results = handle_tool_call(wrapped)
+        if any(str(t.get("content", "")).startswith("Notification failed") for t in tool_results):
+            _tool_error = True
+
         msgs.append({"role": "assistant", "content": collected or "",
                      "tool_calls": tool_calls_acc})
         msgs.extend(tool_results)
@@ -1589,6 +1650,11 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
 
     print(f"<<FILES:>>\n{diagram_path}\n")
 
+    # Capture the plain-text assistant response before any diagram HTML is appended.
+    # This makes the log more analytically useful while still preserving response_chars
+    # for the final rendered output shown to the visitor.
+    logged_response_text = collected
+
     # ── Log cost after streaming completes ──────────────────────
     prompt_text = "\n".join(
         m.get("content", "") for m in msgs if isinstance(m.get("content"), str)
@@ -1621,15 +1687,17 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
     provider = actual_model.split("/")[0] if "/" in actual_model else "openai"
     last_call = session_tracker.calls[-1] if session_tracker.calls else None
     query_cost = last_call.cost_usd if last_call else 0.0
-    prompt_toks = last_call.prompt_tokens if last_call else 0
-    completion_toks = last_call.completion_tokens if last_call else 0
+    prompt_toks = last_call.prompt_tokens if last_call else None
+    completion_toks = last_call.completion_tokens if last_call else None
+
+    empty_response = not bool((logged_response_text or "").strip())
 
     _log_query(
         message       = message,
         project_title = (walkthrough_project or diagram_project or {}).get("title"),
         walkthrough   = bool(walkthrough_project),
         tool_name     = _tool_name_called,
-        had_error     = False,
+        had_error     = bool(empty_response or _tool_error),
         # Phase 1: Model & config
         model            = actual_model,
         temperature      = actual_temp,
@@ -1652,7 +1720,9 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
         audience_tier     = audience_tier,
         session_id       = session_id,
         turn_index       = turn_index,
+        empty_response=empty_response,        
         is_owner_traffic = is_owner_traffic,
+        assistant_response = logged_response_text,
     )
 #----------------------------------
 
