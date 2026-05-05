@@ -22,7 +22,9 @@ output/
 .chroma_db_DT/
 .chroma_db_DT.bak/
 
-test_*
+test_*.json
+test_*.jsonl
+test_*.csv
 
 # Environment variables (contains API keys - NEVER commit)
 .env
