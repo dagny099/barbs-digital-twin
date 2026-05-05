@@ -72,8 +72,8 @@ The goal is not to test everything — it's to catch the right failure at the ri
 
 ### Status
 
-- [ ] Write `scripts/healthcheck.py`
-- [ ] Add `--dry-run` flag for credential-only mode
+- [x] Write `scripts/healthcheck.py` — 5 checks, all passing against live services
+- [x] `--notify` flag for full end-to-end notification send (default: credential validation only via Pushover's `/users/validate` endpoint)
 - [ ] Document in `MAINTAINER_GUIDE.md`
 
 ---
@@ -168,7 +168,7 @@ What to do first, and why:
 
 2. ~~**CI integration of unit tests**~~ — **done.** `deploy-ec2.yml` now has a `test` job that blocks deploy on failure.
 
-3. **`scripts/healthcheck.py`** — next up. The scariest breakage (silent credential/config failure) is not caught by anything right now.
+3. ~~**`scripts/healthcheck.py`**~~ — **done.** Run before any deploy touching credentials, env config, or ChromaDB.
 
 4. **Eval baseline** — low effort given the framework exists. Transforms the eval tool from "interesting snapshot" to "regression detector."
 

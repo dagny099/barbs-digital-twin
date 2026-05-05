@@ -71,6 +71,21 @@ push to main → unit tests (pytest) → SSH deploy → smoke test (HTTP 200)
 
 If any unit test fails, the deploy is blocked and the EC2 instance is not touched. See [QA_STRATEGY.md](QA_STRATEGY.md) for the full testing approach.
 
+**Before pushing a deploy that touches credentials, environment config, or ChromaDB**, run the integration healthcheck manually first:
+
+```bash
+# Validate all external service connections (no notification sent)
+python scripts/healthcheck.py
+
+# Run specific checks only
+python scripts/healthcheck.py --checks env chroma
+
+# Full end-to-end: also sends a Pushover notification to confirm delivery
+python scripts/healthcheck.py --notify
+```
+
+Checks covered: environment variables, OpenAI LLM (live completion), OpenAI embeddings, ChromaDB collection count, Pushover credentials. All pass in ~3 seconds. Exit code 1 if anything fails.
+
 **Required GitHub Secrets** (Settings → Secrets and variables → Actions):
 
 | Secret | Value |
@@ -485,7 +500,7 @@ Future enhancements and features under consideration:
 - [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`EVAL_QUICKSTART.md`](../evals/EVAL_QUICKSTART.md))
 - [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
 - [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md), [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md))
-- [x] **Tiered QA strategy**: Unit tests gate EC2 deploys; healthcheck script and eval baseline planned (see [`QA_STRATEGY.md`](QA_STRATEGY.md))
+- [x] **Tiered QA strategy**: Unit tests gate EC2 deploys; integration healthcheck script for pre-deploy credential/service validation (see [`QA_STRATEGY.md`](QA_STRATEGY.md))
 
 ---
 
