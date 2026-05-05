@@ -62,7 +62,14 @@ Both deployments are automated via GitHub Actions and trigger on every push to `
 
 ### EC2 Deployment (Primary)
 
-The app runs as a `systemd` service on an AWS EC2 instance (Amazon Linux 2). On push to `main`, GitHub Actions SSHes in, pulls the latest code, installs dependencies, restarts the service, and smoke-tests the endpoint.
+The app runs as a `systemd` service on an AWS EC2 instance (Amazon Linux 2). On push to `main`, GitHub Actions first runs the unit test suite, then (if all tests pass) SSHes in, pulls the latest code, installs dependencies, restarts the service, and smoke-tests the endpoint.
+
+**Deploy pipeline summary:**
+```
+push to main → unit tests (pytest) → SSH deploy → smoke test (HTTP 200)
+```
+
+If any unit test fails, the deploy is blocked and the EC2 instance is not touched. See [QA_STRATEGY.md](QA_STRATEGY.md) for the full testing approach.
 
 **Required GitHub Secrets** (Settings → Secrets and variables → Actions):
 
@@ -186,7 +193,7 @@ Every conversation turn and visitor vote (👍/👎) is logged to `query_log.jso
 **Production logs:** `query_log.jsonl`
 **Admin logs:** `query_log_admin.jsonl` (separate for experimentation)
 
-**Learn more:** [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md) | [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md)
+**Learn more:** [`LOG_ANALYSIS_SCRIPTS.md`](LOG_ANALYSIS_SCRIPTS.md) | [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md) | [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md)
 
 ### Basic Analytics
 
@@ -478,6 +485,7 @@ Future enhancements and features under consideration:
 - [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`EVAL_QUICKSTART.md`](../evals/EVAL_QUICKSTART.md))
 - [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
 - [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md), [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md))
+- [x] **Tiered QA strategy**: Unit tests gate EC2 deploys; healthcheck script and eval baseline planned (see [`QA_STRATEGY.md`](QA_STRATEGY.md))
 
 ---
 

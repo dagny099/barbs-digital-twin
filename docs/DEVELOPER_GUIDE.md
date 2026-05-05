@@ -60,6 +60,39 @@ python app.py
 
 The Gradio interface will launch at `http://localhost:7860`
 
+## Testing
+
+The project uses a lightweight, tiered QA strategy. See [QA_STRATEGY.md](QA_STRATEGY.md) for the full design rationale.
+
+### Running the unit tests
+
+```bash
+.venv/bin/pytest tests/ -v
+```
+
+51 tests, all pure logic, no API keys or network required. Completes in under a second. Run these before pushing any change to `app.py`.
+
+### What's covered
+
+| Test class | Functions tested |
+|---|---|
+| `TestDiceRoll` | `dice_roll()` — range and type |
+| `TestDetectAudienceTier` | `detect_audience_tier()` — tier logic, case-insensitivity, history scanning |
+| `TestBuildSensitivityFilter` | `build_sensitivity_filter()` — ChromaDB filter shape per tier |
+| `TestModelSupportsTools` | `model_supports_tools()` — blocklist behaviour |
+| `TestComputeSimilarityStats` | `_compute_similarity_stats()` — L2→cosine math, clamping, empty input |
+| `TestRedactLogText` | `_redact_log_text()` — email and phone redaction |
+| `TestBuildResponsePreview` | `_build_response_preview()` — truncation, newline collapsing |
+| `TestHandleToolCall` | `handle_tool_call()` — dispatch, ID threading, unknown function |
+
+### How the import works
+
+`app.py` has module-level side effects (API key check, OpenAI client creation, `SYSTEM_PROMPT.md` read). `tests/conftest.py` handles all of these before the import: it sets a dummy `OPENAI_API_KEY`, patches the OpenAI constructor with a mock, and sets the working directory to the project root. No `.env` file or real credentials are needed to run the test suite.
+
+### CI gate
+
+Every push to `main` runs the tests automatically before deploying to EC2. If any test fails, the deploy is blocked. See [QA_STRATEGY.md](QA_STRATEGY.md) for the full pipeline design.
+
 ## Architecture
 
 ### RAG Query Flow

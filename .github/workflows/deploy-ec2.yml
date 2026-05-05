@@ -1,14 +1,40 @@
 name: Deploy to EC2
 
 # Triggers on every push to main.
-# SSHes into the EC2 instance, pulls the latest code, installs deps,
-# restarts the systemd service, and smoke-tests the app endpoint.
+# 1. Runs unit tests (pure logic, no API keys needed) as a pre-deploy gate.
+# 2. SSHes into the EC2 instance, pulls the latest code, installs deps,
+#    restarts the systemd service, and smoke-tests the app endpoint.
+# Deploy is blocked if any unit test fails.
 on:
   push:
     branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        env:
+          # A placeholder value satisfies the module-level API key check.
+          # No real OpenAI calls are made — the client is patched in conftest.py.
+          OPENAI_API_KEY: "sk-test-placeholder"
+        run: pytest tests/ -v
+
   deploy:
+    needs: test   # deploy only runs if all tests pass
     runs-on: ubuntu-latest
 
     steps:

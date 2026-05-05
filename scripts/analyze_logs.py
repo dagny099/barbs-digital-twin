@@ -63,8 +63,6 @@ class QueryRecord:
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     config_override: bool = False
-    assistant_response: Optional[str] = None
-    assistant_response_preview: Optional[str] = None
 
     @property
     def is_knowledge_gap(self) -> bool:
@@ -129,9 +127,7 @@ class LogAnalyzer:
     def _load_logs(self):
         """Load and parse JSONL log file, splitting queries, votes, and artifacts."""
         if not self.log_path.exists():
-            print(f"❌ Log file not found: {self.log_path}")
-            print("   Run the app first to generate logs.")
-            sys.exit(1)
+            raise FileNotFoundError(self.log_path)
 
         legacy_count = 0
         malformed_json_count = 0
@@ -350,7 +346,11 @@ class LogAnalyzer:
             "latency_ms": {
                 "mean": int(statistics.mean(latencies)),
                 "median": int(statistics.median(latencies)),
-                "p95": int(statistics.quantiles(latencies, n=20)[18]) if len(latencies) > 20 else max(latencies),
+                **(
+                    {"p95": int(statistics.quantiles(latencies, n=20)[18])}
+                    if len(latencies) >= 20
+                    else {"p95_note": f"sample too small ({len(latencies)} rows); use max"}
+                ),
                 "max": max(latencies),
             },
             "chunk_similarity": {
@@ -439,10 +439,14 @@ class LogAnalyzer:
         print()
 
         print("⚡ LATENCY")
-        print(f"   Mean:   {stats['latency_ms']['mean']:,}ms")
-        print(f"   Median: {stats['latency_ms']['median']:,}ms")
-        print(f"   P95:    {stats['latency_ms']['p95']:,}ms")
-        print(f"   Max:    {stats['latency_ms']['max']:,}ms\n")
+        lm = stats['latency_ms']
+        print(f"   Mean:   {lm['mean']:,}ms")
+        print(f"   Median: {lm['median']:,}ms")
+        if 'p95' in lm:
+            print(f"   P95:    {lm['p95']:,}ms")
+        else:
+            print(f"   P95:    n/a ({lm.get('p95_note', 'sample too small')})")
+        print(f"   Max:    {lm['max']:,}ms\n")
 
         print("🎯 RETRIEVAL QUALITY (Cosine Similarity)")
         print(f"   Mean:   {stats['chunk_similarity']['mean']:.3f}")
@@ -946,6 +950,17 @@ class LogAnalyzer:
 # CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+def _validated_date(date_str: str) -> str:
+    """Exit with a clear message if date_str is not strictly YYYY-MM-DD."""
+    try:
+        parsed = datetime.strptime(date_str, "%Y-%m-%d")
+        if parsed.strftime("%Y-%m-%d") != date_str:
+            raise ValueError
+    except ValueError:
+        sys.exit(f"❌ Invalid --cutoff-date '{date_str}'. Expected format: YYYY-MM-DD")
+    return date_str
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Analyze query logs from Digital Twin",
@@ -994,12 +1009,21 @@ Admin:
 
     args = parser.parse_args()
 
-    analyzer = LogAnalyzer(args.log)
+    if args.cutoff_date:
+        _validated_date(args.cutoff_date)
+
+    try:
+        analyzer = LogAnalyzer(args.log)
+    except FileNotFoundError as e:
+        print(f"❌ Log file not found: {e}")
+        print("   Run the app first to generate logs.")
+        sys.exit(1)
 
     if args.cutoff_date:
         analyzer.apply_cutoff_date(args.cutoff_date, args.timezone)
 
     if args.exclude_owner:
+        print(f"ℹ️  Owner filter active: mode='{args.owner_filter}'")
         analyzer.exclude_owner_traffic(mode=args.owner_filter)
 
     if args.last:

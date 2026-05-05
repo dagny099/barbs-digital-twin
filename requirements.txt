@@ -8,3 +8,6 @@ pdfplumber
 huggingface_hub
 litellm
 lxml_html_clean
+
+# dev / testing
+pytest

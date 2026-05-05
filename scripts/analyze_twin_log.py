@@ -40,7 +40,6 @@ import csv
 import json
 import statistics
 from collections import Counter, defaultdict
-from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -73,6 +72,7 @@ def parse_ts(ts_str: str) -> datetime:
 
 def load_jsonl(path: Path):
     rows = []
+    malformed = 0
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -81,8 +81,9 @@ def load_jsonl(path: Path):
             try:
                 rows.append(json.loads(line))
             except json.JSONDecodeError:
-                # Ignore malformed rows rather than failing the whole run
-                continue
+                malformed += 1
+    if malformed:
+        print(f"⚠️  {malformed} malformed JSON line(s) skipped in {path}")
     return rows
 
 
@@ -275,16 +276,14 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
     if compare_owner_views:
         owner_view_comparison = {}
         for mode in ("none", "row", "session"):
-            mode_chat, mode_votes, _ = apply_owner_filter(
-                deepcopy(chat_rows_all), deepcopy(vote_rows_all), mode
-            )
+            mode_chat, mode_votes, _ = apply_owner_filter(chat_rows_all, vote_rows_all, mode)
             mode_chat, _ = apply_cutoff(mode_chat, cutoff_date, timezone_str)
             mode_votes, _ = apply_cutoff(mode_votes, cutoff_date, timezone_str)
             owner_view_comparison[mode] = compute_view_metrics(mode_chat, mode_votes)
 
     # Apply owner filter
     chat_rows, vote_rows, owner_filter_summary = apply_owner_filter(
-        deepcopy(chat_rows_all), deepcopy(vote_rows_all), owner_filter_mode
+        chat_rows_all, vote_rows_all, owner_filter_mode
     )
 
     # Apply cutoff date
@@ -663,7 +662,6 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
     # ----------------------------
 
     print("\n=== Digital Twin Log Summary ===")
-    print(f"Owner filter mode:         {owner_filter_mode}")
     print(f"Cutoff date:               {cutoff_date or 'None'} ({timezone_str})")
     print(f"Chat turns:                {summary['total_chat_turns']}")
     print(f"Sessions:                  {summary['total_sessions']}")
@@ -706,6 +704,17 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
     print(f"  {out_dir / 'report.md'}")
 
 
+def _validated_date(date_str: str) -> str:
+    """Exit with a clear message if date_str is not strictly YYYY-MM-DD."""
+    try:
+        parsed = datetime.strptime(date_str, "%Y-%m-%d")
+        if parsed.strftime("%Y-%m-%d") != date_str:
+            raise ValueError
+    except ValueError:
+        raise SystemExit(f"❌ Invalid --cutoff-date '{date_str}'. Expected format: YYYY-MM-DD")
+    return date_str
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Lightweight Digital Twin log analysis with cutoff-date and owner-traffic filtering."
@@ -724,9 +733,14 @@ def main():
 
     args = parser.parse_args()
 
+    if args.cutoff_date:
+        _validated_date(args.cutoff_date)
+
+    print(f"ℹ️  Owner filter mode: {args.owner_filter}")
+
     log_path = Path(args.log)
     if not log_path.exists():
-        raise SystemExit(f"Log file not found: {log_path}")
+        raise SystemExit(f"❌ Log file not found: {log_path}")
 
     rows = load_jsonl(log_path)
     build_analysis(
