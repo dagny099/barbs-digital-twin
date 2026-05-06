@@ -155,17 +155,33 @@ with st.sidebar:
         start_date = date_range[0].isoformat() if date_range[0] else None
         end_date = date_range[1].isoformat() if date_range[1] else None
 
-chat_df, vote_df, meta = _load_data(log_path, start_date, end_date, owner_filter)
+try:
+    chat_df, vote_df, meta = _load_data(log_path, start_date, end_date, owner_filter)
+except FileNotFoundError:
+    st.error(f"Log file not found: {log_path}")
+    st.info("Tip: run from repo root or set an absolute path to query_log.jsonl.")
+    st.stop()
+except Exception as exc:
+    st.error("Failed to load analytics data.")
+    st.exception(exc)
+    st.stop()
 
 if chat_df.empty:
     st.warning("No chat rows found for the current filters.")
+    st.caption("Try widening date range or including owner traffic.")
     st.stop()
 
+# NOTE: workflow may be sparsely populated in mixed/legacy logs; keep filter optional.
 workflows = sorted([w for w in chat_df["workflow"].dropna().unique().tolist() if str(w).strip()])
 if workflows:
     selected_workflows = st.sidebar.multiselect("Workflow type", options=workflows, default=workflows)
     if selected_workflows:
         chat_df = chat_df[chat_df["workflow"].isin(selected_workflows)].copy()
+
+if chat_df.empty:
+    st.warning("No rows remain after workflow filtering.")
+    st.caption("Select one or more workflows, or clear the filter.")
+    st.stop()
 
 session_df = build_session_summary(chat_df)
 
@@ -269,8 +285,10 @@ with right:
     st.dataframe(slow_responses(real_chat_df, threshold_ms=5000, limit=30), use_container_width=True, hide_index=True)
 
 st.markdown("<div class='section-title'>Recent sessions</div>", unsafe_allow_html=True)
+# Future improvement: add session drilldown (click session_id => full turn timeline).
 recent_sessions = real_session_df.sort_values("session_start", ascending=False).head(50)
 st.dataframe(recent_sessions, use_container_width=True, hide_index=True)
 
 with st.expander("Load metadata"):
+    # Future improvement: surface schema coverage (missing-field rates) in a dedicated QA panel.
     st.json(meta)
