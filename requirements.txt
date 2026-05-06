@@ -11,3 +11,6 @@ lxml_html_clean
 
 # dev / testing
 pytest
+
+pandas
+streamlit
