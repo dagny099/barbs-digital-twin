@@ -21,8 +21,7 @@ from analytics import (
     slow_responses,
 )
 
-st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
-
+log_file = Path("latest.json")
 
 THEME_CSS = """
 <style>
@@ -131,9 +130,16 @@ def _format_duration(seconds: float | int | None) -> str:
         return f"{mins}m {sec}s"
     return f"{sec}s"
 
+from datetime import datetime
+
+last_modified = datetime.fromtimestamp(log_file.stat().st_mtime)
+
+st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
+
 
 st.title("Internal Analytics Dashboard")
 st.caption("Focused v1 view of session quality, retrieval quality, and performance.")
+st.caption(f"Log file last updated locally: {last_modified}")
 st.markdown("<div class='accent-sage' style='margin-top:-0.35rem; margin-bottom:0.55rem;'>Quick scan: quality, engagement, latency, and outliers.</div>", unsafe_allow_html=True)
 
 with st.sidebar:
