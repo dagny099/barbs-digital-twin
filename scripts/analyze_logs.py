@@ -63,6 +63,8 @@ class QueryRecord:
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     config_override: bool = False
+    assistant_response: Optional[str] = None
+    assistant_response_preview: Optional[str] = None
 
     @property
     def is_knowledge_gap(self) -> bool:
