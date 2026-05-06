@@ -84,7 +84,7 @@ def load_jsonl(path: Path):
                 malformed += 1
     if malformed:
         print(f"⚠️  {malformed} malformed JSON line(s) skipped in {path}")
-    return rows
+    return rows, malformed
 
 
 def safe_mean(values, ndigits=2):
@@ -257,7 +257,8 @@ def compute_view_metrics(chat_rows, vote_rows):
 
 def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: str,
                    owner_filter_mode: str, compare_owner_views: bool,
-                   source_log_path: str | None = None):
+                   source_log_path: str | None = None,
+                   malformed_json_lines: int = 0):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Separate row types first
@@ -423,6 +424,7 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
         "model_counts": model_counter.most_common(),
         "audience_tier_counts": audience_counter.most_common(),
         "analysis_assumption": "session_id and turn_index are present on chat rows",
+        "malformed_json_lines_skipped": malformed_json_lines,
         "filtering": {
             "cutoff_date": cutoff_date,
             "timezone": timezone_str,
@@ -526,6 +528,7 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
     report_lines.append(f"- Vote events: **{summary['total_vote_events']}**")
     report_lines.append(f"- Empty responses: **{summary['empty_responses']}**")
     report_lines.append(f"- Had-error rows: **{summary['had_errors']}**")
+    report_lines.append(f"- Malformed JSON lines skipped: **{summary['malformed_json_lines_skipped']}**")
     report_lines.append(f"- Avg latency: **{fmt_num(summary['avg_latency_ms'])} ms**")
     report_lines.append(f"- Avg chunk similarity: **{fmt_num(summary['avg_chunk_similarity'])}**")
     report_lines.append(f"- Avg response chars: **{fmt_num(summary['avg_response_chars'])}**")
@@ -671,6 +674,7 @@ def build_analysis(rows, out_dir: Path, cutoff_date: str | None, timezone_str: s
     print(f"Vote events:               {summary['total_vote_events']}")
     print(f"Empty responses:           {summary['empty_responses']}")
     print(f"Had-error rows:            {summary['had_errors']}")
+    print(f"Malformed JSON skipped:    {summary['malformed_json_lines_skipped']}")
     print(f"Avg latency (ms):          {summary['avg_latency_ms']}")
     print(f"Avg similarity:            {summary['avg_chunk_similarity']}")
     print(f"Avg response chars:        {summary['avg_response_chars']}")
@@ -742,7 +746,7 @@ def main():
     if not log_path.exists():
         raise SystemExit(f"❌ Log file not found: {log_path}")
 
-    rows = load_jsonl(log_path)
+    rows, malformed_json_lines = load_jsonl(log_path)
     build_analysis(
         rows=rows,
         out_dir=Path(args.out_dir),
@@ -751,6 +755,7 @@ def main():
         owner_filter_mode=args.owner_filter,
         compare_owner_views=args.compare_owner_views,
         source_log_path=str(log_path),
+        malformed_json_lines=malformed_json_lines,
     )
 
 
