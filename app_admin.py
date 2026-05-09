@@ -1239,14 +1239,19 @@ admin_css = """
 
 if __name__ == "__main__":
 
-    if not ADMIN_PASSWORD:
-        print("ADMIN_PASSWORD not set — admin app has no authentication.")
+    # Guard against uvicorn re-spawning workers re-running this block on macOS
+    # (spawn multiprocessing start method re-executes the script as __main__)
+    if not os.environ.get("_ADMIN_STARTED"):
+        os.environ["_ADMIN_STARTED"] = "1"
 
-    if collection.count() == 0:
-        print("Knowledge base empty — running ingest...")
-        subprocess.run([sys.executable, "scripts/ingest.py", "--all"], check=True)
+        if not ADMIN_PASSWORD:
+            print("ADMIN_PASSWORD not set — admin app has no authentication.")
 
-    print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
+        if collection.count() == 0:
+            print("Knowledge base empty — running ingest...")
+            subprocess.run([sys.executable, "scripts/ingest.py", "--all"], check=True)
+
+        print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 
     # Pre-compute source filter choices from the cached collection
     _source_types = sorted(set(c["source_type"] for c in _ALL_CHUNKS))
