@@ -14,6 +14,7 @@ Run locally:
 """
 
 import os
+import sys
 import json
 import time
 import base64
@@ -59,8 +60,6 @@ LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.4"))
 SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7862))
 ADMIN_USER        = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASSWORD    = os.getenv("ADMIN_PASSWORD")   # None = no auth (local dev without password set)
-if not ADMIN_PASSWORD:
-    print("WARNING: ADMIN_PASSWORD not set — admin app has no authentication.")
 
 _QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
 _ADMIN_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log_admin.jsonl")
@@ -191,15 +190,6 @@ if not os.path.exists(".chroma_db_DT"):
 chroma_client = chromadb.PersistentClient(path=".chroma_db_DT")
 collection = chroma_client.get_or_create_collection(name="barb-twin")
 
-if collection.count() == 0:
-    print("Knowledge base empty — running ingest...")
-    subprocess.run(["python", "scripts/ingest.py", "--all"], check=True)
-    # from db_sync import push_db
-    # push_db()
-    # print("Ingestion complete.")
-
-
-print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 
 # System prompt
 with open("SYSTEM_PROMPT.md", "r", encoding="utf-8") as _f:
@@ -1248,6 +1238,15 @@ admin_css = """
 
 
 if __name__ == "__main__":
+
+    if not ADMIN_PASSWORD:
+        print("ADMIN_PASSWORD not set — admin app has no authentication.")
+
+    if collection.count() == 0:
+        print("Knowledge base empty — running ingest...")
+        subprocess.run([sys.executable, "scripts/ingest.py", "--all"], check=True)
+
+    print(f"✅ Admin mode — collection ready: {collection.count()} chunks loaded")
 
     # Pre-compute source filter choices from the cached collection
     _source_types = sorted(set(c["source_type"] for c in _ALL_CHUNKS))
