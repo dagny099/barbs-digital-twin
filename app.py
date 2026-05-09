@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import types
 import datetime
@@ -242,7 +243,7 @@ collection = chroma_client.get_or_create_collection(name="barb-twin")
 # If still empty (pull failed or very first run), build from scratch then cache.
 if collection.count() == 0:
     print("Knowledge base is empty — running scripts/ingest.py --all ...")
-    subprocess.run(["python", "scripts/ingest.py", "--all"], check=True)
+    subprocess.run([sys.executable, "scripts/ingest.py", "--all"], check=True)
     from db_sync import push_db
     push_db()
     print("Ingestion complete.")
