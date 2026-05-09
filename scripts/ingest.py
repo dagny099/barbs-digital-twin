@@ -353,7 +353,8 @@ def run_source(source: dict, force: bool = False, dry_run: bool = False) -> int:
 
     print(f"\n  ▶  Running: {' '.join(cmd)}")
     print(f"  {'─' * 60}")
-    result = subprocess.run(cmd)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    result = subprocess.run(cmd, cwd=project_root)
     print(f"  {'─' * 60}")
 
     if result.returncode == 0:
