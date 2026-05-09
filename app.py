@@ -876,28 +876,25 @@ button[aria-label="Submit"]:hover {
 }
 
 /* ── Contact CTA ─────────────────────────────────────────────── */
-.contact-cta-btn {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+.title-header-wrap {
+    position: relative !important;
+}
+.contact-cta-link {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
     color: var(--accent-strong) !important;
-    font-size: 0.92rem !important;
+    font-size: 0.88rem !important;
     font-weight: 500 !important;
-    padding: 6px 0 8px 0 !important;
-    margin: 6px auto 0 !important;
-    display: block !important;
-    width: auto !important;
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
     text-decoration-color: rgba(47,127,123,0.42) !important;
     transition: color 0.15s ease !important;
+    white-space: nowrap !important;
 }
-.contact-cta-btn:hover {
+.contact-cta-link:hover {
     color: var(--accent) !important;
     text-decoration-color: rgba(47,127,123,0.82) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
 }
 
 .owner-traffic-row {
@@ -1764,10 +1761,17 @@ def _build_title_html() -> str:
     except FileNotFoundError:
         img_tag = ""
     return (
+        '<div class="title-header-wrap">'
         '<div class="title-row">'
         '<h2>Barbara\'s Digital Twin</h2>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
+        '<a class="contact-cta-link" href="#" '
+        'onclick="var tb=document.querySelector(\'textarea\');'
+        'if(tb){tb.value=\'I\\u2019d like to get in touch with Barbara\';'
+        'tb.dispatchEvent(new Event(\'input\',{bubbles:true}));}return false;">'
+        '📬 Want to reach Barbara directly? Get in touch →</a>'
+        '</div>'
     )
 
 if __name__ == "__main__":
@@ -1866,15 +1870,6 @@ if __name__ == "__main__":
                                 elem_classes=["sidebar-btn", CSS_CLASS[category]],
                             )
                             btn.click(lambda q=q: q, outputs=chat.textbox)
-
-        contact_btn = gr.Button(
-            "📬 Want to reach Barbara directly? Get in touch →",
-            elem_classes=["contact-cta-btn"],
-        )
-        contact_btn.click(
-            fn=lambda: "I'd like to get in touch with Barbara",
-            outputs=chat.textbox,
-        )
 
         with gr.Row(elem_classes=["owner-traffic-row"]):
             owner_toggle.render()
