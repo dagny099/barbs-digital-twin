@@ -106,7 +106,9 @@ hr {
 </style>
 """
 
-st.markdown(THEME_CSS, unsafe_allow_html=True)
+#st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
+#st.markdown(THEME_CSS, unsafe_allow_html=True)
+st.html(THEME_CSS)
 
 
 @st.cache_data(ttl=60)
@@ -134,7 +136,6 @@ from datetime import datetime
 
 last_modified = datetime.fromtimestamp(log_file.stat().st_mtime)
 
-st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
 
 
 st.title("Internal Analytics Dashboard")
@@ -220,14 +221,15 @@ slow_count = int((real_chat_df["latency_ms"] > 5000).sum()) if "latency_ms" in r
 gap_count = int((real_chat_df["chunk_similarity_avg"] < 0.55).sum()) if "chunk_similarity_avg" in real_chat_df else 0
 error_count = int((real_chat_df["had_error"] == True).sum()) if "had_error" in real_chat_df else 0
 
-st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-st.markdown("<div class='section-title'>Health snapshot</div>", unsafe_allow_html=True)
-h1, h2, h3, h4 = st.columns(4)
-h1.metric("Gap rate", f"{_pct(gap_count, turn_count)}%", help="Turns with retrieval similarity < 0.55")
-h2.metric("Slow rate", f"{_pct(slow_count, turn_count)}%", help="Turns with latency > 5000ms")
-h3.metric("Error rate", f"{_pct(error_count, turn_count)}%", help="Turns where had_error is true")
-h4.metric("Bounce rate", f"{overall['bounce_rate_pct']:.1f}%", help="One-turn sessions / all real sessions")
-st.markdown("</div>", unsafe_allow_html=True)
+# st#.markdown('<div class="section-card">', unsafe_allow_html=True)
+#st.markdown('<div class="section-title">Health snapshot</div>', unsafe_allow_html=True)
+with st.expander("Health snapshot", icon=":material/thumb_up:"):
+    h1, h2, h3, h4 = st.columns(4)
+    h1.metric("Gap rate", f"{_pct(gap_count, turn_count)}%", help="Turns with retrieval similarity < 0.55")
+    h2.metric("Slow rate", f"{_pct(slow_count, turn_count)}%", help="Turns with latency > 5000ms")
+    h3.metric("Error rate", f"{_pct(error_count, turn_count)}%", help="Turns where had_error is true")
+    h4.metric("Bounce rate", f"{overall['bounce_rate_pct']:.1f}%", help="One-turn sessions / all real sessions")
+#st.markdown('</div>', unsafe_allow_html=True)
 
 st.divider()
 
@@ -254,31 +256,31 @@ else:
 
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+    #st.markdown("<div class='section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title accent-teal'>Daily sessions</div>", unsafe_allow_html=True)
     if daily_sessions.empty:
         st.caption("No data")
     else:
         st.line_chart(daily_sessions.set_index("day")["sessions"], height=220)
-    st.markdown("</div>", unsafe_allow_html=True)
+    #st.markdown("</div>", unsafe_allow_html=True)
 
 with c2:
-    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+    #st.markdown("<div class='section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title accent-sage'>Daily turns</div>", unsafe_allow_html=True)
     if daily_turns.empty:
         st.caption("No data")
     else:
         st.line_chart(daily_turns.set_index("day")["turns"], height=220)
-    st.markdown("</div>", unsafe_allow_html=True)
+    #st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+#st.markdown("<div class='section-card'>", unsafe_allow_html=True)
 st.markdown("<div class='section-title accent-amber'>Session depth distribution</div>", unsafe_allow_html=True)
 if real_session_df.empty:
     st.caption("No data")
 else:
     depth = real_session_df["turns"].value_counts().sort_index().rename_axis("turns").reset_index(name="sessions")
     st.bar_chart(depth.set_index("turns")["sessions"], height=220)
-st.markdown("</div>", unsafe_allow_html=True)
+#st.markdown("</div>", unsafe_allow_html=True)
 
 st.divider()
 

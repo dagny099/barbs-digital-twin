@@ -1833,7 +1833,9 @@ if __name__ == "__main__":
             fn=respond_ai,
             chatbot=chatbot,
             textbox=gr.Textbox(show_label=False, placeholder="Ask me a question", container=False, scale=7, submit_btn=True),
-            examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
+            #examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
+            # other idea = What's the case for knowledge graphs in 2026?
+            examples=["What does 'making data legible' actually mean?", "How do you make a RAG system you'd actually trust?", "Why do most enterprise AI pilots stall?", "How did a vision scientist end up shipping AI systems?"],
             example_icons=[
                            os.path.join(_assets_dir, "want-shine.svg"),
                            os.path.join(_assets_dir, "communication-icon.svg"),
