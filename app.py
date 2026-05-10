@@ -395,7 +395,7 @@ custom_css = """
     --text-soft: #7D8B94;
     --border-soft: #D9DDD6;
     --border-strong: #BEC9C4;
-    --accent: #2F7F7B;
+    --accent: #ff5e00;
     --accent-strong: #256B68;
     --accent-deep: #1F565B;
     --accent-soft: #E2F0EC;
@@ -733,7 +733,7 @@ button[aria-label="Submit"]:hover {
 }
 .examples {
     font-family: 'IBM Plex Sans', sans-serif !important;
-    gap: 12px !important;
+    gap: 13px !important;
 }
 .examples .example {
     display: flex !important;
@@ -741,8 +741,8 @@ button[aria-label="Submit"]:hover {
     align-items: center !important;
 }
 .examples .example img {
-    width: 24px !important;
-    height: 24px !important;
+    width: 34px !important;
+    height: 34px !important;
     display: block !important;
     margin: 0 auto 10px auto !important;
     opacity: 0.84 !important;
@@ -760,7 +760,7 @@ button[aria-label="Submit"]:hover {
     font-size: 1rem !important;
     font-weight: 500 !important;
     line-height: 1.45 !important;
-    padding: 15px !important;
+    padding: 16px !important;
     white-space: normal !important;
     height: auto !important;
     min-height: 85px !important;
@@ -1768,7 +1768,7 @@ def _build_title_html() -> str:
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
         '<a class="contact-cta-link" href="#" '
         'onclick="var tb=document.querySelector(\'textarea\');'
-        'if(tb){tb.value=\'I\\u2019d like to get in touch with Barbara\';'
+        'if(tb){tb.value=\'I\\u2019d like to get in touch with Barbara - Here is my name, email, and message: \';'
         'tb.dispatchEvent(new Event(\'input\',{bubbles:true}));}return false;">'
         '📬 Want to reach Barbara directly? Get in touch →</a>'
         '</div>'
@@ -1792,10 +1792,10 @@ if __name__ == "__main__":
         chatbot = gr.Chatbot(
             show_label=False,
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="<h3 class='chatbot-header'>My portfolio, in conversation form</h3><p class='chatbot-subtitle'>Ask question or start with a prompt below :)</p>",
+            placeholder="<h3 class='chatbot-header'>My portfolio, in conversation form</h3><p class='chatbot-subtitle'>Ask question or start with a prompt below :)<br>⬇</p>",
             height="60vh",
             min_height=320,
-            max_height=650,
+            max_height=625,
             autoscroll=True,
             render_markdown=True,
             container=False
