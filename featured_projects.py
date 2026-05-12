@@ -269,7 +269,7 @@ FEATURED_PROJECTS = [
             "income questions), and completeness with a 90%+ target. Supports "
             "multi-provider comparison (Anthropic vs OpenAI vs Ollama). "
             "Stack: Python, FastAPI, SQLModel, ChromaDB, Anthropic/OpenAI/Ollama, "
-            "Alembic, DSPy."
+            "Alembic."
         ),
         "diagram_filename": "poolula-platform-diagarm.png",
         "diagram_caption": "Poolula Platform — business question → RAG retrieval → LLM answer → evaluation harness verification",

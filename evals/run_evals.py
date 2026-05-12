@@ -414,8 +414,8 @@ def main():
     print(f"  Errors: {sum(1 for r in results if 'error' in r)}")
     print("\nNext steps:")
     print(f"  1. Review results in: {output_file}")
-    print("  2. Run analysis: python analyze_evals_rich.py")
-    print("  3. Export richer review sheet: python analyze_evals_rich.py --export\n")
+    print("  2. Run analysis: python analyze_evals.py")
+    print("  3. Export richer review sheet: python analyze_evals.py --export --output evals/eval_results/Latest-Eval-Review.csv\n")
 
 
 if __name__ == "__main__":

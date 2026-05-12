@@ -29,23 +29,23 @@ It does **not** fully exercise:
 ## Run a quick check
 
 ```bash
-python run_evals.py --limit 10
-python analyze_evals.py
+python evals/run_evals.py --limit 10
+python evals/analyze_evals.py
 ```
 
 ## Run the full suite
 
 ```bash
-python run_evals.py
-python analyze_evals.py --export
+python evals/run_evals.py
+python evals/analyze_evals.py --export --output evals/eval_results/latest_results_review.csv
 ```
 
 ## Run a category
 
 ```bash
-python run_evals.py --category bio
-python run_evals.py --category projects
-python run_evals.py --category technical
+python evals/run_evals.py --category bio
+python evals/run_evals.py --category projects
+python evals/run_evals.py --category technical
 ```
 
 ## Review results
