@@ -21,8 +21,6 @@ from analytics import (
     slow_responses,
 )
 
-log_file = Path("latest.json")
-
 THEME_CSS = """
 <style>
 :root {
@@ -106,7 +104,7 @@ hr {
 </style>
 """
 
-#st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
+st.set_page_config(page_title="Digital Twin Analytics", layout="wide")
 #st.markdown(THEME_CSS, unsafe_allow_html=True)
 st.html(THEME_CSS)
 
@@ -134,8 +132,8 @@ def _format_duration(seconds: float | int | None) -> str:
 
 from datetime import datetime
 
-last_modified = datetime.fromtimestamp(log_file.stat().st_mtime)
-
+default_log = "latest.json" if Path("latest.json").exists() else "query_log.jsonl" #"query_log.jsonl" 
+last_modified = datetime.fromtimestamp(Path(default_log).stat().st_mtime)
 
 
 st.title("Internal Analytics Dashboard")
@@ -144,9 +142,7 @@ st.caption(f"Log file last updated locally: {last_modified}")
 st.markdown("<div class='accent-sage' style='margin-top:-0.35rem; margin-bottom:0.55rem;'>Quick scan: quality, engagement, latency, and outliers.</div>", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("Filters")
-
-    default_log = "query_log.jsonl" if Path("query_log.jsonl").exists() else "scripts/query_log_ORIG.jsonl"
+    st.header("Filters")  
     log_path = st.text_input("Log path", value=default_log)
 
     owner_choice = st.selectbox(
@@ -208,12 +204,12 @@ median_duration = real_session_df["duration_seconds"].median() if not real_sessi
 
 # KPI row
 k1, k2, k3, k4, k5, k6 = st.columns(6)
-k1.metric("Real Sessions", f"{len(real_session_df):,}")
-k2.metric("Real Chat Turns", f"{len(real_chat_df):,}")
-k3.metric("Median Turns / Session", f"{overall['median_turns_per_session']:.1f}")
-k4.metric("Median Session Duration", _format_duration(median_duration))
-k5.metric("Avg Retrieval Similarity", f"{overall['avg_similarity']:.3f}")
-k6.metric("Avg Latency", f"{overall['avg_latency_ms']:.0f} ms")
+k1.metric("Real Sessions", f"{len(real_session_df):,}", help="Total conversation sessions (excludes synthetic/missing IDs)")
+k2.metric("Real Chat Turns", f"{len(real_chat_df):,}", help="Total user messages across all sessions")
+k3.metric("Median Turns / Session", f"{overall['median_turns_per_session']:.1f}", help="Middle value of conversation depth (turns per session)")
+k4.metric("Median Session Duration", _format_duration(median_duration), help="Middle value of time spent in conversation")
+k5.metric("Avg Retrieval Similarity", f"{overall['avg_similarity']:.3f}", help="Average cosine similarity between queries and retrieved chunks (higher = better retrieval quality)")
+k6.metric("Avg Latency", f"{overall['avg_latency_ms']:.0f} ms", help="Average response time from query to answer")
 
 # Quick health snapshot for fast triage (30-second read)
 turn_count = len(real_chat_df)
@@ -221,15 +217,49 @@ slow_count = int((real_chat_df["latency_ms"] > 5000).sum()) if "latency_ms" in r
 gap_count = int((real_chat_df["chunk_similarity_avg"] < 0.55).sum()) if "chunk_similarity_avg" in real_chat_df else 0
 error_count = int((real_chat_df["had_error"] == True).sum()) if "had_error" in real_chat_df else 0
 
-# st#.markdown('<div class="section-card">', unsafe_allow_html=True)
-#st.markdown('<div class="section-title">Health snapshot</div>', unsafe_allow_html=True)
+# Generate quick insights
+gap_rate = _pct(gap_count, turn_count)
+slow_rate = _pct(slow_count, turn_count)
+error_rate = _pct(error_count, turn_count)
+bounce_rate = overall['bounce_rate_pct']
+
+insights = []
+if gap_rate > 20:
+    insights.append(f"⚠️ **High knowledge gap rate ({gap_rate}%)** - Consider expanding knowledge base")
+elif gap_rate > 10:
+    insights.append(f"⚡ Moderate knowledge gap rate ({gap_rate}%) - Some queries lack good retrieval matches")
+else:
+    insights.append(f"✅ Good retrieval quality ({gap_rate}% gap rate)")
+
+if slow_rate > 10:
+    insights.append(f"⚠️ **Many slow responses ({slow_rate}%)** - Check model performance and infrastructure")
+elif slow_rate > 5:
+    insights.append(f"⚡ Some slow responses ({slow_rate}%)")
+
+if error_rate > 5:
+    insights.append(f"🔴 **High error rate ({error_rate}%)** - Investigate error logs immediately")
+elif error_rate > 0:
+    insights.append(f"⚡ Some errors detected ({error_rate}%)")
+
+if bounce_rate > 60:
+    insights.append(f"⚠️ **High bounce rate ({bounce_rate:.1}%)** - Many users leave after 1 turn")
+elif bounce_rate > 40:
+    insights.append(f"⚡ Moderate bounce rate ({bounce_rate:.1}%)")
+
+if overall['median_turns_per_session'] >= 3:
+    insights.append(f"✅ Good engagement (median {overall['median_turns_per_session']:.1f} turns/session)")
+
+if insights:
+    with st.expander("📊 Quick Insights", expanded=True):
+        for insight in insights:
+            st.markdown(insight)
+
 with st.expander("Health snapshot", icon=":material/thumb_up:"):
     h1, h2, h3, h4 = st.columns(4)
-    h1.metric("Gap rate", f"{_pct(gap_count, turn_count)}%", help="Turns with retrieval similarity < 0.55")
-    h2.metric("Slow rate", f"{_pct(slow_count, turn_count)}%", help="Turns with latency > 5000ms")
-    h3.metric("Error rate", f"{_pct(error_count, turn_count)}%", help="Turns where had_error is true")
-    h4.metric("Bounce rate", f"{overall['bounce_rate_pct']:.1f}%", help="One-turn sessions / all real sessions")
-#st.markdown('</div>', unsafe_allow_html=True)
+    h1.metric("Gap rate", f"{gap_rate}%", help="Turns with retrieval similarity < 0.55 (indicates knowledge base gaps)")
+    h2.metric("Slow rate", f"{slow_rate}%", help="Turns with latency > 5000ms (potential performance issues)")
+    h3.metric("Error rate", f"{error_rate}%", help="Turns where had_error is true (system failures)")
+    h4.metric("Bounce rate", f"{bounce_rate:.1f}%", help="One-turn sessions / all real sessions (user retention indicator)")
 
 st.divider()
 
@@ -256,65 +286,161 @@ else:
 
 c1, c2 = st.columns(2)
 with c1:
-    #st.markdown("<div class='section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title accent-teal'>Daily sessions</div>", unsafe_allow_html=True)
+    st.caption("Unique conversation sessions per day")
     if daily_sessions.empty:
         st.caption("No data")
     else:
-        st.line_chart(daily_sessions.set_index("day")["sessions"], height=220)
-    #st.markdown("</div>", unsafe_allow_html=True)
+        st.line_chart(daily_sessions.set_index("day")["sessions"], height=240, y_label="Sessions", x_label="Date")
 
 with c2:
-    #st.markdown("<div class='section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title accent-sage'>Daily turns</div>", unsafe_allow_html=True)
+    st.caption("Total chat messages (user queries) per day")
     if daily_turns.empty:
         st.caption("No data")
     else:
-        st.line_chart(daily_turns.set_index("day")["turns"], height=220)
-    #st.markdown("</div>", unsafe_allow_html=True)
+        st.line_chart(daily_turns.set_index("day")["turns"], height=240, y_label="Turns", x_label="Date")
 
-#st.markdown("<div class='section-card'>", unsafe_allow_html=True)
 st.markdown("<div class='section-title accent-amber'>Session depth distribution</div>", unsafe_allow_html=True)
+st.caption("Number of sessions by conversation length (turns = back-and-forth exchanges)")
 if real_session_df.empty:
     st.caption("No data")
 else:
     depth = real_session_df["turns"].value_counts().sort_index().rename_axis("turns").reset_index(name="sessions")
-    st.bar_chart(depth.set_index("turns")["sessions"], height=220)
-#st.markdown("</div>", unsafe_allow_html=True)
+    st.bar_chart(depth.set_index("turns")["sessions"], height=240, y_label="# Sessions", x_label="Turns per session")
 
 st.divider()
 
 left, right = st.columns(2)
 with left:
     st.markdown("<div class='section-title'>Top prompts</div>", unsafe_allow_html=True)
-    st.dataframe(prompt_frequency(real_chat_df, top_n=20), use_container_width=True, hide_index=True)
-
-    st.markdown("<div class='section-title'>Worst retrieval prompts</div>", unsafe_allow_html=True)
+    st.caption("Most frequently asked questions")
+    top_prompts_df = prompt_frequency(real_chat_df, top_n=20)
     st.dataframe(
-        low_similarity_queries(real_chat_df, threshold=0.55, limit=30),
-        use_container_width=True,
+        top_prompts_df,
+        width='stretch',
         hide_index=True,
+        column_config={
+            "message": st.column_config.TextColumn("Question", width="large"),
+            "count": st.column_config.NumberColumn("Count", width="small"),
+        },
     )
 
+    st.markdown("<div class='section-title'>Worst retrieval prompts</div>", unsafe_allow_html=True)
+    st.caption("Questions with low similarity scores (< 0.55) indicating knowledge gaps")
+    low_sim_df = low_similarity_queries(real_chat_df, threshold=0.55, limit=30)
+    if not low_sim_df.empty:
+        # Reorder columns: most informative first
+        col_order = ["message", "chunk_similarity_avg", "chunk_similarity_max", "workflow", "turn_index", "ts", "session_id"]
+        display_cols = [c for c in col_order if c in low_sim_df.columns]
+        st.dataframe(
+            low_sim_df[display_cols],
+            width='stretch',
+            hide_index=True,
+            column_config={
+                "message": st.column_config.TextColumn("Question", width="large"),
+                "chunk_similarity_avg": st.column_config.NumberColumn("Avg Sim", format="%.3f", width="small"),
+                "chunk_similarity_max": st.column_config.NumberColumn("Max Sim", format="%.3f", width="small"),
+                "workflow": st.column_config.TextColumn("Workflow", width="small"),
+                "turn_index": st.column_config.NumberColumn("Turn", width="small"),
+                "ts": st.column_config.DatetimeColumn("Time", format="MMM D, h:mm a", width="medium"),
+                "session_id": st.column_config.TextColumn("Session", width="small"),
+            },
+        )
+    else:
+        st.caption("No low similarity queries found")
+
     st.markdown("<div class='section-title'>Sessions with errors</div>", unsafe_allow_html=True)
-    st.dataframe(error_sessions(real_chat_df, real_session_df), use_container_width=True, hide_index=True)
+    st.caption("Sessions that encountered errors during chat")
+    error_sess_df = error_sessions(real_chat_df, real_session_df)
+    if not error_sess_df.empty:
+        st.dataframe(
+            error_sess_df,
+            width='stretch',
+            hide_index=True,
+            column_config={
+                "session_id": st.column_config.TextColumn("Session", width="small"),
+                "error_turns": st.column_config.NumberColumn("Errors", width="small"),
+                "turns": st.column_config.NumberColumn("Total Turns", width="small"),
+                "session_start": st.column_config.DatetimeColumn("Started", format="MMM D, h:mm a", width="medium"),
+                "session_end": st.column_config.DatetimeColumn("Ended", format="MMM D, h:mm a", width="medium"),
+            },
+        )
+    else:
+        st.caption("No error sessions found")
 
 with right:
     st.markdown("<div class='section-title'>Recent questions</div>", unsafe_allow_html=True)
+    st.caption("Latest 30 user queries (most recent first)")
     recent_questions = real_chat_df.sort_values("ts", ascending=False).head(30)
-    st.dataframe(
-        recent_questions[[c for c in ["ts", "session_id", "turn_index", "message", "workflow"] if c in recent_questions.columns]],
-        use_container_width=True,
-        hide_index=True,
-    )
+    if not recent_questions.empty:
+        # Reorder columns: message first, then context
+        col_order = ["message", "workflow", "turn_index", "ts", "session_id"]
+        display_cols = [c for c in col_order if c in recent_questions.columns]
+        st.dataframe(
+            recent_questions[display_cols],
+            width='stretch',
+            hide_index=True,
+            column_config={
+                "message": st.column_config.TextColumn("Question", width="large"),
+                "workflow": st.column_config.TextColumn("Workflow", width="small"),
+                "turn_index": st.column_config.NumberColumn("Turn", width="small"),
+                "ts": st.column_config.DatetimeColumn("Time", format="MMM D, h:mm a", width="medium"),
+                "session_id": st.column_config.TextColumn("Session", width="small"),
+            },
+        )
+    else:
+        st.caption("No recent questions")
 
     st.markdown("<div class='section-title'>Slowest responses</div>", unsafe_allow_html=True)
-    st.dataframe(slow_responses(real_chat_df, threshold_ms=5000, limit=30), use_container_width=True, hide_index=True)
+    st.caption("Queries with response time > 5000ms")
+    slow_resp_df = slow_responses(real_chat_df, threshold_ms=5000, limit=30)
+    if not slow_resp_df.empty:
+        # Reorder columns: message first, then latency
+        col_order = ["message", "latency_ms", "model", "workflow", "turn_index", "ts", "session_id"]
+        display_cols = [c for c in col_order if c in slow_resp_df.columns]
+        st.dataframe(
+            slow_resp_df[display_cols],
+            width='stretch',
+            hide_index=True,
+            column_config={
+                "message": st.column_config.TextColumn("Question", width="large"),
+                "latency_ms": st.column_config.NumberColumn("Latency (ms)", format="%d", width="small"),
+                "model": st.column_config.TextColumn("Model", width="small"),
+                "workflow": st.column_config.TextColumn("Workflow", width="small"),
+                "turn_index": st.column_config.NumberColumn("Turn", width="small"),
+                "ts": st.column_config.DatetimeColumn("Time", format="MMM D, h:mm a", width="medium"),
+                "session_id": st.column_config.TextColumn("Session", width="small"),
+            },
+        )
+    else:
+        st.caption("No slow responses found")
 
 st.markdown("<div class='section-title'>Recent sessions</div>", unsafe_allow_html=True)
+st.caption("Most recent 50 conversation sessions with key metrics")
 # Future improvement: add session drilldown (click session_id => full turn timeline).
 recent_sessions = real_session_df.sort_values("session_start", ascending=False).head(50)
-st.dataframe(recent_sessions, use_container_width=True, hide_index=True)
+if not recent_sessions.empty:
+    # Reorder columns for better readability: ID, duration, quality metrics, timestamps
+    col_order = ["session_id", "turns", "duration_seconds", "error_turns", "avg_similarity", "avg_latency_ms", "session_start", "session_end"]
+    display_cols = [c for c in col_order if c in recent_sessions.columns]
+    st.dataframe(
+        recent_sessions[display_cols],
+        width='stretch',
+        hide_index=True,
+        column_config={
+            "session_id": st.column_config.TextColumn("Session ID", width="small"),
+            "turns": st.column_config.NumberColumn("Turns", width="small"),
+            "duration_seconds": st.column_config.NumberColumn("Duration (s)", format="%d", width="small"),
+            "error_turns": st.column_config.NumberColumn("Errors", width="small"),
+            "avg_similarity": st.column_config.NumberColumn("Avg Similarity", format="%.3f", width="small"),
+            "avg_latency_ms": st.column_config.NumberColumn("Avg Latency (ms)", format="%d", width="small"),
+            "session_start": st.column_config.DatetimeColumn("Started", format="MMM D, h:mm a", width="medium"),
+            "session_end": st.column_config.DatetimeColumn("Ended", format="MMM D, h:mm a", width="medium"),
+        },
+    )
+else:
+    st.caption("No recent sessions")
 
 
 

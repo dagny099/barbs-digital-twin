@@ -32,14 +32,16 @@ CURATED_EXAMPLES = {
         "What kinds of problems get you most excited to solve?",
     ],
     "Bridge": [
+        
         "What's a project you built that you're really proud of?",
         "How do you think about the connection between cognition and AI?",
         "What are you hoping to work on next in your career?",
     ],
     "Personal": [
-        "What are you working on these days that's lighting you up?",
+        "How was this digital twin built?",
         "How did you get into beekeeping, and does it influence your work?",
-        "What's something you're learning right now just for fun?",
+        "What are you working on these days that's lighting you up?",
+#        "What's something you're learning right now just for fun?",
     ],
 }
 
@@ -456,6 +458,8 @@ html, body {
     padding: 20px 16px 24px !important;
     position: relative;
     z-index: 1;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 body::before {
@@ -497,7 +501,7 @@ body::before {
 }
 .title-row h2 {
     margin: 0 !important;
-    font-size: 2rem !important;
+    font-size: 1.75rem !important;
     line-height: 1.0 !important;
     font-weight: 700 !important;
     letter-spacing: -0.025em !important;
@@ -676,7 +680,7 @@ button[aria-label="Submit"],
 button.submit-button {
     background: transparent !important;
     border: none !important;
-    color: var(--accent) !important;
+    color: var(--accent-strong) !important;
     border-radius: 50% !important;
     height: 42px !important;
     width: 42px !important;
@@ -755,12 +759,13 @@ button[aria-label="Submit"]:hover {
     background: linear-gradient(180deg, rgba(255,253,249,0.96) 0%, rgba(250,244,236,0.96) 100%) !important;
     border: 1px solid rgba(190, 201, 196, 0.95) !important;
     border-radius: 18px !important;
-    color: var(--accent) !important;
+    color: var(--text-main) !important;
     font-family: 'IBM Plex Sans', sans-serif !important;
-    font-size: 1rem !important;
+    font-size: 1.1rem !important;
     font-weight: 500 !important;
     line-height: 1.45 !important;
     padding: 16px !important;
+    margin-bottom: 64px;
     white-space: normal !important;
     height: auto !important;
     min-height: 85px !important;
@@ -795,10 +800,18 @@ button[aria-label="Submit"]:hover {
     border: 1px solid var(--border-soft) !important;
     box-shadow: var(--shadow-soft) !important;
     overflow: hidden !important;
+    min-width: 100% !important;
+    width: 100% !important;
 }
 /* Dark mode explore accordion */
 .dark #explore-accordion {
     background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-soft) 100%) !important;
+}
+/* Force accordion content row to maintain width even when collapsed */
+#explore-accordion .gr-row,
+#explore-accordion > div > div {
+    width: 100% !important;
+    min-width: 100% !important;
 }
 #explore-accordion .label-wrap span,
 #explore-accordion > div:first-child span {
@@ -880,21 +893,31 @@ button[aria-label="Submit"]:hover {
     position: relative !important;
 }
 .contact-cta-link {
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
+    display: inline-block !important;
     color: var(--accent-strong) !important;
-    font-size: 0.88rem !important;
+    font-size: 0.9rem !important;
     font-weight: 500 !important;
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
     text-decoration-color: rgba(47,127,123,0.42) !important;
-    transition: color 0.15s ease !important;
+    transition: all 0.15s ease !important;
     white-space: nowrap !important;
+    padding: 5px 12px 0px 12px !important;
+    border-radius: 8px !important;
 }
 .contact-cta-link:hover {
     color: var(--accent) !important;
     text-decoration-color: rgba(47,127,123,0.82) !important;
+    background: rgba(47,127,123,0.06) !important;
+}
+.dark .contact-cta-link {
+    color: var(--accent-lighter) !important;
+    text-decoration-color: rgba(125,199,188,0.48) !important;
+}
+.dark .contact-cta-link:hover {
+    color: var(--accent-light) !important;
+    text-decoration-color: rgba(125,199,188,0.88) !important;
+    background: rgba(125,199,188,0.08) !important;
 }
 
 .owner-traffic-row {
@@ -1766,11 +1789,19 @@ def _build_title_html() -> str:
         '<h2>Barbara\'s Digital Twin</h2>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
+        '</div>'
+    )
+
+def _build_contact_cta_html() -> str:
+    """Build the 'Get in touch' CTA that fills the textbox with a contact template."""
+    return (
+        '<div style="text-align:center;">'
+        '<p style="font-size:13px;color:var(--text-muted);">Want to reach Barbara directly?</p>'
         '<a class="contact-cta-link" href="#" '
         'onclick="var tb=document.querySelector(\'textarea\');'
         'if(tb){tb.value=\'I\\u2019d like to get in touch with Barbara - Here is my name, email, and message: \';'
         'tb.dispatchEvent(new Event(\'input\',{bubbles:true}));}return false;">'
-        '📬 Want to reach Barbara directly? Get in touch →</a>'
+        '📬 Get in touch →</a>'
         '</div>'
     )
 
@@ -1792,7 +1823,7 @@ if __name__ == "__main__":
         chatbot = gr.Chatbot(
             show_label=False,
             avatar_images=(None, "assets/bhs_forweb.png"),
-            placeholder="<h3 class='chatbot-header'>My portfolio, in conversation form</h3><p class='chatbot-subtitle'>Ask question or start with a prompt below :)<br>⬇</p>",
+            placeholder="<h3 class='chatbot-header'>My portfolio, in conversation form</h3><p class='chatbot-subtitle'>Ask question or start with a prompt below ⬇</p>",
             height="60vh",
             min_height=320,
             max_height=625,
@@ -1839,21 +1870,23 @@ if __name__ == "__main__":
             textbox=gr.Textbox(show_label=False, placeholder="Ask me a question", container=False, scale=7, submit_btn=True),
             #examples=["What problems does Barbara solve?", "Walk me through a project", "How was this digital twin built?", "What does 'making meaning from messy data' actually mean?"],
             # other idea = What's the case for knowledge graphs in 2026?
-            examples=["What does 'making data legible' actually mean?", "How do you make a RAG system you'd actually trust?", "Why do most enterprise AI pilots stall?", "How did a vision scientist end up shipping AI systems?"],
+            examples=["What does 'making data legible' actually mean?", "How do you make a RAG system you'd actually trust?", "What would you build for an enterprise drowning in documents?", "How did a vision scientist end up shipping AI systems?"],
             example_icons=[
-                           os.path.join(_assets_dir, "want-shine.svg"),
-                           os.path.join(_assets_dir, "communication-icon.svg"),
-                           os.path.join(_assets_dir, "precision-icon.svg"),
-                           os.path.join(_assets_dir, "psychology-icon.svg"),
+                           os.path.join(_assets_dir, "local_library_28dp_2A3BBD_FILL0_wght400_GRAD0_opsz24.svg"),#"want-shine.svg"),
+                           os.path.join(_assets_dir, "handshake_28dp_A9472D_FILL0_wght400_GRAD0_opsz24.svg"),  #communication-icon.svg
+                           os.path.join(_assets_dir, "precision_manufacturing_28dp_4B2E5A_FILL0_wght400_GRAD0_opsz24.svg"),  #precision-icon.svg
+                           os.path.join(_assets_dir, "psychology_28dp_D96A32_FILL0_wght400_GRAD0_opsz24.svg"),  #psychology-icon.svg
                            ],
         )
         demo.load(_reset_owner_flag, outputs=owner_toggle)
         owner_toggle.change(_set_owner_flag, inputs=owner_toggle, outputs=owner_toggle)
         chatbot.like(handle_vote, [chatbot], None)  # passes history so vote logs can map to the current session
-        
-        # ── "GET IN TOUCH" CTA — fills textbox with contact trigger ──
-        # ── EXPLORE ACCORDION (always open on load, collapsible) ──
-        with gr.Accordion("Explore Topics", open=True, elem_id="explore-accordion"):
+
+        # ── "GET IN TOUCH" CTA — positioned between chat and explore topics for better user flow ──
+        gr.HTML(_build_contact_cta_html())
+
+        # ── EXPLORE ACCORDION (collapsible example questions) ──
+        with gr.Accordion("Ask Me Something Like…", open=False, elem_id="explore-accordion"):
             with gr.Row():
                 for category, questions in CURATED_EXAMPLES.items():
                     with gr.Column():

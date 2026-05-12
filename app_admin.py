@@ -61,7 +61,7 @@ SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7862))
 ADMIN_USER        = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASSWORD    = os.getenv("ADMIN_PASSWORD")   # None = no auth (local dev without password set)
 
-_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log.jsonl")
+_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "latest.json") #"query_log.jsonl")
 _ADMIN_QUERY_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "query_log_admin.jsonl")
 
 MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 14))  # Last 14 turns (7 user + 7 assistant)
@@ -751,11 +751,16 @@ def get_source_stats_html():
     )
 
 
-def build_browse_dataframe(source_filter="All", text_search=""):
+def build_browse_dataframe(source_filter="All", text_search="", max_rows=100):
     """Build a Pandas-free list-of-lists for gr.Dataframe from cached chunks.
 
     Filters by source type and/or text search (case-insensitive substring
     match on full text, source, and section fields).
+
+    Args:
+        source_filter: Filter by source type (default: "All")
+        text_search: Text search query (default: "")
+        max_rows: Maximum number of rows to return (default: 100, set to None for all)
     """
     filtered = _ALL_CHUNKS
     if source_filter and source_filter != "All":
@@ -770,6 +775,11 @@ def build_browse_dataframe(source_filter="All", text_search=""):
             or q in c["source_id"].lower()
         ]
 
+    # Limit rows for performance
+    total_filtered = len(filtered)
+    if max_rows is not None and len(filtered) > max_rows:
+        filtered = filtered[:max_rows]
+
     headers = ["#", "Source type", "Source doc", "Section", "Chunk", "Chars", "Preview"]
     rows = [
         [
@@ -783,17 +793,20 @@ def build_browse_dataframe(source_filter="All", text_search=""):
         ]
         for i, c in enumerate(filtered)
     ]
-    return {"headers": headers, "data": rows}
+    return {"headers": headers, "data": rows, "total": total_filtered}
 
 
 def do_browse(source_filter, text_search):
     """Gradio event handler: re-filter the browse table."""
-    result = build_browse_dataframe(source_filter, text_search)
-    status = f"{len(result['data'])} chunks shown"
+    result = build_browse_dataframe(source_filter, text_search, max_rows=100)
+    total = result.get('total', len(result['data']))
+    status = f"{len(result['data'])} of {total} chunks shown"
+    if len(result['data']) < total:
+        status += " (showing first 100 for performance)"
     if source_filter != "All":
-        status += f" (filtered: {source_filter})"
+        status += f" • filtered: {source_filter}"
     if text_search:
-        status += f" (search: \"{text_search}\")"
+        status += f" • search: \"{text_search}\""
     return result, status, NO_CHUNK_SELECTED
 
 
@@ -822,9 +835,12 @@ def do_semantic_probe(query):
 
     headers = ["Rank", "Similarity", "Source type", "Source doc", "Section", "Chars", "Preview"]
     rows = []
+    max_display_rows = 100  # Limit for performance
     for i, (doc, meta, dist) in enumerate(
         zip(results["documents"][0], results["metadatas"][0], results["distances"][0])
     ):
+        if i >= max_display_rows:
+            break  # Stop after displaying first 100 results
         sim = l2_to_cosine_sim(dist)
         raw_source = meta.get("source", "?:?")
         source_type = raw_source.split(":")[0] if ":" in raw_source else raw_source
@@ -844,6 +860,8 @@ def do_semantic_probe(query):
         verdict = "Weak coverage — consider adding content about this topic."
 
     status = f"Probed \"{query.strip()}\" across {n_all} chunks. Top-3 avg similarity: {avg_top3:.3f}. {verdict}"
+    if n_all > max_display_rows:
+        status += f" (showing top {max_display_rows} for performance)"
     return {"headers": headers, "data": rows}, status, NO_CHUNK_SELECTED
 
 
@@ -1256,7 +1274,7 @@ if __name__ == "__main__":
     # Pre-compute source filter choices from the cached collection
     _source_types = sorted(set(c["source_type"] for c in _ALL_CHUNKS))
     _source_filter_choices = ["All"] + _source_types
-    _initial_browse = build_browse_dataframe()
+    _initial_browse = build_browse_dataframe(max_rows=100)  # Limit initial display for performance
 
     with gr.Blocks(title="Digital Twin — Admin") as demo:
 
@@ -1403,7 +1421,7 @@ if __name__ == "__main__":
 
                 # Status bar
                 browse_status = gr.Textbox(
-                    value=f"{len(_ALL_CHUNKS)} chunks shown",
+                    value=f"100 of {len(_ALL_CHUNKS)} chunks shown (showing first 100 for performance)",
                     label="", show_label=False, interactive=False, max_lines=1,
                 )
 
@@ -1496,7 +1514,8 @@ if __name__ == "__main__":
 
                 log_refresh_btn.click(fn=_load_log, outputs=[log_df])
                 log_download_btn.click(fn=_download_log, outputs=[log_download_btn])
-                demo.load(fn=_load_log, outputs=[log_df])
+                # Removed demo.load - users click "Refresh" to load log data
+                # This prevents blocking the entire page load with log parsing
 
     # Mount diagrams directory for serving project diagrams via URL
     _diagrams_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
