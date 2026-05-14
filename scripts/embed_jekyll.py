@@ -55,7 +55,16 @@ from utils import chunk_prose, build_metadata
 
 # ── CONFIG ───────────────────────────────────────────────────────
 JEKYLL_SITES = [
-    {"name": "dagny099-site", "base_url": "https://barbhs.com"},
+    {
+        "name": "dagny099-site",
+        "base_url": "https://barbhs.com",
+        # Optional path filtering — leave empty lists (or omit) to scrape everything.
+        # include_paths: only scrape URLs whose path starts with one of these prefixes.
+        # exclude_paths: scrape everything except URLs matching these prefixes.
+        # (include_paths takes precedence if both are set)
+        "include_paths": [],   # e.g. ["/projects/", "/about/"]
+        "exclude_paths": [],   # e.g. ["/blog/", "/tags/"]
+    },
     # Add more sites here if needed:
     # {"name": "other-site", "base_url": "https://example.github.io"},
 ]
@@ -94,6 +103,12 @@ Examples:
                         help='Fetch and parse pages without embedding')
     parser.add_argument('--max-pages', type=int, default=None,
                         help='Limit to first N pages (for testing)')
+    parser.add_argument('--include-paths', nargs='+', metavar='PATH', default=None,
+                        help='Only embed pages whose URL path starts with one of these prefixes '
+                             '(overrides site config). Example: --include-paths /projects/ /about/')
+    parser.add_argument('--exclude-paths', nargs='+', metavar='PATH', default=None,
+                        help='Skip pages whose URL path starts with one of these prefixes '
+                             '(overrides site config). Ignored when --include-paths is set.')
     return parser.parse_args()
 
 
@@ -190,9 +205,38 @@ def url_to_path(url: str, base_url: str) -> str:
     return path or "home"
 
 
+def filter_urls(urls: list[str], base_url: str,
+                include_paths: list[str] = None,
+                exclude_paths: list[str] = None) -> list[str]:
+    """
+    Filter a URL list by path prefix.
+    include_paths: keep only URLs whose path starts with one of these.
+    exclude_paths: drop URLs whose path starts with one of these.
+    include_paths takes precedence if both are provided.
+    Returns urls unchanged if neither is set.
+    """
+    if not include_paths and not exclude_paths:
+        return urls
+
+    def _matches(url, prefixes):
+        path = "/" + url_to_path(url, base_url)  # ensure leading slash
+        return any(path.startswith(p.rstrip("/") or "/") for p in prefixes)
+
+    if include_paths:
+        filtered = [u for u in urls if _matches(u, include_paths)]
+        print(f"   🔍 include_paths filter: {len(filtered)}/{len(urls)} URLs kept "
+              f"({include_paths})")
+    else:
+        filtered = [u for u in urls if not _matches(u, exclude_paths)]
+        print(f"   🔍 exclude_paths filter: {len(filtered)}/{len(urls)} URLs kept "
+              f"(excluded {exclude_paths})")
+    return filtered
+
+
 def process_site(site_name: str, base_url: str, collection, client: OpenAI,
                  force_reembed: bool = False, dry_run: bool = False,
-                 max_pages: int = None):
+                 max_pages: int = None, include_paths: list[str] = None,
+                 exclude_paths: list[str] = None):
     """Main pipeline for one site: discover → fetch → chunk → embed → store."""
 
     print(f"\n🌐 Processing site: {site_name}")
@@ -203,6 +247,12 @@ def process_site(site_name: str, base_url: str, collection, client: OpenAI,
     if not urls:
         print(f"   ❌ No URLs found. Check that {base_url}/sitemap.xml exists.")
         print(f"      (Tip: add 'jekyll-sitemap' to your Gemfile plugins)")
+        return 0
+
+    urls = filter_urls(urls, base_url, include_paths=include_paths,
+                       exclude_paths=exclude_paths)
+    if not urls:
+        print(f"   ❌ No URLs remain after path filtering.")
         return 0
 
     if max_pages:
@@ -376,6 +426,13 @@ def main():
         # ── Process each site ─────────────────────────────────────────
         total_embedded = 0
         for site in sites:
+            # CLI flags override per-site config; config overrides "no filter"
+            include_paths = args.include_paths or site.get("include_paths") or None
+            exclude_paths = args.exclude_paths or site.get("exclude_paths") or None
+            # Normalise empty lists → None so filter_urls skips the branch
+            include_paths = include_paths or None
+            exclude_paths = exclude_paths or None
+
             n = process_site(
                 site_name=site["name"],
                 base_url=site["base_url"],
@@ -384,6 +441,8 @@ def main():
                 force_reembed=args.force_reembed,
                 dry_run=args.dry_run,
                 max_pages=args.max_pages,
+                include_paths=include_paths,
+                exclude_paths=exclude_paths,
             )
             total_embedded += n
 
