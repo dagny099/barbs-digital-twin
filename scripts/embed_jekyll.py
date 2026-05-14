@@ -21,17 +21,26 @@ USAGE:
 
 EXAMPLES:
     # Dry run to preview what would be embedded
-    python embed_jekyll.py --dry-run
+    python scripts/embed_jekyll.py --dry-run
 
     # Embed with default site list
-    python embed_jekyll.py
+    python scripts/embed_jekyll.py
 
     # Re-embed after site content changes
-    python embed_jekyll.py --force-reembed
+    python scripts/embed_jekyll.py --force-reembed
 
     # Test with first 5 pages only
-    python embed_jekyll.py --max-pages 5 --dry-run
+    python scripts/embed_jekyll.py --max-pages 5 --dry-run
 
+    # Dry run — see exactly which pages would be scraped
+    python scripts/embed_jekyll.py --dry-run --include-paths /projects/ /about/
+
+    # Re-ingest only the projects section
+    python scripts/embed_jekyll.py --force-reembed --include-paths /projects/
+
+    # Scrape everything except the blog
+    python scripts/embed_jekyll.py --exclude-paths /blog/ /tags/
+    
     # Embed a specific site
     python embed_jekyll.py --site-url https://dagny099.github.io --site-name dagny099-site
 
@@ -62,7 +71,7 @@ JEKYLL_SITES = [
         # include_paths: only scrape URLs whose path starts with one of these prefixes.
         # exclude_paths: scrape everything except URLs matching these prefixes.
         # (include_paths takes precedence if both are set)
-        "include_paths": [],   # e.g. ["/projects/", "/about/"]
+        "include_paths": ["/projects/", "/blog/", "/my-journey/", "/data-stories/"],   # e.g. ["/projects/", "/about/"]
         "exclude_paths": [],   # e.g. ["/blog/", "/tags/"]
     },
     # Add more sites here if needed:
