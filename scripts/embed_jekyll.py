@@ -71,8 +71,8 @@ JEKYLL_SITES = [
 
 CHROMA_PATH  = ".chroma_db_DT"   # must match app.py
 COLLECTION   = "barb-twin"        # must match app.py
-CHUNK_SIZE   = 900                # must match app.py
-OVERLAP      = 120                 # must match app.py
+CHUNK_SIZE   = int(os.getenv("CHUNK_SIZE", "900"))
+OVERLAP      = int(os.getenv("CHUNK_OVERLAP", "100"))
 MIN_CHARS    = 80                 # skip pages shorter than this (stub/redirect pages)
 WHOLE_DOC_THRESHOLD = 1200
 BATCH_SIZE   = 500                # OpenAI embedding batch size

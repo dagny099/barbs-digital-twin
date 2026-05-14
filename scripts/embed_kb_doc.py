@@ -40,8 +40,9 @@ METADATA SCHEMA (per stored chunk):
     }
 
 CHUNKING:
-    chunk_size = 500 chars, overlap = 50 chars, atomic unit = paragraph
-    All handled by utils.chunk_prose() — consistent with every other source.
+    chunk_size = CHUNK_SIZE env var (default 900 chars)
+    overlap    = CHUNK_OVERLAP env var (default 100 chars)
+    atomic unit = paragraph; all handled by utils.chunk_prose().
 """
 
 import os
@@ -66,9 +67,9 @@ load_dotenv(override=True)
 # ── CONFIG ──────────────────────────────────────────────────────────────────
 CHROMA_PATH = ".chroma_db_DT"
 COLLECTION  = "barb-twin"
-CHUNK_SIZE  = 900
-OVERLAP     = 100
-MIN_CHUNK_CHARS = 150   # added mar-25
+CHUNK_SIZE  = int(os.getenv("CHUNK_SIZE", "900"))
+OVERLAP     = int(os.getenv("CHUNK_OVERLAP", "100"))
+MIN_CHUNK_CHARS = 150
 BATCH_SIZE  = 500   # max chunks per OpenAI embeddings API call
 # ────────────────────────────────────────────────────────────────────────────
 
