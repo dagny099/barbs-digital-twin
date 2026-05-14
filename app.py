@@ -251,88 +251,6 @@ if collection.count() == 0:
     print("Ingestion complete.")
 
 
-#------ CUSTOM FUNCTIONS -------
-"""
-Chunk plain prose into overlapping segments for retrieval tasks.
-
-Atomic unit: paragraph (double-newline delimited)
-- Paragraphs are never split mid-sentence
-- Overlap re-includes trailing paragraphs from the previous chunk
-- No external dependencies
-"""
-
-def parse_paragraphs(raw_text: str) -> list[str]:
-    """
-    Split text on blank lines, strip whitespace, drop empties.
-    Handles both \n\n and \r\n\r\n line endings.
-    """
-    paragraphs = raw_text.split("\n\n")
-    # Collapse internal newlines within each paragraph into spaces
-    cleaned = [" ".join(p.split()) for p in paragraphs]
-    return [p for p in cleaned if p]
-
-
-def chunk_prose(raw_text, chunk_size=500, overlap=50):
-    """
-    Chunk plain prose into overlapping segments.
-
-    Args:
-        raw_text:   Full text (paragraphs separated by blank lines).
-        chunk_size: Target size in chars. May slightly exceed to keep
-                    paragraphs intact.
-        overlap:    Target overlap in chars. Backtracks whole paragraphs.
-
-    Returns:
-        List of dicts: {text, para_start, para_end, char_count}
-    """
-    paragraphs = parse_paragraphs(raw_text)
-
-    if not paragraphs:
-        return []
-
-    chunks = []
-    i = 0
-
-    while i < len(paragraphs):
-        # --- Accumulate paragraphs until we hit chunk_size ---
-        chunk_paras, char_count, j = [], 0, i
-        while j < len(paragraphs):
-            para_len = len(paragraphs[j])
-
-            # Always include at least one paragraph per chunk
-            if char_count > 0 and (char_count + para_len) > chunk_size:
-                break
-
-            chunk_paras.append(paragraphs[j])
-            char_count += para_len + 1
-            j += 1
-
-        # --- Store as a plain dict ---
-        text = "\n\n".join(chunk_paras)
-        chunks.append({
-            "text": text,
-            "para_start": i,
-            "para_end": j - 1,
-            "char_count": len(text),
-        })
-
-        # --- Stop if we've consumed everything ---
-        if j >= len(paragraphs):
-            break
-
-        # --- Backtrack for overlap ---
-        overlap_chars = 0
-        backtrack = 0
-        for k in range(j - 1, i, -1):
-            if overlap_chars + len(paragraphs[k]) > overlap:
-                break
-            overlap_chars += len(paragraphs[k])
-            backtrack += 1
-
-        i = j - backtrack
-
-    return chunks
-
 
 def handle_vote(data: gr.LikeData, history, request: gr.Request = None):
     """Called when a visitor clicks thumbs up or thumbs down.
@@ -1255,40 +1173,6 @@ class SessionTracker:
     """Tracks token usage and cost across messages in one session."""
     calls: list = field(default_factory=list)
 
-    def log_chat(self, response, model: str, call_type: str = "chat"):
-        """Log a LiteLLM completion response with auto cost calculation."""
-        try:
-            cost = litellm.completion_cost(completion_response=response)
-        except Exception:
-            cost = 0.0
-
-        usage = getattr(response, "usage", None)
-        prompt_tok = getattr(usage, "prompt_tokens", 0) if usage else 0
-        completion_tok = getattr(usage, "completion_tokens", 0) if usage else 0
-
-        self.calls.append(CallRecord(
-            timestamp=dt.now().isoformat(),
-            model=model,
-            prompt_tokens=prompt_tok,
-            completion_tokens=completion_tok,
-            cost_usd=cost,
-            call_type=call_type,
-        ))
-
-    def log_embedding(self, response):
-        """Log an OpenAI embedding call."""
-        usage = getattr(response, "usage", None)
-        tokens = getattr(usage, "total_tokens", 0) if usage else 0
-        cost = tokens * 0.00000002  # text-embedding-3-small: $0.02/1M tokens
-        self.calls.append(CallRecord(
-            timestamp=dt.now().isoformat(),
-            model="openai/text-embedding-3-small",
-            prompt_tokens=tokens,
-            completion_tokens=0,
-            cost_usd=cost,
-            call_type="embedding",
-        ))
-
     def log_stream(self, model: str, prompt_text: str, completion_text: str):
         """Log a streaming completion by estimating cost from text."""
         try:
@@ -1321,44 +1205,10 @@ class SessionTracker:
             "total_calls": len(self.calls),
         }
 
-    def last_query_cost(self) -> float:
-        """Sum cost of the most recent query (may span multiple calls)."""
-        if not self.calls:
-            return 0.0
-        last_ts = self.calls[-1].timestamp
-        return sum(c.cost_usd for c in self.calls if c.timestamp == last_ts)
-
-    def history_for_json(self) -> list:
-        return [
-            {
-                "timestamp": c.timestamp, "model": c.model, "type": c.call_type,
-                "prompt_tokens": c.prompt_tokens,
-                "completion_tokens": c.completion_tokens,
-                "cost_usd": round(c.cost_usd, 8),
-            }
-            for c in self.calls
-        ]
 
 
 session_tracker = SessionTracker()
 
-
-def _assistant_message_dict(msg):
-    """Convert an OpenAI SDK assistant message to a plain API payload dict."""
-    payload = {"role": "assistant", "content": msg.content or ""}
-    if msg.tool_calls:
-        payload["tool_calls"] = [
-            {
-                "id": tc.id,
-                "type": tc.type,
-                "function": {
-                    "name": tc.function.name,
-                    "arguments": tc.function.arguments,
-                },
-            }
-            for tc in msg.tool_calls
-        ]
-    return payload
 
 #------ Tool Handler -----------
 def handle_tool_call(tool_calls):

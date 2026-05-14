@@ -105,7 +105,7 @@ def parse_paragraphs(raw_text: str) -> list[str]:
     return [p for p in cleaned if p]
 
 
-def chunk_prose(raw_text: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
+def chunk_prose(raw_text: str, chunk_size: int = 900, overlap: int = 100) -> list[dict]:
     """
     Chunk plain prose into overlapping segments, preserving paragraph boundaries.
 
@@ -117,9 +117,9 @@ def chunk_prose(raw_text: str, chunk_size: int = 500, overlap: int = 50) -> list
     Args:
         raw_text:   Full text (paragraphs separated by blank lines).
         chunk_size: Target size in chars. May slightly exceed to keep
-                    paragraphs intact. Default: 500.
+                    paragraphs intact. Default: 900 (override via CHUNK_SIZE env var).
         overlap:    Target overlap in chars. Backtracks whole paragraphs.
-                    Default: 50.
+                    Default: 100 (override via CHUNK_OVERLAP env var).
 
     Returns:
         List of dicts with structure:
