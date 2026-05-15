@@ -34,10 +34,15 @@ FLAGS:
 
 METADATA SCHEMA (per stored chunk):
     {
-        "source":      "kb-biosketch:kb_biosketch.md",   # source_type:filename
-        "section":     "Professional Identity",           # ## header name
-        "chunk_index": 0                                  # resets per section
+        "source":       "kb-biosketch:kb_biosketch.md",   # source_type:filename
+        "section":      "Professional Identity",           # ## header name
+        "chunk_index":  0,                                 # resets per section
+        "content_hash": "a3f5b9...c1d2"                    # sha256 of source file   (NEW)
     }
+
+    The content_hash lets `ingest.py --check-drift` detect when a source
+    file on disk has changed since its chunks were embedded. All chunks
+    from the same file share the same hash by construction.
 
 CHUNKING:
     chunk_size = CHUNK_SIZE env var (default 900 chars)
@@ -49,6 +54,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import uuid
+import hashlib                              # NEW: file-level content hash
 import argparse
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -171,10 +177,16 @@ def process_kb_doc(
     full_source = f"{source_type}:{filename}"   # e.g. "kb-biosketch:kb_biosketch.md"
 
     # ── Load ────────────────────────────────────────────────────────────────
+    # NEW: Read as bytes so the hash reflects the exact on-disk file. We then
+    # decode for parsing. The hash is computed once and reused for every chunk
+    # produced from this file, enabling cheap drift detection later.
     print(f"\n📄 Loading: {filepath}")
-    with open(filepath, "r", encoding="utf-8") as f:
-        raw_text = f.read()
+    with open(filepath, "rb") as f:
+        file_bytes = f.read()
+    raw_text  = file_bytes.decode("utf-8")
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
     print(f"   ✅ Loaded {len(raw_text):,} characters")
+    print(f"   📐 Content hash (sha256): {file_hash[:16]}…")     # NEW
 
     # ── Parse sections by ## headers ────────────────────────────────────────
     # include_nested=True merges ### subsections into their parent ## section,
@@ -223,13 +235,18 @@ def process_kb_doc(
             print(f"   ⏭️   Skipping '{section_name}' (too short: {len(section_text)} chars)")
             continue
 
-        # Per-section idempotency: skip if this (source, section) pair is already stored
+        # Per-section idempotency: skip if this (source, section) pair is already stored.
+        # NOTE: this is a name-level check, not a hash-level one. If you edited the file
+        # but the section name is unchanged, this skip would miss the change — which is
+        # exactly why we also store content_hash and expose `ingest.py --check-drift`.
+        # The intended flow when content changes: run with --force-reembed (which wipes
+        # this source's chunks first), or run --check-drift to see what needs attention.
         if not force_reembed and section_already_embedded(collection, full_source, section_name):
             print(f"   ⏭️   Skipping '{section_name}' (already embedded)")
             continue
 
         chunk_results = chunk_prose(section_text, chunk_size=CHUNK_SIZE, overlap=OVERLAP)
-        chunk_results = merge_tiny_chunks(chunk_results, min_chars=MIN_CHUNK_CHARS)  # ← add this
+        chunk_results = merge_tiny_chunks(chunk_results, min_chars=MIN_CHUNK_CHARS)
 
         if not chunk_results:
             print(f"   ⚠️   '{section_name}' produced no chunks (empty section?)")
@@ -242,6 +259,11 @@ def process_kb_doc(
                 section_name=section_name,
                 chunk_index=chunk_index,
             )
+            # NEW: tag every chunk with the source file's content hash. Cost: a few
+            # extra bytes per chunk (~64 chars). Benefit: drift detection without
+            # needing a separate manifest collection.
+            metadata["content_hash"] = file_hash
+
             all_chunks.append(f"[{section_name}]\n{chunk_data['text']}")
             all_ids.append(str(uuid.uuid4()))
             all_metadatas.append(metadata)
@@ -287,9 +309,10 @@ def process_kb_doc(
     print(f"\n{'='*70}")
     print(f"📊 EMBEDDING COMPLETE — {source_type}")
     print(f"{'='*70}")
-    print(f"   Source:   {full_source}")
-    print(f"   Sections: {len(section_stats)}")
-    print(f"   Chunks:   {len(all_chunks)}")
+    print(f"   Source:       {full_source}")
+    print(f"   Content hash: {file_hash[:16]}…")                  # NEW: surface in summary
+    print(f"   Sections:     {len(section_stats)}")
+    print(f"   Chunks:       {len(all_chunks)}")
     print(f"\n   Section breakdown:")
     for stat in section_stats:
         print(f"   • {stat['section']:<50} {stat['chunks']:>3} chunk(s)")

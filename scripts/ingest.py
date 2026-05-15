@@ -11,6 +11,7 @@ INTERACTIVE USAGE (default):
 
 NON-INTERACTIVE FLAGS:
     python ingest.py --status                    # Show DB status and exit
+    python ingest.py --check-drift               # Compare source hashes to DB     (NEW)
     python ingest.py --all                       # Embed all sources (skip existing)
     python ingest.py --all --force               # Force re-embed everything
     python ingest.py --source kb-biosketch       # Embed one source (skip existing)
@@ -27,6 +28,13 @@ SOURCE KEYS:
     kb-dissertation-philosophy, kb-intellectual-foundations,
     kb-easter-eggs,
     project-summaries, jekyll, project-walkthroughs
+
+ENVIRONMENT VARIABLES (read from .env):
+    INPUTS_PATH   Absolute path to the canonical inputs directory. Defaults to
+                  "inputs" (the legacy in-repo location). When inputs live in
+                  a separate private repo, point this at that clone's root —
+                  e.g. INPUTS_PATH=/Users/dagny/code/digital-twin-inputs
+    HF_TOKEN      HuggingFace Hub token for DB push/pull (see db_sync.py)
     """
 
 import os
@@ -34,14 +42,24 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import subprocess
 import argparse
+import hashlib                              # NEW: drift detection via sha256
 import chromadb
 import time
 import gc
 from collections import Counter
+from dotenv import load_dotenv              # NEW: read INPUTS_PATH from .env
+
+load_dotenv(override=True)                  # NEW: must run before INPUTS_PATH is read
 
 # ── CONFIG ────────────────────────────────────────────────────────────────
 CHROMA_PATH = ".chroma_db_DT"
 COLLECTION  = "barb-twin"
+
+# NEW: Root directory for canonical source documents. The SOURCES registry below keeps
+# its readable "inputs/..." paths; at invocation time _resolve_args() rewrites them
+# under INPUTS_PATH. This decouples "what to ingest" (the registry, in code) from
+# "where it lives on this machine" (the env var, in deployment config).
+INPUTS_PATH = os.getenv("INPUTS_PATH", "inputs")
 
 # ── SOURCE REGISTRY ───────────────────────────────────────────────────────
 # Each entry defines one data source and how to invoke its embed script.
@@ -277,6 +295,65 @@ SOURCES = [
 
 SOURCE_BY_KEY = {s["key"]: s for s in SOURCES}
 
+
+# ── PATH RESOLUTION ───────────────────────────────────────────────────────
+# NEW: SOURCES entries keep their canonical "inputs/..." paths for readability
+# (the registry literal answers "what gets embedded", regardless of host).
+# At invocation time we rewrite any --file or --summaries-folder arg to live
+# under INPUTS_PATH. Non-destructive — the registry itself isn't mutated.
+
+def _resolve_args(args):
+    """Rewrite path-bearing args to live under INPUTS_PATH. Returns a new list."""
+    resolved = list(args)
+    for i, arg in enumerate(resolved):
+        if arg in ("--file", "--summaries-folder") and i + 1 < len(resolved):
+            path = resolved[i + 1]
+            if path.startswith("inputs/"):
+                resolved[i + 1] = os.path.join(INPUTS_PATH, path[len("inputs/"):])
+    return resolved
+
+
+def _source_filepath(source):
+    """Resolved --file path for a source, or None if the source doesn't use one."""
+    args = source["base_args"]
+    if "--file" not in args:
+        return None
+    idx = args.index("--file")
+    path = args[idx + 1]
+    if path.startswith("inputs/"):
+        return os.path.join(INPUTS_PATH, path[len("inputs/"):])
+    return path
+
+
+def _source_type(source):
+    """The --source-type value for a source, or None."""
+    args = source["base_args"]
+    if "--source-type" not in args:
+        return None
+    return args[args.index("--source-type") + 1]
+
+
+# ── DB PULL (idempotent per session) ──────────────────────────────────────
+# NEW: Pull-before-embed handshake. Whichever machine you're on, you start
+# from canonical state — not your possibly-stale local cache — so two machines
+# can no longer silently overwrite each other's pushes.
+
+_db_pulled_this_session = False
+
+def _ensure_db_pulled():
+    """Pull current DB from HF Hub before embedding. Runs at most once per session."""
+    global _db_pulled_this_session
+    if _db_pulled_this_session:
+        return
+    print(f"\n⬇️  Pulling current DB from HF Hub before embedding...")
+    try:
+        from db_sync import pull_db
+        pull_db()
+    except Exception as e:
+        print(f"   ⚠️  Pull failed ({e}) — proceeding with local state")
+    _db_pulled_this_session = True   # Mark done either way; don't retry on every action.
+
+
 # ── DB STATUS ─────────────────────────────────────────────────────────────
 
 def get_db_status() -> dict:
@@ -318,6 +395,70 @@ def chunks_for_source(status: dict, source: dict) -> str:
     return f"✅  {count:,} chunks"
 
 
+# ── DRIFT DETECTION ───────────────────────────────────────────────────────
+# NEW: Compare each source file's current sha256 to the content_hash stored
+# in its ChromaDB chunks. Surfaces five states so you can act on each:
+#   ✅ in sync       — source hash matches DB hash
+#   ⚠️  DRIFTED      — source changed since embed; re-embed with --force-reembed
+#   ❓ unhashed     — chunks exist but pre-date content_hash; one-time backfill
+#   ❌ missing      — source file expected but not found at the resolved path
+#   ⏭️  not embedded — registry knows about it but no chunks in DB yet
+
+def check_drift():
+    """Print a drift report comparing source files to ChromaDB content hashes."""
+    print_header()
+    print(f"\n  Drift check: source files (sha256) vs ChromaDB content_hash")
+    print(f"  INPUTS_PATH = {INPUTS_PATH}\n")
+
+    if not os.path.exists(CHROMA_PATH):
+        print(f"  ⚠️  DB not found at {CHROMA_PATH}/ — run `python ingest.py --all` first\n")
+        return
+
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    collection = client.get_or_create_collection(name=COLLECTION)
+    all_metas = collection.get(include=["metadatas"])["metadatas"] or []
+
+    # Build map: full_source -> content_hash. We take the first occurrence;
+    # all chunks for one source share the same hash by construction.
+    db_hashes = {}
+    for meta in all_metas:
+        src = meta.get("source")
+        if src and src not in db_hashes:
+            db_hashes[src] = meta.get("content_hash")   # may be None for legacy chunks
+
+    print(f"  {'Source':<32} {'Status':<18} {'Notes'}")
+    print(f"  {'─'*32} {'─'*18} {'─'*30}")
+
+    for source in SOURCES:
+        key = source["key"]
+        filepath = _source_filepath(source)
+        source_type = _source_type(source)
+
+        # Skip sources that don't have a single --file (jekyll, walkthroughs, summaries dir)
+        if filepath is None:
+            continue
+
+        if not os.path.exists(filepath):
+            print(f"  {key:<32} {'❌ missing':<18} {filepath}")
+            continue
+
+        with open(filepath, "rb") as f:
+            file_hash = hashlib.sha256(f.read()).hexdigest()
+
+        full_source = f"{source_type}:{os.path.basename(filepath)}"
+
+        if full_source not in db_hashes:
+            print(f"  {key:<32} {'⏭️  not embedded':<18}")
+        elif db_hashes[full_source] is None:
+            print(f"  {key:<32} {'❓ unhashed':<18} pre-dates content_hash field")
+        elif db_hashes[full_source] == file_hash:
+            print(f"  {key:<32} {'✅ in sync':<18}")
+        else:
+            print(f"  {key:<32} {'⚠️  DRIFTED':<18} re-embed with --force-reembed")
+
+    print()
+
+
 # ── DISPLAY ───────────────────────────────────────────────────────────────
 
 def print_header():
@@ -338,6 +479,7 @@ def print_status_table(status: dict):
         db_exists = os.path.exists(CHROMA_PATH)
         db_label  = f"{CHROMA_PATH}/"  if db_exists else "(not found)"
         print(f"  Database : {db_label}    Collection : {COLLECTION}    Total : {total:,} chunks")
+        print(f"  Inputs   : {INPUTS_PATH}/")        # NEW: surface canonical inputs path
 
     print()
     print(f"  {'#':<3} {'Source':<22} {'Description':<42} {'Status'}")
@@ -356,6 +498,7 @@ def print_menu():
     print("  Commands:")
     print(f"    [1–{len(SOURCES)}]   Select a source to embed")
     print("    a       Embed all sources (skip already-embedded)")
+    print("    c       Check drift (compare source files to DB hashes)")    # NEW
     print("    r       Refresh status")
     print("    q       Quit")
     print()
@@ -368,7 +511,8 @@ def run_source(source: dict, force: bool = False, dry_run: bool = False) -> int:
     Invoke an embed script via subprocess.
     Returns the exit code (0 = success).
     """
-    cmd = [sys.executable, source["script"]] + source["base_args"]
+    # CHANGED: paths in base_args are resolved under INPUTS_PATH at invocation time.
+    cmd = [sys.executable, source["script"]] + _resolve_args(source["base_args"])
 
     if force:
         if source["force_arg"]:
@@ -454,8 +598,13 @@ def interactive_mode():
         elif choice == "r":
             continue
 
+        # NEW: Check drift
+        elif choice == "c":
+            check_drift()
+
         # Embed all
         elif choice == "a":
+            _ensure_db_pulled()                  # NEW: pull-before-embed handshake
             print(f"\n  Embedding all sources (skipping already-embedded)...")
             for source in SOURCES:
                 run_source(source, force=False, dry_run=False)
@@ -469,10 +618,12 @@ def interactive_mode():
                 print(f"  Cancelled.")
                 continue
             force, dry_run = result
+            if not dry_run:
+                _ensure_db_pulled()              # NEW: pull-before-embed handshake
             run_source(source, force=force, dry_run=dry_run)
 
         else:
-            print(f"  Invalid input — enter a number 1–{len(SOURCES)}, 'a' (all), 'r' (refresh), or 'q' (quit)")
+            print(f"  Invalid input — enter a number 1–{len(SOURCES)}, 'a' (all), 'c' (drift), 'r' (refresh), or 'q' (quit)")
 
 
 def cli_mode(args):
@@ -481,6 +632,11 @@ def cli_mode(args):
         print_header()
         status = get_db_status()
         print_status_table(status)
+        return
+
+    # NEW: drift-check command (read-only, no pull/push needed)
+    if args.check_drift:
+        check_drift()
         return
 
     if args.source:
@@ -492,6 +648,10 @@ def cli_mode(args):
         sources_to_run = [SOURCE_BY_KEY[key]]
     else:
         sources_to_run = SOURCES  # --all
+
+    # NEW: pull-before-embed handshake (skipped on dry-run since nothing is written)
+    if not args.dry_run:
+        _ensure_db_pulled()
 
     errors = 0
     for source in sources_to_run:
@@ -526,6 +686,7 @@ def parse_args():
 Examples:
   python ingest.py                              # Interactive menu
   python ingest.py --status                     # Show DB status and exit
+  python ingest.py --check-drift                # Compare source hashes to DB
   python ingest.py --all                        # Embed all sources
   python ingest.py --all --force                # Force re-embed everything
   python ingest.py --source kb-biosketch           # Embed one source
@@ -539,6 +700,8 @@ Source keys: kb-biosketch, kb-philosophy, kb-positioning, kb-projects,
     )
     parser.add_argument('--status',  action='store_true',
                         help='Show DB status and exit (no embedding)')
+    parser.add_argument('--check-drift', action='store_true',                # NEW
+                        help='Compare source files to stored content hashes and exit')
     parser.add_argument('--all',     action='store_true',
                         help='Embed all sources non-interactively')
     parser.add_argument('--source',  metavar='KEY',
@@ -556,7 +719,7 @@ def main():
     args = parse_args()
 
     # If any non-interactive flag is set, go straight to CLI mode
-    if args.status or args.all or args.source or args.dry_run:
+    if args.status or args.check_drift or args.all or args.source or args.dry_run:
         cli_mode(args)
     else:
         interactive_mode()
