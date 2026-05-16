@@ -15,6 +15,7 @@ Usage:
     python scripts/test_neo4j_connection.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -70,13 +71,20 @@ def check_constraints(driver) -> bool:
 
 
 def main() -> int:
+    uri = os.environ.get("NEO4J_URI", "(not set)")
+    user = os.environ.get("NEO4J_USER", "(not set)")
+    print(f"  Connecting to: {uri}  (user={user})")
+
     driver = get_driver()
     results = {}
 
     print("── Connectivity ──────────────────────────────────────────────")
     results["connectivity"] = check_connectivity(driver)
-    if results["connectivity"]:
-        print("  ✓  connected")
+    if not results["connectivity"]:
+        close_driver()
+        print("\n✗  Auth failed — check NEO4J_URI / NEO4J_USER / NEO4J_PASSWORD in .env")
+        return 1
+    print("  ✓  connected")
 
     print("── Vector index ──────────────────────────────────────────────")
     results["vector_index"] = check_vector_index(driver)
