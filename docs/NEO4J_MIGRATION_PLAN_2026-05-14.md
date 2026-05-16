@@ -14,13 +14,14 @@
 4. [Proposed Neo4j Schema](#proposed-neo4j-schema)
 5. [How This Solves Current Problems](#how-this-solves-current-problems)
 6. [Migration Strategy](#migration-strategy)
-7. [Query Transformation](#query-transformation)
-8. [Entity Extraction Pipeline](#entity-extraction-pipeline)
-9. [Implementation Roadmap](#implementation-roadmap)
-10. [Code Changes Required](#code-changes-required)
-11. [Expected Improvements](#expected-improvements)
-12. [Risks & Mitigations](#risks--mitigations)
-13. [Evaluation Strategy](#evaluation-strategy)
+7. [Architectural Decisions](#architectural-decisions)
+8. [Query Transformation](#query-transformation)
+9. [Entity Extraction Pipeline](#entity-extraction-pipeline)
+10. [Implementation Roadmap](#implementation-roadmap)
+11. [Code Changes Required](#code-changes-required)
+12. [Expected Improvements](#expected-improvements)
+13. [Risks & Mitigations](#risks--mitigations)
+14. [Evaluation Strategy](#evaluation-strategy)
 
 ---
 
@@ -302,7 +303,8 @@ Each project has:
 **Example Query**:
 ```cypher
 // Return FULL SECTION about Resume Graph Explorer
-MATCH (p:Project {id: "resume-graph-explorer"})<-[:DESCRIBED_IN]-(s:Section)
+// Note: direction is Project -[:DESCRIBED_IN]-> Section (project points to the section that describes it)
+MATCH (p:Project {id: "resume-graph-explorer"})-[:DESCRIBED_IN]->(s:Section)
 RETURN s.full_text, s.name
 ```
 
@@ -358,7 +360,8 @@ YIELD node AS s, score AS vector_score
 WHERE s.sensitivity IN $allowed_tiers
 
 // Boost sections that explicitly describe projects
-OPTIONAL MATCH (s)-[:DESCRIBED_IN]->(p:Project)
+// Direction: Project -[:DESCRIBED_IN]-> Section, so traverse from section back to project
+OPTIONAL MATCH (s)<-[:DESCRIBED_IN]-(p:Project)
 OPTIONAL MATCH (s)-[:MENTIONS]->(entity)
 
 WITH s, vector_score,
@@ -366,18 +369,20 @@ WITH s, vector_score,
      count(DISTINCT entity) AS entities_mentioned
 
 // Composite score: weighted combination
+// IMPORTANT: All signals normalized to [0,1] to prevent count-based signals from dominating vector score.
 WITH s,
-     (vector_score * 0.5 +          // Base semantic similarity
-      projects_described * 0.3 +     // Boost for project descriptions
-      entities_mentioned * 0.1 +     // Boost for entity-rich sections
-      (CASE WHEN s.char_count > 2000 THEN 0.1 ELSE 0 END)) AS final_score
+     (vector_score * 0.6 +
+      CASE WHEN projects_described > 0 THEN 0.25 ELSE 0 END +
+      toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * 0.10 +
+      (CASE WHEN s.char_count > 2000 THEN 0.05 ELSE 0 END)) AS final_score
+// Max possible score ≈ 1.0 (0.60 + 0.25 + 0.10 + 0.05). Tune weights after prototype eval.
 
 ORDER BY final_score DESC
 LIMIT 5
 
 MATCH (doc:Document)-[:HAS_SECTION]->(s)
 RETURN s.full_text, s.name, doc.title, final_score,
-       [(s)-[:DESCRIBED_IN]->(p:Project) | p.title] AS described_projects
+       [(p:Project)-[:DESCRIBED_IN]->(s) | p.title] AS described_projects
 ```
 
 ---
@@ -431,6 +436,76 @@ Replace ChromaDB entirely with Neo4j in one migration.
 - [ ] Deploy to EC2 with Neo4j Aura
 - [ ] Monitor query logs
 - [ ] Update MAINTAINER_GUIDE.md
+
+---
+
+## Architectural Decisions
+
+> **For future sessions**: These decisions are resolved. Do not re-open without new evidence. They were made on 2026-05-15 after reviewing the codebase and the Resume Graph Explorer project (`../resume-graph-explorer/`).
+
+---
+
+### Decision 1: Section Boundary Detection
+
+**Decision**: Split KB documents at H2 headings (`##`), merging all nested H3+ content into the parent section.
+
+**Rationale**: `utils.parse_markdown_sections(raw_text, header_level=2, include_nested=True)` already exists in `utils.py` and is used by the current `scripts/embed_kb_doc.py` ingestion pipeline. All KB docs in `inputs/` use consistent H2 structure (confirmed by the existing embed scripts). Reusing this function ensures Neo4j section boundaries are identical to the existing ChromaDB metadata, making A/B comparisons valid.
+
+**Implementation**: In `scripts/populate_neo4j_graph.py`, call `utils.parse_markdown_sections` when creating Section nodes. The `full_text` field on each Section node receives the complete merged text of the H2 block plus all nested H3 content.
+
+**Fallback**: If any KB document has a single H2 (too coarse), apply a secondary H3 split for that document only, storing H3 nodes as child Sections of the H2 Section with a `HAS_SUBSECTION` relationship.
+
+---
+
+### Decision 2: Entity Name Canonicalization
+
+**Decision**: Three-phase normalization adapted from the Resume Graph Explorer `entity_normalizer.py` (`../resume-graph-explorer/backend/resume_explorer/services/entity_normalizer.py`). Use `featured_projects.py` `tags` arrays as the authoritative canonical seed list.
+
+**Phases**:
+
+1. **Deterministic** (free, instant): Lowercase-normalize all extracted entity names. For case conflicts, prefer: (1) the form matching a `featured_projects.py` tag, (2) Title Case, (3) longest form. URL-decode any percent-encoded strings.
+2. **Tag-anchored** (free, instant): If an extracted entity matches a `featured_projects.py` tag exactly (case-insensitive), the tag form wins as canonical. This is the Digital Twin equivalent of RGE's ESCO-URI-anchored phase — free normalization from an existing authoritative source.
+3. **LLM batch** (one Claude API call per entity type): Send all remaining entities to Claude with type-annotated prompts — label each entity as `[tag]` (authoritative) or `[extracted]` (free-text from walkthrough). Instruct the model to prefer `[tag]` labels as canonical when merging. Use conservative bias: "only group things you are highly confident are the same concept."
+
+**Type pools (kept separate in Phase 3 to prevent cross-type contamination)**:
+- Skills (capabilities like "Knowledge Graphs", "RAG Systems")
+- Technologies (tools like "Neo4j", "ChromaDB", "Streamlit")
+- Methods (approaches like "Section-aware chunking", "TransE embeddings")
+- Concepts (theoretical frameworks — no cross-contamination with tech names)
+
+**altLabel preservation**: When any label is normalized (e.g., "Knowledge Graph" → "Knowledge Graphs"), store the original as an `alt_labels` list property on the Neo4j node. This ensures Cypher queries can still match on any variant name after normalization. Pattern ported directly from RGE's SKOS altLabel implementation.
+
+**Output**: Each normalization run writes a report to `scripts/entity_normalization_report.json` documenting all decisions (phase, canonical, merged variants, reasoning). **Review this report before loading into Neo4j.** Zero merges is a valid outcome — it means labels were already consistent.
+
+**Script**: `scripts/canonicalize_entities.py` — adapted from RGE's normalizer. Run after `extract_entities.py`, before `populate_neo4j_graph.py`.
+
+**Do NOT use fuzzy string matching** (SequenceMatcher, Levenshtein): At our entity count (~40-80 entities total), a single LLM batch call is faster, cheaper, and more accurate than threshold tuning. "GA4" vs "Google Analytics 4" scores ~0.35 on SequenceMatcher — far below any useful fuzzy threshold. This lesson is documented in RGE's design notes.
+
+---
+
+### Decision 3: Graph Update Strategy
+
+**Decision**: Full rebuild for all migrations. Drop all nodes/relationships, re-extract, re-embed, and reload from scratch.
+
+**Rationale**: At prototype scale (~100-120 nodes), a full rebuild runs in under 10 minutes — acceptable. Incremental update logic (tracking changed documents, deleting stale cross-document relationships, handling topology changes) adds significant complexity for minimal gain at current scale.
+
+**Implementation**: `scripts/populate_neo4j_graph.py` begins with:
+```cypher
+MATCH (n) DETACH DELETE n
+```
+...before any node creation.
+
+**Future upgrade trigger**: Consider incremental updates only if (a) rebuild time exceeds 30 minutes, OR (b) you are frequently making manual graph corrections that get lost on rebuild.
+
+**Rollback**: `.chroma_db_DT/` stays intact (NOT deleted) until Neo4j has run in production for 72 hours without incident.
+
+**Document hash tracking** (add now, enables incremental later at no schema cost):
+Add `content_hash: string` and `last_updated: datetime` to Document nodes:
+```python
+import hashlib
+content_hash = hashlib.sha256(raw_text.encode()).hexdigest()
+```
+This metadata costs nothing now and makes a future incremental strategy possible without a schema migration.
 
 ---
 
@@ -508,19 +583,20 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
     WHERE section.sensitivity IN $allowed_tiers
 
     // Calculate graph-based signals
-    OPTIONAL MATCH (section)-[:DESCRIBED_IN]->(p:Project)
+    // Note direction: Project -[:DESCRIBED_IN]-> Section; traverse from section back to project
+    OPTIONAL MATCH (section)<-[:DESCRIBED_IN]-(p:Project)
     OPTIONAL MATCH (section)-[:MENTIONS]->(entity)
 
     WITH section, vector_score,
          count(DISTINCT p) AS projects_described,
          count(DISTINCT entity) AS entities_mentioned
 
-    // Composite ranking (tunable weights)
+    // Composite ranking — all signals normalized to [0,1]; tune weights after prototype eval
     WITH section,
-         (vector_score * 0.5 +
-          projects_described * 0.3 +
-          entities_mentioned * 0.1 +
-          (CASE WHEN section.char_count > 2000 THEN 0.1 ELSE 0 END)) AS final_score,
+         (vector_score * 0.6 +
+          CASE WHEN projects_described > 0 THEN 0.25 ELSE 0 END +
+          toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * 0.10 +
+          (CASE WHEN section.char_count > 2000 THEN 0.05 ELSE 0 END)) AS final_score,
          vector_score,
          projects_described
 
@@ -529,7 +605,7 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
 
     // Get parent document and related projects
     MATCH (doc:Document)-[:HAS_SECTION]->(section)
-    OPTIONAL MATCH (section)-[:DESCRIBED_IN]->(project:Project)
+    OPTIONAL MATCH (section)<-[:DESCRIBED_IN]-(project:Project)
 
     RETURN section.full_text AS text,
            section.name AS section_name,
@@ -640,12 +716,19 @@ Return JSON:
 """
 
     response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-6",
         max_tokens=3000,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return json.loads(response.content[0].text)
+    # Strip markdown fences if the model added them despite instructions
+    raw = response.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+    return json.loads(raw)
 
 
 def extract_section_mentions(section_text: str, section_name: str) -> dict:
@@ -677,12 +760,18 @@ Return JSON with counts:
 """
 
     response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-6",
         max_tokens=1500,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return json.loads(response.content[0].text)
+    raw = response.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+    return json.loads(raw)
 ```
 
 ### Graph Population Script
@@ -899,9 +988,14 @@ if __name__ == "__main__":
 ### New Files
 
 1. **`neo4j_utils.py`** - Neo4j driver and query utilities
-2. **`scripts/extract_entities.py`** - LLM-based entity extraction
-3. **`scripts/populate_neo4j_graph.py`** - Graph population script
-4. **`scripts/embed_sections.py`** - Generate section embeddings for vector index
+2. **`scripts/extract_entities.py`** - LLM-based entity extraction from project walkthroughs and KB sections
+3. **`scripts/canonicalize_entities.py`** - Three-phase entity normalization (deterministic → tag-anchored → LLM batch). Adapted from `../resume-graph-explorer/backend/tools/entity_normalizer.py`. Produces `scripts/entity_normalization_report.json`. Run after `extract_entities.py`, before `populate_neo4j_graph.py`.
+4. **`scripts/populate_neo4j_graph.py`** - Graph population script (full rebuild; starts with `MATCH (n) DETACH DELETE n`)
+5. **`scripts/embed_sections.py`** - Generate section embeddings for vector index
+
+### Reused Existing Code
+
+- **`utils.parse_markdown_sections(raw_text, header_level=2, include_nested=True)`** — already exists in `utils.py`; use directly in `populate_neo4j_graph.py` for section boundary detection. No new parsing logic needed.
 
 ### Modified Files
 

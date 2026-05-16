@@ -94,6 +94,7 @@ gradio_cached_examples/
 # Evaluation results (generated, not source)
 eval_results/
 eval_review.csv
+evals/results/*.json
 
 # Archive of old scripts (reference only, not for deployment)
 archive/
