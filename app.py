@@ -1555,7 +1555,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
         model            = actual_model,
         temperature      = actual_temp,
         # Phase 1: RAG metrics
-        n_chunks_retrieved = len(results['documents'][0]),
+        n_chunks_retrieved = len(rag_result["sources"]),
         # Phase 1: Response metrics
         response_chars   = len(collected),
         workflow_type    = workflow_type,

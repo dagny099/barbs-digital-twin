@@ -266,6 +266,31 @@ python chunk_inspector.py --query "..." --n 12   # Retrieve N chunks
 3. Retrieval simulation — embed a query, show the chunks retrieved, formatted exactly as the LLM would see them
 4. Gap detection — sections with suspiciously few chunks
 
+### Debugging Neo4j Retrieval
+
+`replay_retrieval.py` is the Neo4j counterpart to `chunk_inspector.py`. While
+`chunk_inspector.py` audits ChromaDB chunk quality, `replay_retrieval.py` shows exactly
+what context the LLM received from Neo4j — with each chunk's composite score decomposed
+into its vector, project-link, entity-mention, and length components.
+
+```bash
+python replay_retrieval.py --query "How did you get into beekeeping?"
+python replay_retrieval.py --query "..." --compare          # Neo4j vs ChromaDB side-by-side
+python replay_retrieval.py --replay "beekeeping" --compare  # find in query_log.jsonl and replay
+python replay_retrieval.py --query "..." --tier personal    # unlock personal-tier chunks
+python replay_retrieval.py --query "..." --full             # show full chunk text
+```
+
+The `--compare` flag produces a ranking-drift table that immediately reveals when graph
+signals are promoting or demoting chunks relative to pure vector similarity — the most
+common source of unexpected responses.
+
+**Scoring weights** live as named constants in `neo4j_utils.py` (`SCORE_W_VECTOR`,
+`SCORE_W_PROJECT`, `SCORE_W_ENTITY`, `SCORE_W_LENGTH`) and are imported by
+`replay_retrieval.py` automatically, so the debug script and production code stay in sync.
+Before adjusting weights, read `docs/LESSONS_LEARNED.md` Entry 001 — it documents the
+hallucination that motivated the current values and includes before/after score comparisons.
+
 ### Wiping the DB
 
 ```bash

@@ -26,8 +26,15 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=True)
 _driver: Driver | None = None
 _openai_client: OpenAI | None = None
 
+# Composite scoring weights — must sum to ≤ 1.0 with all bonuses at max.
+# Import these in replay_retrieval.py so the debug script stays in sync.
+SCORE_W_VECTOR  = 0.85   # pure semantic relevance — dominant signal
+SCORE_W_PROJECT = 0.08   # bonus: section is linked to a Project node
+SCORE_W_ENTITY  = 0.05   # bonus: section mentions entities (capped at 5)
+SCORE_W_LENGTH  = 0.02   # bonus: long sections (> 2000 chars)
+
 # Cypher: vector similarity + graph-signal composite ranking.
-# Weights are normalized to [0,1] — tune after prototype eval.
+# Weights defined above — edit there, not here.
 # Relationship direction: Project -[:DESCRIBED_IN]-> Section.
 _HYBRID_CYPHER = """
 CALL db.index.vector.queryNodes('section_embeddings', $fetch_k, $query_embedding)
@@ -43,10 +50,10 @@ WITH section, vector_score,
      count(DISTINCT entity) AS entities_mentioned
 
 WITH section,
-     (vector_score * 0.6 +
-      CASE WHEN projects_described > 0 THEN 0.25 ELSE 0 END +
-      toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * 0.10 +
-      (CASE WHEN section.char_count > 2000 THEN 0.05 ELSE 0 END)) AS final_score,
+     (vector_score * 0.85 +
+      CASE WHEN projects_described > 0 THEN 0.08 ELSE 0 END +
+      toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * 0.05 +
+      (CASE WHEN section.char_count > 2000 THEN 0.02 ELSE 0 END)) AS final_score,
      vector_score,
      projects_described
 
@@ -130,7 +137,7 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
             {
                 "query_embedding": query_embedding,
                 "k": k,
-                "fetch_k": k * 2,
+                "fetch_k": k * 4,   # wider candidate pool reduces graph-reranking displacement
                 "allowed_tiers": allowed_tiers,
             },
         ).data()
