@@ -362,10 +362,10 @@ The knowledge base uses **section-aware metadata** so the LLM knows exactly wher
 
 ### 9. Project Walkthroughs
 - **Source**: `featured_projects.py` (the `walkthrough_context` field of each featured project)
-- **Source key**: `project-walkthroughs`
-- **Script**: `embed_walkthroughs.py`
-- **Content**: One chunk per featured project — title + summary + walkthrough notes + tags — enabling normal RAG to surface this content without triggering walkthrough mode
-- **Metadata**: `project_name`, `section="walkthrough"`, `char_count`
+- **Source key**: `project-walkthrough:{project-id}` (Neo4j Section node ID)
+- **Script**: `scripts/populate_neo4j_graph.py` step [2b] — `create_walkthrough_sections()`
+- **Content**: One Section node per featured project — composite of title + summary + design_insight + walkthrough_context + tags. Linked to its Project node via `Project -[:DESCRIBED_IN]-> Section`, so it earns the +0.08 project graph bonus in composite scoring.
+- **Note**: `scripts/embed_walkthroughs.py` still exists for ChromaDB ingestion but is no longer the active path. Neo4j walkthroughs are populated during `populate_neo4j_graph.py` and embedded by `scripts/embed_sections.py`.
 
 ## Shared Utilities (utils.py)
 

@@ -237,12 +237,21 @@ This is where you define:
 
 Run the offline harness against a selected question bank.
 
+```bash
+python evals/run_evals.py --backend chromadb   # original ChromaDB path
+python evals/run_evals.py --backend neo4j      # Neo4j hybrid vector + graph path
+```
+
+The `--backend` flag controls which retrieval pipeline is used. Both produce
+identical output JSON/CSV schemas so runs can be compared in a spreadsheet.
+Output filenames include the backend name (e.g. `eval_results_neo4j_<timestamp>.json`).
+
 This produces:
 
 - raw responses
-- retrieved context
-- runtime metadata
-- derived response features
+- retrieved context (chunks for ChromaDB; pre-formatted sections for Neo4j)
+- runtime metadata including `backend`, model, temperature, top-k
+- derived response features (word count, markdown usage, follow-up presence, similarity scores)
 
 ### 3. Review
 
@@ -276,6 +285,7 @@ At minimum, run evaluation after:
 - changing or re-ingesting knowledge-base sources
 - changing retrieval settings such as top-k
 - changing default models or temperature
+- migrating or reconfiguring the retrieval backend (ChromaDB → Neo4j)
 - before deployment
 
 The full suite is the regression check. Smaller benchmark subsets are useful for fast model bake-offs or focused debugging.

@@ -152,6 +152,76 @@ def create_projects(session) -> None:
     print(f"  ✓ {len(FEATURED_PROJECTS)} projects")
 
 
+def create_walkthrough_sections(session) -> None:
+    """Create one Section node per project from its walkthrough composite text.
+
+    Composite mirrors embed_walkthroughs.py exactly:
+        title: summary
+        What makes it distinctive: design_insight  (if present)
+        walkthrough_context
+        Tags: tag1, tag2, ...
+
+    Each Section is linked to its Project via DESCRIBED_IN so it earns the
+    +0.08 project graph bonus in the composite ranking formula, and to a
+    synthetic 'project-walkthroughs' Document for structural completeness.
+    embed_sections.py will pick these up automatically (embedding IS NULL).
+    """
+    doc = DocumentNode(
+        id="project-walkthroughs",
+        source_type="project-walkthrough",
+        file_path="featured_projects.py",
+        title="Project Walkthrough Contexts",
+        sensitivity="public",
+    )
+    session.run(
+        "MERGE (d:Document {id: $id}) SET d += $props",
+        {"id": doc.id, "props": doc.to_dict()},
+    )
+
+    count = 0
+    for order, project in enumerate(FEATURED_PROJECTS):
+        title   = project.get("title", "")
+        summary = project.get("summary", "")
+        insight = project.get("design_insight", "")
+        context = project.get("walkthrough_context", "").strip()
+        tags    = project.get("tags", [])
+        pid     = project["id"]
+
+        if not context:
+            print(f"  ⚠️  {title} — no walkthrough_context, skipping")
+            continue
+
+        parts = [f"{title}: {summary}"]
+        if insight:
+            parts.append(f"What makes it distinctive: {insight}")
+        parts.append(context)
+        parts.append(f"Tags: {', '.join(tags)}")
+
+        sec = SectionNode(
+            id=f"project-walkthrough:{pid}",
+            name=f"{title} — Walkthrough",
+            full_text="\n\n".join(parts),
+            sensitivity="public",
+            order=order,
+        )
+        session.run(
+            """
+            MERGE (s:Section {id: $id})
+            SET s += $props
+            WITH s
+            MATCH (d:Document {id: 'project-walkthroughs'})
+            MERGE (d)-[:HAS_SECTION]->(s)
+            WITH s
+            MATCH (p:Project {id: $pid})
+            MERGE (p)-[:DESCRIBED_IN]->(s)
+            """,
+            {"id": sec.id, "props": sec.to_dict(), "pid": pid},
+        )
+        count += 1
+
+    print(f"  ✓ {count} walkthrough sections, each linked via Project -[:DESCRIBED_IN]-> Section")
+
+
 def create_entity_nodes(session, canonical: dict) -> None:
     for s in canonical.get("skills", []):
         node = SkillNode(name=s["name"], category=s.get("category", ""), alt_labels=s.get("alt_labels", []))
@@ -351,6 +421,9 @@ def main():
 
         print("\n[2] Project nodes")
         create_projects(session)
+
+        print("\n[2b] Walkthrough Section nodes")
+        create_walkthrough_sections(session)
 
         print("\n[3] Entity nodes (Skill / Method / Technology / Concept)")
         create_entity_nodes(session, canonical)
