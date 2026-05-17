@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Contextual priors",
+    "description": "Cognitive science framework that prior context and learned expectations shape what attention, perception, and retrieval prioritize from incoming information; the through-line connecting Barbara's dissertation on context-guided visual attention to her contemporary work on RAG and grounded AI.",
+    "alt_labels": ["Prior knowledge", "Priors", "Learned priors", "Prior assumptions and interpretation", "Prior experience shaping behavior", "Prior Knowledge in Perception", "Contextual guidance", "Context-Driven Attention", "Context-guided attention"]
+  },
+  {
+    "name": "David Marr's levels of analysis",
+    "description": "Three-level analytical framework for any information-processing system — computational (what and why), algorithmic (how), implementation (physical realization) — that Barbara uses to keep purpose, method, and realization from collapsing into each other when reasoning about AI architectures, retrieval pipelines, and research questions.",
+    "alt_labels": ["Marr's levels of analysis", "Levels of analysis", "David Marr's levels-of-analysis framework"]
+  },
+  {
+    "name": "Bayesian reasoning",
+    "description": "Framework for combining prior beliefs with new evidence to update confidence under uncertainty; for Barbara, less about formal probability and more about a disciplined habit of asking what assumptions a system carries, what evidence it weighs, and what would count as a meaningful update.",
+    "alt_labels": ["Bayesian thinking", "Bayesian updating under uncertainty", "Belief updating", "Hypothesis revision", "Evidence-based confidence updating", "Reasoning under uncertainty", "Decisions under uncertainty"]
+  },
+  {
+    "name": "Sensemaking",
+    "description": "Framework — drawn from organizational and information science — for how people construct coherent understanding from ambiguous, fragmented, or contested information; Barbara applies it to data legibility, human-AI collaboration, and the design of inspectable retrieval systems.",
+    "alt_labels": ["Collaborative sensemaking", "Contextual sensemaking", "Meaning-making"]
+  },
+  {
+    "name": "Visual attention",
+    "description": "Cognitive process by which the brain prioritizes some information over others within a visual scene; Barbara's dissertation work on context-guided visual attention is the direct intellectual precursor to her current thinking about attention mechanisms and retrieval ranking in AI systems.",
+    "alt_labels": ["visual attention", "Visual attention allocation", "Selective attention", "Biological attention", "Attentional selection", "Attention allocation"]
+  },
+  {
+    "name": "Attention as limited resource",
+    "description": "Theoretical lens framing attention not as a spotlight that can illuminate anything but as a finite resource that must be allocated under constraints; informs Barbara's thinking about retrieval ranking, context window budgets, and where human-in-the-loop intervention earns its cost.",
+    "alt_labels": ["Resource allocation under constraints"]
+  },
+  {
+    "name": "Mental models",
+    "description": "Cognitive science concept that people understand and predict systems through internal representations; for Barbara, the operative design principle is that AI systems should align with the downstream user's mental model rather than override it.",
+    "alt_labels": ["Mental model", "Internal models"]
+  },
+  {
+    "name": "Systems thinking",
+    "description": "Approach of understanding behavior as emerging from interactions between parts rather than properties of any single part; underpins Barbara's instinct to reason about retrieval, evaluation, and deployment as a coupled pipeline rather than independent components.",
+    "alt_labels": ["Systems-level mindset", "systems-level thinking"]
+  },
+  {
+    "name": "Structured representations",
+    "description": "Principle that information becomes both computationally useful and humanly trustworthy when given explicit, typed structure — graphs, ontologies, schemas — rather than left as unstructured text; the conceptual bridge between Barbara's cognitive science training and her knowledge engineering practice.",
+    "alt_labels": ["Structured representation", "structured representation", "Structured Intelligence"]
+  },
+  {
+    "name": "Representational Constraints",
+    "description": "Cognitive science framework — closely related to Marr — that the form of an internal representation both enables and constrains what computations a system can perform; foundational to how Barbara thinks about knowledge graph schema choices and AI architecture trade-offs.",
+    "alt_labels": ["Representations and Constraints Framework"]
+  },
+  {
+    "name": "Data legibility",
+    "description": "Barbara's central professional framing: the principle that data and AI outputs must be made legible — interpretable, contextualized, traceable — to both machines and the humans who depend on them; her self-identified contribution to the field.",
+    "alt_labels": ["Knowledge legibility", "knowledge usability"]
+  },
+  {
+    "name": "Making meaning from messy data",
+    "description": "Barbara's webpage tagline and the cross-cutting design challenge under which her cognitive science, consulting, and AI engineering work converge: producing coherent, trustworthy interpretation from ambiguous, fragmented, or unstructured inputs — with the explicit stance that the mess is where the meaning lives.",
+    "alt_labels": ["Making Meaning from Messy Data", "Meaning from messy data"]
+  },
+  {
+    "name": "Evaluation as a design problem",
+    "description": "Framing of evaluation not as a post-hoc validation step but as a first-class design discipline that shapes what gets built, what counts as ready, and what the system's contract with its users actually is; central to Barbara's LLM eval work and to the admin panel in her Digital Twin.",
+    "alt_labels": ["Evaluation as shared understanding", "Evaluation mindset"]
+  },
+  {
+    "name": "Grounded AI Systems",
+    "description": "Paradigm in which AI outputs are explicitly traced to specific source data so the system's reasoning is inspectable and trustworthy; informs Barbara's work on RAG, citation-grounded retrieval, and the audit-trail design of her Digital Twin.",
+    "alt_labels": ["Grounded generation", "decision grounding"]
+  },
+  {
+    "name": "Human-centered design",
+    "description": "Design philosophy that centers user needs, mental models, and lived workflows over technical elegance; Barbara's self-stated approach across consulting, cognitive science research, and AI engineering.",
+    "alt_labels": []
+  },
+  {
+    "name": "Pragmatic design",
+    "description": "Design philosophy that prioritizes what works in practice and gets adopted by domain experts over solutions that are theoretically optimal but operationally fragile; the consulting-derived counterweight to research-purity instincts in Barbara's work.",
+    "alt_labels": []
+  },
+  {
+    "name": "Gap between technically correct and actually useful",
+    "description": "The recurring tension between an AI system that performs well in evaluation and one that gets adopted in real workflows by real domain experts; Barbara treats this gap as the organizing problem of applied AI rather than a downstream usability concern.",
+    "alt_labels": ["Build-adopt gap", "Model Adoptability", "Domain expert adoption"]
+  },
+  {
+    "name": "Operational readiness",
+    "description": "Consulting-derived framework — anchored in Inflective's Assert methodology — for assessing whether a system is genuinely ready for deployment across stakeholder alignment, role clarity, workflow fit, and real-world usability; the operational counterpart to evaluation-as-design.",
+    "alt_labels": ["Operational reality", "Real-world usability", "Workflow fit", "Readiness for real operation", "Operational success criteria", "Readiness"]
+  },
+  {
+    "name": "Cognitive science as a design lens",
+    "description": "Barbara's distinctive positioning: bringing cognitive science principles — attention, mental models, structured representations, contextual priors — to bear on the design of AI and retrieval systems; the throughline that connects her PhD to her contemporary engineering work.",
+    "alt_labels": ["Cognitive Science in Engineering", "cognitive science applied to AI systems", "cognitive science of retrieval"]
+  },
+  {
+    "name": "Model-building as perception",
+    "description": "Cognitive science framing that perception is active model-construction from prior knowledge and incoming evidence, not passive registration of input; bridges Barbara's vision-science background to contemporary predictive coding and Bayesian inference in AI.",
+    "alt_labels": ["Model-building (perception)"]
+  }
+]

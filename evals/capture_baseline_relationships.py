@@ -34,9 +34,15 @@ EMBED_MODEL = "text-embedding-3-small"
 RESULTS_DIR = _HERE / "results"
 OUTPUT_FILE = RESULTS_DIR / "baseline_relationships.json"
 
+# Expected projects verified against featured_projects.py tags and walkthrough_context.
+# Names must match how they appear in KB chunk text (substring match, case-insensitive).
+# Note: the KB contains projects beyond featured_projects.py (e.g. "Local RAG Assistant",
+# "Digital Memory Chest") — those aren't listed here, so ChromaDB returning them will
+# appear as unexpected finds rather than scored hits. That's acceptable for a baseline.
 RELATIONSHIP_QUERIES = [
     {
         "query": "Which projects use knowledge graphs?",
+        # All four have "knowledge-graph" tag in featured_projects.py
         "expected_projects": [
             "Resume Graph Explorer",
             "Weaving Memories",
@@ -46,10 +52,12 @@ RELATIONSHIP_QUERIES = [
     },
     {
         "query": "What projects use Neo4j?",
+        # Both have "neo4j" tag; ChronoScope mentions it as optional/beta only
         "expected_projects": ["Weaving Memories", "Academic Citation Platform"],
     },
     {
         "query": "Which projects are similar to Resume Explorer?",
+        # Subjective — shared domain (knowledge graphs, career data)
         "expected_projects": [
             "Concept Cartographer",
             "ChronoScope",
@@ -58,19 +66,39 @@ RELATIONSHIP_QUERIES = [
     },
     {
         "query": "What other projects use evaluation harnesses?",
+        # Poolula has an explicit eval harness; Digital Twin has evals/ suite
         "expected_projects": ["Poolula Platform", "Digital Twin"],
     },
     {
         "query": "Which projects use Streamlit?",
-        "expected_projects": ["Resume Graph Explorer", "Fitness Tracker", "ConvoScope"],
+        # Verified from "streamlit" tag in featured_projects.py:
+        #   Academic Citation Platform ✓, Beehive Monitor ✓, ConvoScope ✓,
+        #   Fitness Tracker ✓ (also called "Fitness Dashboard" in KB),
+        #   ChronoScope ✓
+        # Resume Graph Explorer uses Flask + React — NOT Streamlit (was wrong before)
+        "expected_projects": [
+            "Academic Citation Platform",
+            "Beehive Monitor",
+            "ConvoScope",
+            "Fitness",     # matches both "Fitness Tracker" and "Fitness Dashboard"
+            "ChronoScope",
+        ],
     },
     {
         "query": "What projects involve natural language processing?",
-        "expected_projects": ["ConvoScope", "ChronoScope", "Digital Twin"],
+        # All have "nlp" tag: Resume Graph Explorer, Digital Twin, ConvoScope,
+        # Concept Cartographer, ChronoScope. Listing the clearest ones.
+        "expected_projects": [
+            "ConvoScope",
+            "ChronoScope",
+            "Digital Twin",
+            "Concept Cartographer",
+        ],
     },
     {
         "query": "Which projects demonstrate data visualization skills?",
-        "expected_projects": ["Fitness Tracker", "ChronoScope", "Beehive Monitor"],
+        # Strongest visualization projects (Plotly/Streamlit dashboards)
+        "expected_projects": ["Fitness", "ChronoScope", "Beehive Monitor"],
     },
     {
         "query": "Show me projects related to beekeeping or agriculture",

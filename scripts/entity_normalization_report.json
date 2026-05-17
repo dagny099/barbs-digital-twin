@@ -1,0 +1,1914 @@
+{
+  "decisions": [
+    {
+      "phase": 2,
+      "variant": "NLP",
+      "old_canonical": "NLP",
+      "new_canonical": "Nlp",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "LLM Extraction",
+      "old_canonical": "LLM Extraction",
+      "new_canonical": "Llm Extraction",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "NLP Pipeline Design",
+      "canonical": "Nlp",
+      "reasoning": "NLP Pipeline Design and NLP / LLM Integration are both NLP-centric concepts that map to the authoritative 'Nlp' label; LLM integration is a subset but the primary domain is NLP processing."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "NLP / LLM Integration",
+      "canonical": "Nlp",
+      "reasoning": "NLP Pipeline Design and NLP / LLM Integration are both NLP-centric concepts that map to the authoritative 'Nlp' label; LLM integration is a subset but the primary domain is NLP processing."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Entity Extraction",
+      "canonical": "Concept Extraction",
+      "reasoning": "Entity Extraction and Information Extraction refer to the same extraction-from-text concept as the authoritative 'Concept Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Information Extraction",
+      "canonical": "Concept Extraction",
+      "reasoning": "Entity Extraction and Information Extraction refer to the same extraction-from-text concept as the authoritative 'Concept Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Ontology Design",
+      "canonical": "Ontology",
+      "reasoning": "Ontology Design is the same concept as the authoritative 'Ontology' label with added process qualifier."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Data Visualization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to the same core visualization concept covered by the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Interactive Visualization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to the same core visualization concept covered by the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Graph Visualization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to the same core visualization concept covered by the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Conversational AI",
+      "canonical": "Conversation Analysis",
+      "reasoning": "Conversational AI and Conversational AI Integration both map closely to the authoritative 'Conversation Analysis' label covering conversational systems."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Conversational AI Integration",
+      "canonical": "Conversation Analysis",
+      "reasoning": "Conversational AI and Conversational AI Integration both map closely to the authoritative 'Conversation Analysis' label covering conversational systems."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Chatbot Development",
+      "canonical": "Chatbot",
+      "reasoning": "Chatbot Development is the same concept as the authoritative 'Chatbot' label with an added process qualifier."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "RAG Systems",
+      "canonical": "Rag",
+      "reasoning": "RAG Systems is the same concept as the authoritative 'Rag' label (Retrieval-Augmented Generation)."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Structured Output Generation",
+      "canonical": "Structured Output",
+      "reasoning": "Structured Output Generation is the same concept as the authoritative 'Structured Output' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Document Management Systems",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing and handling documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Document Chunking Strategies",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing and handling documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "PDF Extraction",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing and handling documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Graph Embeddings",
+      "canonical": "Embeddings",
+      "reasoning": "Graph Embeddings and Vector Embeddings are both embedding representations mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Vector Embeddings",
+      "canonical": "Embeddings",
+      "reasoning": "Graph Embeddings and Vector Embeddings are both embedding representations mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Knowledge Graphs",
+      "canonical": "Knowledge Graph",
+      "reasoning": "Knowledge Graphs is a plural form and Knowledge Base Design refers to the same structured knowledge concept as the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Knowledge Base Design",
+      "canonical": "Knowledge Graph",
+      "reasoning": "Knowledge Graphs is a plural form and Knowledge Base Design refers to the same structured knowledge concept as the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Multi-Provider LLM Integration",
+      "canonical": "Multi Provider",
+      "reasoning": "Both refer to integrating or orchestrating multiple LLM providers, matching the authoritative 'Multi Provider' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Multi-LLM Orchestration",
+      "canonical": "Multi Provider",
+      "reasoning": "Both refer to integrating or orchestrating multiple LLM providers, matching the authoritative 'Multi Provider' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Evaluation Harnesses",
+      "canonical": "Evaluation",
+      "reasoning": "Evaluation Harnesses and Model Output Comparison both refer to evaluating model performance, matching the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Model Output Comparison",
+      "canonical": "Evaluation",
+      "reasoning": "Evaluation Harnesses and Model Output Comparison both refer to evaluating model performance, matching the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "RDF/Linked Data",
+      "canonical": "Rdf",
+      "reasoning": "RDF/Linked Data and Turtle/JSON-LD serialization are core RDF concepts mapping to the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Data Serialization (Turtle, JSON-LD)",
+      "canonical": "Rdf",
+      "reasoning": "RDF/Linked Data and Turtle/JSON-LD serialization are core RDF concepts mapping to the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "SKOS Vocabulary Modeling",
+      "canonical": "Skos",
+      "reasoning": "SKOS Vocabulary Modeling is the same concept as the authoritative 'Skos' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Containerization",
+      "canonical": "Docker",
+      "reasoning": "Containerization is the general concept behind Docker, and in this context maps to the authoritative 'Docker' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Cloud Deployment",
+      "canonical": "Google Cloud",
+      "reasoning": "Cloud Deployment and Live Web Deployment both refer to deploying to cloud/web infrastructure, mapping to the authoritative 'Google Cloud' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Live Web Deployment",
+      "canonical": "Google Cloud",
+      "reasoning": "Cloud Deployment and Live Web Deployment both refer to deploying to cloud/web infrastructure, mapping to the authoritative 'Google Cloud' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Computer Vision Integration",
+      "canonical": "Computer Vision",
+      "reasoning": "Computer Vision Integration, Image Metadata Extraction, and Color Palette Analysis all fall under the computer vision domain matching the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Image Metadata Extraction",
+      "canonical": "Computer Vision",
+      "reasoning": "Computer Vision Integration, Image Metadata Extraction, and Color Palette Analysis all fall under the computer vision domain matching the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Color Palette Analysis",
+      "canonical": "Computer Vision",
+      "reasoning": "Computer Vision Integration, Image Metadata Extraction, and Color Palette Analysis all fall under the computer vision domain matching the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Personal Analytics",
+      "canonical": "Analytics",
+      "reasoning": "Personal Analytics, Temporal Trend Analysis, and Time Series Analysis are all analytics subdomains mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Temporal Trend Analysis",
+      "canonical": "Analytics",
+      "reasoning": "Personal Analytics, Temporal Trend Analysis, and Time Series Analysis are all analytics subdomains mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Time Series Analysis",
+      "canonical": "Analytics",
+      "reasoning": "Personal Analytics, Temporal Trend Analysis, and Time Series Analysis are all analytics subdomains mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "REST API Development",
+      "canonical": "Fastapi",
+      "reasoning": "REST API Development and REST API Design both refer to building REST APIs, mapping to the authoritative 'Fastapi' label as the project's REST framework."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "REST API Design",
+      "canonical": "Fastapi",
+      "reasoning": "REST API Development and REST API Design both refer to building REST APIs, mapping to the authoritative 'Fastapi' label as the project's REST framework."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Interactive Dashboard Development",
+      "canonical": "Streamlit",
+      "reasoning": "Interactive Dashboard Development, Dashboard Development, and Interactive UI Development all map to the authoritative 'Streamlit' label as the primary dashboard/UI tool."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Dashboard Development",
+      "canonical": "Streamlit",
+      "reasoning": "Interactive Dashboard Development, Dashboard Development, and Interactive UI Development all map to the authoritative 'Streamlit' label as the primary dashboard/UI tool."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Interactive UI Development",
+      "canonical": "Streamlit",
+      "reasoning": "Interactive Dashboard Development, Dashboard Development, and Interactive UI Development all map to the authoritative 'Streamlit' label as the primary dashboard/UI tool."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Weather Data Integration",
+      "canonical": "Weather Api",
+      "reasoning": "Weather Data Integration is the same concept as the authoritative 'Weather Api' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Rapid Prototyping",
+      "canonical": "Plotly",
+      "reasoning": "Not merging \u2014 Rapid Prototyping is distinct from Plotly; keeping separate."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Data Pipeline Engineering",
+      "canonical": "Data Engineering",
+      "reasoning": "Data Pipeline Engineering, Database Schema Design, Schema Design, and Data Modeling all refer to data engineering and modeling concepts under the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Database Schema Design",
+      "canonical": "Data Engineering",
+      "reasoning": "Data Pipeline Engineering, Database Schema Design, Schema Design, and Data Modeling all refer to data engineering and modeling concepts under the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Schema Design",
+      "canonical": "Data Engineering",
+      "reasoning": "Data Pipeline Engineering, Database Schema Design, Schema Design, and Data Modeling all refer to data engineering and modeling concepts under the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Data Modeling",
+      "canonical": "Data Engineering",
+      "reasoning": "Data Pipeline Engineering, Database Schema Design, Schema Design, and Data Modeling all refer to data engineering and modeling concepts under the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "Semantic Search",
+      "canonical": "Semantic Web",
+      "reasoning": "Semantic Search and SPARQL are both core Semantic Web technologies mapping to the authoritative 'Semantic Web' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "skills",
+      "variant": "SPARQL",
+      "canonical": "Semantic Web",
+      "reasoning": "Semantic Search and SPARQL are both core Semantic Web technologies mapping to the authoritative 'Semantic Web' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Plotly Overlay Visualization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to rendering/displaying data visually in various formats, mapping to the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Clickable Network Graph Visualization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to rendering/displaying data visually in various formats, mapping to the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "HTML Report Rendering",
+      "canonical": "Visualization",
+      "reasoning": "All refer to rendering/displaying data visually in various formats, mapping to the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Filterable View Rendering",
+      "canonical": "Visualization",
+      "reasoning": "All refer to rendering/displaying data visually in various formats, mapping to the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Gantt chart timeline rendering",
+      "canonical": "Visualization",
+      "reasoning": "All refer to rendering/displaying data visually in various formats, mapping to the authoritative 'Visualization' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "CSV Ground Truth Evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Hits@K Evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "AUC Evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "MRR Evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Gold standard comparison",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Numerical Accuracy Scoring",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Tool Choice Scoring",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to evaluation metrics or comparison against ground truth, mapping to the authoritative 'Evaluation' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "LLM-based entity and event extraction (GPT)",
+      "canonical": "Llm Extraction",
+      "reasoning": "All describe using LLMs to extract structured information from text, mapping to the authoritative 'Llm Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "LLM-based structured entity extraction",
+      "canonical": "Llm Extraction",
+      "reasoning": "All describe using LLMs to extract structured information from text, mapping to the authoritative 'Llm Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Single-call LLM extraction",
+      "canonical": "Llm Extraction",
+      "reasoning": "All describe using LLMs to extract structured information from text, mapping to the authoritative 'Llm Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Plain-language extraction summarization",
+      "canonical": "Llm Extraction",
+      "reasoning": "All describe using LLMs to extract structured information from text, mapping to the authoritative 'Llm Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Domain-lens-guided concept extraction",
+      "canonical": "Concept Extraction",
+      "reasoning": "Both refer to extracting concepts or topics from text, mapping to the authoritative 'Concept Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Theme and Topic Extraction",
+      "canonical": "Concept Extraction",
+      "reasoning": "Both refer to extracting concepts or topics from text, mapping to the authoritative 'Concept Extraction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Pydantic Schema Validation",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or validating structured data outputs from LLMs or pipelines, mapping to the authoritative 'Structured Output' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Structured YAML Extraction",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or validating structured data outputs from LLMs or pipelines, mapping to the authoritative 'Structured Output' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Structured JSON ontology extraction",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or validating structured data outputs from LLMs or pipelines, mapping to the authoritative 'Structured Output' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "TransE Embeddings",
+      "canonical": "Embeddings",
+      "reasoning": "All refer to embedding representations or vector space operations, mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Semantic Vector Indexing",
+      "canonical": "Embeddings",
+      "reasoning": "All refer to embedding representations or vector space operations, mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Query embedding",
+      "canonical": "Embeddings",
+      "reasoning": "All refer to embedding representations or vector space operations, mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Vector Translation in Embedding Space",
+      "canonical": "Embeddings",
+      "reasoning": "All refer to embedding representations or vector space operations, mapping to the authoritative 'Embeddings' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Entity relationship graph construction (NetworkX)",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to building or working with knowledge graphs and their structural components, mapping to the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Incremental graph accumulation across turns",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to building or working with knowledge graphs and their structural components, mapping to the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Graph-structure narrative generation",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to building or working with knowledge graphs and their structural components, mapping to the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Relationship triple extraction with typed edges",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to building or working with knowledge graphs and their structural components, mapping to the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Typed relationship modeling",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to building or working with knowledge graphs and their structural components, mapping to the authoritative 'Knowledge Graph' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Turn-level Conversation Parsing",
+      "canonical": "Conversation Analysis",
+      "reasoning": "All refer to analyzing or managing conversational data, mapping to the authoritative 'Conversation Analysis' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Conversation History Management",
+      "canonical": "Conversation Analysis",
+      "reasoning": "All refer to analyzing or managing conversational data, mapping to the authoritative 'Conversation Analysis' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Interaction Pattern Recognition",
+      "canonical": "Conversation Analysis",
+      "reasoning": "All refer to analyzing or managing conversational data, mapping to the authoritative 'Conversation Analysis' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "PDF Normalization and Classification",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing, classifying, or chunking documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Document Type Classification",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing, classifying, or chunking documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Dual-library fallback extraction (PyMuPDF + pdfplumber)",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing, classifying, or chunking documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Section-aware chunking",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing, classifying, or chunking documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Synthetic overview chunk generation",
+      "canonical": "Document Processing",
+      "reasoning": "All refer to processing, classifying, or chunking documents, mapping to the authoritative 'Document Processing' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Semantic similarity retrieval",
+      "canonical": "Rag",
+      "reasoning": "All refer to retrieval-augmented generation components including retrieval and context injection, mapping to the authoritative 'Rag' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Semantic Search via ChromaDB",
+      "canonical": "Rag",
+      "reasoning": "All refer to retrieval-augmented generation components including retrieval and context injection, mapping to the authoritative 'Rag' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Context injection",
+      "canonical": "Rag",
+      "reasoning": "All refer to retrieval-augmented generation components including retrieval and context injection, mapping to the authoritative 'Rag' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Graph Traversal Querying",
+      "canonical": "Rag",
+      "reasoning": "All refer to retrieval-augmented generation components including retrieval and context injection, mapping to the authoritative 'Rag' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Semi-automated Wikidata Enrichment",
+      "canonical": "Wikidata",
+      "reasoning": "Refers specifically to enrichment using Wikidata, mapping to the authoritative 'Wikidata' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "RDF triple construction",
+      "canonical": "Rdf",
+      "reasoning": "All refer to RDF ecosystem technologies (triples, SPARQL queries, SHACL validation), mapping to the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "SPARQL graph querying",
+      "canonical": "Rdf",
+      "reasoning": "All refer to RDF ecosystem technologies (triples, SPARQL queries, SHACL validation), mapping to the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "SHACL constraint validation",
+      "canonical": "Rdf",
+      "reasoning": "All refer to RDF ecosystem technologies (triples, SPARQL queries, SHACL validation), mapping to the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Hybrid vocabulary alignment (SKOS + ESCO + schema.org)",
+      "canonical": "Skos",
+      "reasoning": "All refer to vocabulary/taxonomy alignment and SKOS-related semantic structuring, mapping to the authoritative 'Skos' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Synonym resolution",
+      "canonical": "Skos",
+      "reasoning": "All refer to vocabulary/taxonomy alignment and SKOS-related semantic structuring, mapping to the authoritative 'Skos' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Taxonomy mapping to ESCO",
+      "canonical": "Skos",
+      "reasoning": "All refer to vocabulary/taxonomy alignment and SKOS-related semantic structuring, mapping to the authoritative 'Skos' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Multi-Provider LLM Comparison",
+      "canonical": "Multi Provider",
+      "reasoning": "Both refer to comparing multiple LLM providers or models, mapping to the authoritative 'Multi Provider' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Side-by-side Model Comparison",
+      "canonical": "Multi Provider",
+      "reasoning": "Both refer to comparing multiple LLM providers or models, mapping to the authoritative 'Multi Provider' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Weather API Enrichment",
+      "canonical": "Weather Api",
+      "reasoning": "Direct match to the authoritative 'Weather Api' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "TimelineJS export with theming",
+      "canonical": "Timeline",
+      "reasoning": "Both refer to timeline-related representations or exports, mapping to the authoritative 'Timeline' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Temporal Relationship Modeling",
+      "canonical": "Timeline",
+      "reasoning": "Both refer to timeline-related representations or exports, mapping to the authoritative 'Timeline' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Novel Citation Prediction with Confidence Scores",
+      "canonical": "Citation Prediction",
+      "reasoning": "Direct match to the authoritative 'Citation Prediction' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Beekeeper Annotation and State Tracking",
+      "canonical": "Beekeeping",
+      "reasoning": "Both are specific to the beekeeping domain project, mapping to the authoritative 'Beekeeping' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Seasonal Pattern Analysis",
+      "canonical": "Beekeeping",
+      "reasoning": "Both are specific to the beekeeping domain project, mapping to the authoritative 'Beekeeping' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Object and Activity Recognition",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to image/visual processing techniques, mapping to the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Image Label Detection",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to image/visual processing techniques, mapping to the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "EXIF Metadata Extraction with Fallback Mechanisms",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to image/visual processing techniques, mapping to the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Color Clustering for Domain-specific Palette Analysis",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to image/visual processing techniques, mapping to the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Multi-photo Upload Pipeline",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to image/visual processing techniques, mapping to the authoritative 'Computer Vision' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "SHA-256 Duplicate Detection",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Hash-based deduplication",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Data Cleaning and Normalization",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Streaming Batch Processing",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Pluggable Storage Abstraction",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "JSON/CSV Data Export",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data pipeline engineering tasks such as deduplication, cleaning, and storage, mapping to the authoritative 'Data Engineering' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Behavioral Correlation Analysis",
+      "canonical": "Analytics",
+      "reasoning": "All refer to analytical operations over data to find patterns and trends, mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Trend Analysis",
+      "canonical": "Analytics",
+      "reasoning": "All refer to analytical operations over data to find patterns and trends, mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Frequency Shift Detection",
+      "canonical": "Analytics",
+      "reasoning": "All refer to analytical operations over data to find patterns and trends, mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Volume Progression Tracking",
+      "canonical": "Analytics",
+      "reasoning": "All refer to analytical operations over data to find patterns and trends, mapping to the authoritative 'Analytics' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Tool-augmented Generation",
+      "canonical": "Chatbot",
+      "reasoning": "All refer to chatbot configuration and augmentation features, mapping to the authoritative 'Chatbot' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Voice and framing control via system prompt",
+      "canonical": "Chatbot",
+      "reasoning": "All refer to chatbot configuration and augmentation features, mapping to the authoritative 'Chatbot' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "methods",
+      "variant": "Prompt Customization",
+      "canonical": "Chatbot",
+      "reasoning": "All refer to chatbot configuration and augmentation features, mapping to the authoritative 'Chatbot' label."
+    },
+    {
+      "phase": 2,
+      "variant": "ChromaDB",
+      "old_canonical": "ChromaDB",
+      "new_canonical": "Chromadb",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "TransE",
+      "old_canonical": "TransE",
+      "new_canonical": "Transe",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "FastAPI",
+      "old_canonical": "FastAPI",
+      "new_canonical": "Fastapi",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "SQLModel",
+      "old_canonical": "SQLModel",
+      "new_canonical": "Sqlmodel",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Claude (Anthropic)",
+      "canonical": "Anthropic",
+      "reasoning": "All refer to Anthropic's Claude model/API under the authoritative 'Anthropic' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Claude",
+      "canonical": "Anthropic",
+      "reasoning": "All refer to Anthropic's Claude model/API under the authoritative 'Anthropic' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Anthropic Claude",
+      "canonical": "Anthropic",
+      "reasoning": "All refer to Anthropic's Claude model/API under the authoritative 'Anthropic' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Anthropic API",
+      "canonical": "Anthropic",
+      "reasoning": "All refer to Anthropic's Claude model/API under the authoritative 'Anthropic' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "OpenAI API",
+      "canonical": "Openai",
+      "reasoning": "All refer to OpenAI's API/models; 'Openai' is the authoritative label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "OpenAI API (GPT-4o-mini)",
+      "canonical": "Openai",
+      "reasoning": "All refer to OpenAI's API/models; 'Openai' is the authoritative label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "OpenAI GPT",
+      "canonical": "Openai",
+      "reasoning": "All refer to OpenAI's API/models; 'Openai' is the authoritative label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Neo4j Aura",
+      "canonical": "Neo4j",
+      "reasoning": "Neo4j Aura is the cloud-hosted version of Neo4j; same core technology."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "SKOS Core",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core is the formal name for the SKOS standard; same concept."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Turtle (RDF serialization)",
+      "canonical": "Rdf",
+      "reasoning": "Turtle and JSON-LD are RDF serialization formats; rdflib is a Python RDF library \u2014 all are RDF-level concepts merging under the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "JSON-LD",
+      "canonical": "Rdf",
+      "reasoning": "Turtle and JSON-LD are RDF serialization formats; rdflib is a Python RDF library \u2014 all are RDF-level concepts merging under the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "rdflib",
+      "canonical": "Rdf",
+      "reasoning": "Turtle and JSON-LD are RDF serialization formats; rdflib is a Python RDF library \u2014 all are RDF-level concepts merging under the authoritative 'Rdf' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Google Cloud Run",
+      "canonical": "Google Cloud",
+      "reasoning": "All are specific Google Cloud services falling under the authoritative 'Google Cloud' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Google Cloud Storage",
+      "canonical": "Google Cloud",
+      "reasoning": "All are specific Google Cloud services falling under the authoritative 'Google Cloud' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Google Cloud Vision API",
+      "canonical": "Google Cloud",
+      "reasoning": "All are specific Google Cloud services falling under the authoritative 'Google Cloud' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Wikidata API",
+      "canonical": "Wikidata",
+      "reasoning": "Wikidata API is simply the interface to Wikidata; same concept."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "Open-Meteo API",
+      "canonical": "Weather Api",
+      "reasoning": "Open-Meteo API is a weather API matching the authoritative 'Weather Api' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "TimelineJS",
+      "canonical": "Timeline",
+      "reasoning": "TimelineJS is a timeline visualization tool matching the authoritative 'Timeline' label."
+    },
+    {
+      "phase": 3,
+      "entity_type": "technologies",
+      "variant": "React 18",
+      "canonical": "React",
+      "reasoning": "React 18 is a version of React; same core technology."
+    },
+    {
+      "phase": 2,
+      "variant": "SKOS",
+      "old_canonical": "SKOS",
+      "new_canonical": "Skos",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "RDF",
+      "old_canonical": "RDF",
+      "new_canonical": "Rdf",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 2,
+      "variant": "Knowledge graph",
+      "old_canonical": "Knowledge graph",
+      "new_canonical": "Knowledge Graph",
+      "reason": "matched featured_projects tag"
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Knowledge graphs",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Knowledge Graph Representation",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Memorial Knowledge Graph",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Career Knowledge Graphs",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Graph structures",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Graph representation",
+      "canonical": "Knowledge Graph",
+      "reasoning": "All refer to the same concept of knowledge graphs as a data structure; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Retrieval-Augmented Generation (RAG)",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Retrieval-augmented generation",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Retrieval Augmented Generation",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "RAG (Retrieval-Augmented Generation)",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Retrieval-based AI",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Vector RAG",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "GraphRAG",
+      "canonical": "Rag",
+      "reasoning": "All refer to Retrieval-Augmented Generation; authoritative label is 'Rag'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Ontology extraction",
+      "canonical": "Ontology",
+      "reasoning": "Ontology extraction and knowledge organization are direct expressions of ontology work; authoritative label is 'Ontology'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "knowledge organization",
+      "canonical": "Ontology",
+      "reasoning": "Ontology extraction and knowledge organization are direct expressions of ontology work; authoritative label is 'Ontology'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Linked Open Data",
+      "canonical": "Semantic Web",
+      "reasoning": "JSON-LD, Turtle, and Linked Open Data are core Semantic Web technologies; authoritative label is 'Semantic Web'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "JSON-LD",
+      "canonical": "Semantic Web",
+      "reasoning": "JSON-LD, Turtle, and Linked Open Data are core Semantic Web technologies; authoritative label is 'Semantic Web'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Turtle",
+      "canonical": "Semantic Web",
+      "reasoning": "JSON-LD, Turtle, and Linked Open Data are core Semantic Web technologies; authoritative label is 'Semantic Web'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "SKOS Core",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Vocabulary alignment",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "skills taxonomy",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "ESCO European Skills Taxonomy",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "ESCO taxonomy",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "ESCO",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Hierarchical skill classification",
+      "canonical": "Skos",
+      "reasoning": "SKOS Core and ESCO taxonomy references are all expressions of the SKOS/controlled vocabulary concept; authoritative label is 'Skos'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Relationship triples",
+      "canonical": "Rdf",
+      "reasoning": "Relationship triples and Turtle are core RDF concepts/serializations; authoritative label is 'Rdf'. Note: Turtle also appears under Semantic Web but is most specifically an RDF serialization."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Turtle",
+      "canonical": "Rdf",
+      "reasoning": "Relationship triples and Turtle are core RDF concepts/serializations; authoritative label is 'Rdf'. Note: Turtle also appears under Semantic Web but is most specifically an RDF serialization."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Learned representations",
+      "canonical": "Embeddings",
+      "reasoning": "These all refer to the concept of representing data as learned vector embeddings; authoritative label is 'Embeddings'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Data representation",
+      "canonical": "Embeddings",
+      "reasoning": "These all refer to the concept of representing data as learned vector embeddings; authoritative label is 'Embeddings'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Information representation",
+      "canonical": "Embeddings",
+      "reasoning": "These all refer to the concept of representing data as learned vector embeddings; authoritative label is 'Embeddings'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "structured representation",
+      "canonical": "Embeddings",
+      "reasoning": "These all refer to the concept of representing data as learned vector embeddings; authoritative label is 'Embeddings'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Representation",
+      "canonical": "Embeddings",
+      "reasoning": "These all refer to the concept of representing data as learned vector embeddings; authoritative label is 'Embeddings'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "System evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Ground-truth evaluation",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Evaluation framework",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Evaluation mindset",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Evaluation Habit",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Evaluation as shared understanding",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Evaluation as a design problem",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Retrieval metrics",
+      "canonical": "Evaluation",
+      "reasoning": "All refer to the practice of systematic evaluation; authoritative label is 'Evaluation'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Multi-provider LLM integration",
+      "canonical": "Multi Provider",
+      "reasoning": "All refer to multi-provider LLM integration; authoritative label is 'Multi Provider'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Provider-agnostic LLM integration",
+      "canonical": "Multi Provider",
+      "reasoning": "All refer to multi-provider LLM integration; authoritative label is 'Multi Provider'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Provider-agnostic LLM extraction",
+      "canonical": "Multi Provider",
+      "reasoning": "All refer to multi-provider LLM integration; authoritative label is 'Multi Provider'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Provider-agnostic LLM pipelines",
+      "canonical": "Multi Provider",
+      "reasoning": "All refer to multi-provider LLM integration; authoritative label is 'Multi Provider'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Topic extraction",
+      "canonical": "Llm Extraction",
+      "reasoning": "Topic extraction and concept extraction are core instances of LLM extraction pipelines; authoritative label is 'Llm Extraction'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Concept Extraction",
+      "canonical": "Llm Extraction",
+      "reasoning": "Topic extraction and concept extraction are core instances of LLM extraction pipelines; authoritative label is 'Llm Extraction'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Structured representations",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or working with structured/schema-defined outputs from AI systems; authoritative label is 'Structured Output'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Structured Intelligence",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or working with structured/schema-defined outputs from AI systems; authoritative label is 'Structured Output'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "structured representation",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or working with structured/schema-defined outputs from AI systems; authoritative label is 'Structured Output'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Schema Design",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or working with structured/schema-defined outputs from AI systems; authoritative label is 'Structured Output'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Schema Layer",
+      "canonical": "Structured Output",
+      "reasoning": "All refer to producing or working with structured/schema-defined outputs from AI systems; authoritative label is 'Structured Output'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "citation-grounded retrieval",
+      "canonical": "Citation Prediction",
+      "reasoning": "Citation-grounded retrieval is closely tied to citation prediction workflows; authoritative label is 'Citation Prediction'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Visual Cognition",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Scene Perception",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Real-world scene perception",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Visual attention modeling",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Eye movement data analysis",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Perceptual science",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Visual attention",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Visual Search",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Eye guidance",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Eye movement guidance",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Eye-movement research",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Oculomotor guidance",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Gaze behavior",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "gaze pattern prediction",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Attention and Visual Scanning",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Sequential eye movements",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Visual attention allocation",
+      "canonical": "Computer Vision",
+      "reasoning": "All refer to computer vision and visual perception research concepts; authoritative label is 'Computer Vision'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Temporal pattern analysis",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "temporal pattern extraction",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Temporal Patterns",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Temporal pattern recognition",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Temporal relationship patterns",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Spatial pattern analysis",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Pattern recognition",
+      "canonical": "Analytics",
+      "reasoning": "These are all forms of analytical pattern detection; authoritative label is 'Analytics'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Information Processing",
+      "canonical": "Nlp",
+      "reasoning": "These concepts are core NLP tasks of processing, retrieving, and synthesizing textual information; authoritative label is 'Nlp'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Information retrieval",
+      "canonical": "Nlp",
+      "reasoning": "These concepts are core NLP tasks of processing, retrieving, and synthesizing textual information; authoritative label is 'Nlp'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Narrative Synthesis",
+      "canonical": "Nlp",
+      "reasoning": "These concepts are core NLP tasks of processing, retrieving, and synthesizing textual information; authoritative label is 'Nlp'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Transformer architecture",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Transformer-based attention mechanisms",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Attention mechanism",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Learned priors",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Classification confidence",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Anomaly detection",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Domain adaptability",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Domain transfer",
+      "canonical": "Machine Learning",
+      "reasoning": "These are all machine learning methods and concepts; authoritative label is 'Machine Learning'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Multi-stage ingestion pipeline",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Normalization pipeline",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Chunking",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Checkpointing",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Idempotency",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Data Layer",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "local-first processing",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Local-first architecture",
+      "canonical": "Data Engineering",
+      "reasoning": "All refer to data engineering pipeline construction and processing concepts; authoritative label is 'Data Engineering'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "visual thinking",
+      "canonical": "Visualization",
+      "reasoning": "All refer to visual representation and communication of information; authoritative label is 'Visualization'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "visual framing",
+      "canonical": "Visualization",
+      "reasoning": "All refer to visual representation and communication of information; authoritative label is 'Visualization'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Information Design",
+      "canonical": "Visualization",
+      "reasoning": "All refer to visual representation and communication of information; authoritative label is 'Visualization'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "visual knowledge organization",
+      "canonical": "Visualization",
+      "reasoning": "All refer to visual representation and communication of information; authoritative label is 'Visualization'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Wikidata Enrichment",
+      "canonical": "Wikidata",
+      "reasoning": "Wikidata Enrichment is a direct application of Wikidata; authoritative label is 'Wikidata'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Memorial Graph",
+      "canonical": "Memorial",
+      "reasoning": "All relate to preserving and memorializing knowledge of people or organizations; authoritative label is 'Memorial'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Legacy preservation",
+      "canonical": "Memorial",
+      "reasoning": "All relate to preserving and memorializing knowledge of people or organizations; authoritative label is 'Memorial'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "tribal memory",
+      "canonical": "Memorial",
+      "reasoning": "All relate to preserving and memorializing knowledge of people or organizations; authoritative label is 'Memorial'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Colony health monitoring",
+      "canonical": "Beekeeping",
+      "reasoning": "Colony health monitoring and cross-pollination are beekeeping domain concepts; authoritative label is 'Beekeeping'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Cross-pollination",
+      "canonical": "Beekeeping",
+      "reasoning": "Colony health monitoring and cross-pollination are beekeeping domain concepts; authoritative label is 'Beekeeping'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "User Behavior Analysis",
+      "canonical": "Conversation Analysis",
+      "reasoning": "These refer to analyzing conversational and user interaction patterns; authoritative label is 'Conversation Analysis'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Information-Seeking Strategies",
+      "canonical": "Conversation Analysis",
+      "reasoning": "These refer to analyzing conversational and user interaction patterns; authoritative label is 'Conversation Analysis'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Personal search history",
+      "canonical": "Personal Data",
+      "reasoning": "Personal search history is a form of personal data; authoritative label is 'Personal Data'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "durable knowledge",
+      "canonical": "Personal Data",
+      "reasoning": "Personal search history is a form of personal data; authoritative label is 'Personal Data'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "GenAI systems",
+      "canonical": "Llm",
+      "reasoning": "All refer to large language model / generative AI applications; authoritative label is 'Llm'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Applied AI",
+      "canonical": "Llm",
+      "reasoning": "All refer to large language model / generative AI applications; authoritative label is 'Llm'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "domain-specific AI",
+      "canonical": "Llm",
+      "reasoning": "All refer to large language model / generative AI applications; authoritative label is 'Llm'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "lived-domain AI",
+      "canonical": "Llm",
+      "reasoning": "All refer to large language model / generative AI applications; authoritative label is 'Llm'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Digital Transformation",
+      "canonical": "Google Cloud",
+      "reasoning": "Digital Transformation in this context refers to cloud-based infrastructure modernization aligned with Google Cloud; authoritative label is 'Google Cloud'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Graph Topology",
+      "canonical": "Neo4j",
+      "reasoning": "Graph topology and typed edges are core Neo4j graph database concepts; authoritative label is 'Neo4j'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Typed edges",
+      "canonical": "Neo4j",
+      "reasoning": "Graph topology and typed edges are core Neo4j graph database concepts; authoritative label is 'Neo4j'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Chunking",
+      "canonical": "Document Processing",
+      "reasoning": "Chunking and multimodal data integration are document processing pipeline steps; authoritative label is 'Document Processing'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Multimodal data integration",
+      "canonical": "Document Processing",
+      "reasoning": "Chunking and multimodal data integration are document processing pipeline steps; authoritative label is 'Document Processing'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Knowledge engineering",
+      "canonical": "Knowledge Graph",
+      "reasoning": "Knowledge engineering and knowledge representation are foundational to building knowledge graphs; authoritative label is 'Knowledge Graph'."
+    },
+    {
+      "phase": 3,
+      "entity_type": "concepts",
+      "variant": "Knowledge Representation",
+      "canonical": "Knowledge Graph",
+      "reasoning": "Knowledge engineering and knowledge representation are foundational to building knowledge graphs; authoritative label is 'Knowledge Graph'."
+    }
+  ],
+  "totals": {
+    "skills": 57,
+    "methods": 42,
+    "technologies": 46,
+    "concepts": 265
+  }
+}

@@ -509,6 +509,44 @@ This metadata costs nothing now and makes a future incremental strategy possible
 
 ---
 
+### Decision 4: Entity Source Separation (Canonical Nodes vs. Relationship Data)
+
+**Decision**: Skills, Methods, and Technologies are canonicalized **only from `project_entities`** (structured LLM extraction from project walkthroughs). Concepts are canonicalized **only from `section_mentions`** (KB section extraction). Section mentions of skills/methods/technologies feed MENTIONS edges only — they do not enter the canonical entity pool.
+
+**Rationale**: Discovered during Phase 2 implementation (2026-05-16). The initial implementation pulled skills from both sources, producing 452 raw skill names instead of the expected ~30-40. The fundamental problem: section mentions are *relationship data*, not *node definitions*. A KB section that mentions "machine learning" is evidence of a relationship (`Section -[:MENTIONS]-> Skill`), not evidence that we need a new canonical Skill node. Project walkthroughs provide the structured extraction (with category, role, stage) needed to define nodes properly.
+
+**The two data roles and what feeds them**:
+
+| Data role | Purpose | Source |
+|---|---|---|
+| Node definition | Creates the entity node with category, role, alt_labels | `project_entities` (Skills, Methods, Technologies) |
+| Relationship signal | Creates `MENTIONS` / `DESCRIBED_IN` edges | `section_mentions` (all types) |
+
+Section-mentioned skills/technologies still appear in the graph — `populate_neo4j_graph.py` uses `MERGE` when creating MENTIONS edges, so they are created as minimal nodes if they don't already exist. They just don't go through canonicalization, which is appropriate: they're noise-tolerant edge signals, not curated knowledge nodes.
+
+**Concepts are the exception**: Concepts (theoretical frameworks like "Sensemaking", "Bayesian reasoning") are not extracted from project walkthroughs — they appear in KB documents like `kb_intellectual_foundations.md` and `kb_philosophy-and-approach.md`. So `section_mentions` is their only structured source.
+
+**Example of the failure mode** (what happens if you violate this decision):
+
+```
+# WRONG: mixing both sources
+skills from project_entities  →  ~85 raw names  (expected, manageable)
+skills from section_mentions  →  ~370 additional raw names (every KB mention)
+combined                      →  452 raw names  → Phase 3 LLM call truncates mid-JSON
+```
+
+```
+# CORRECT: project_entities only
+skills from project_entities  →  ~85 raw names
+→ Phase 3 LLM call fits in a single call, produces ~57 canonical nodes
+```
+
+**Implementation**: Enforced in `scripts/canonicalize_entities.py` → `collect_raw_entities()`. The comment in that function explains the source split and should be preserved in any future refactor.
+
+**Concepts curation note**: Even with section_mentions as the sole source, concept extraction is noisy — KB documents like `kb_dissertation_overview.md` produce dissertation-specific vision science terms, biographical facts, and personal values alongside genuine theoretical frameworks. The canonical concepts list in `canonical_entities.json` was manually curated on 2026-05-16 using `scripts/curate_concepts.py`. If `canonicalize_entities.py` is re-run, it will overwrite the curated list. Run `scripts/curate_concepts.py` immediately afterward to restore it. The right long-term fix is to save the curated list to `scripts/concepts_curated.json` and have `canonicalize_entities.py` read and preserve it rather than regenerating from scratch.
+
+---
+
 ## Query Transformation
 
 ### Current: ChromaDB Retrieval (app.py:1454-1485)
