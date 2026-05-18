@@ -436,7 +436,7 @@ Replace ChromaDB entirely with Neo4j in one migration.
 - [x] Update `.env.example` with `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`
 - [ ] Add missing content sources to Neo4j — see **Architectural Decision 5** below
   - [x] Walkthrough sections: `create_walkthrough_sections()` added to `populate_neo4j_graph.py` (step [2b]) — creates one Section node per project from `title + summary + design_insight + walkthrough_context + tags`, linked via `Project -[:DESCRIBED_IN]-> Section`
-  - [ ] Jekyll KB docs: pull barbhs.com source markdown from GitHub repo into `inputs/`, add to `KB_DOCS` in `populate_neo4j_graph.py`, re-run full graph population
+  -[x] Jekyll KB docs: pull barbhs.com source markdown from GitHub repo into `inputs/`, add to `KB_DOCS` in `populate_neo4j_graph.py`, re-run full graph population
 - [ ] Remove ChromaDB startup dependency — replace `app.py:239–251` block with a Neo4j healthcheck guard; remove `chromadb` from `requirements.txt`
 - [ ] Deploy to EC2 with Neo4j Aura credentials (`.env.example` still shows localhost URI)
 - [ ] Monitor query logs for 72 hours; then delete `.chroma_db_DT/` rollback
