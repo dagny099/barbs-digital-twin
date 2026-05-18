@@ -103,40 +103,54 @@ FEATURED_PROJECTS = [
         "id": "digital-twin",
         "title": "Digital Twin",
         "summary": (
-            "A RAG-powered chatbot that represents Barbara conversationally, grounded "
+            "A GraphRAG-powered chatbot that represents Barbara conversationally, grounded "
             "in her actual writing and work history. The twin itself is a portfolio piece "
             "— not just a wrapper around an LLM — demonstrating how knowledge base design "
-            "directly shapes retrieval quality."
+            "and graph structure together shape retrieval quality."
         ),
         "design_insight": (
-            "The key insight: retrieval quality depends more on how you write your "
-            "knowledge base documents than on the embedding model. Three documents were "
-            "written specifically to improve retrieval — a philosophy doc, a positioning "
-            "doc, and a career narrative — each designed for how chunks will be retrieved, "
-            "not just how they read as prose."
+            "Two compounding insights drove the architecture. First: retrieval quality "
+            "depends more on how you write your knowledge base than on the embedding model. "
+            "Three documents were written specifically for retrieval — a philosophy doc, a "
+            "positioning doc, and a career narrative — each designed around how chunks will "
+            "be queried, not just how they read as prose. Second: graph signals should act "
+            "as tiebreakers, not determiners. After migrating to Neo4j, an initial weight "
+            "configuration (graph bonuses up to +0.40) overrode a higher-similarity chunk "
+            "and caused a factual hallucination. Rebalancing to vector×0.85 with graph "
+            "bonuses capped at +0.15 fixed retrieval without discarding the graph's value."
         ),
         "walkthrough_context": (
             "Digital Twin is the chatbot you may be talking to right now. "
-            "It's a retrieval-augmented generation (RAG) system grounded in Barbara's "
-            "actual writing and work history. "
+            "It's a GraphRAG system — retrieval-augmented generation backed by a Neo4j "
+            "knowledge graph — grounded in Barbara's actual writing and work history. "
             "(1) Knowledge Base — Multiple document types (biosketch, project briefs, "
-            "website pages, resume, publications) are chunked with section-aware "
-            "splitting and embedded using OpenAI's text-embedding-3-small into ChromaDB. "
+            "website pages, publications, project walkthroughs) are parsed into named "
+            "sections using Markdown header boundaries, then chunked with paragraph-aware "
+            "splitting and embedded using OpenAI's text-embedding-3-small. "
             "The KB was designed for retrieval quality, not just storage: source priority "
             "ordering, synthetic overview chunks, and a multi-document architecture ensure "
             "the right context surfaces for different question types. "
-            "(2) Retrieval — When you ask a question, the system embeds your query, "
-            "retrieves the most relevant chunks, and injects them as context. "
-            "(3) Generation — A carefully designed system prompt controls voice, "
+            "(2) Knowledge Graph — Sections become nodes in a Neo4j graph. "
+            "Projects connect to their descriptive sections via DESCRIBED_IN relationships. "
+            "An entity extraction pipeline populates canonical nodes for Skills, Methods, "
+            "Technologies, and Concepts, connected to sections via MENTIONS edges. "
+            "(3) Hybrid Retrieval — When you ask a question, the system embeds your query "
+            "and runs a vector search on Neo4j's section_embeddings index. "
+            "A composite scoring formula — vector similarity (weight 0.85, dominant signal) "
+            "plus graph bonuses for project links (0.08), entity mentions (0.05, capped at "
+            "5), and section length (0.02) — reranks the candidate pool. "
+            "Graph signals act as tiebreakers, not overrides. "
+            "A sensitivity tier system (public / personal / inner_circle) gates which "
+            "sections are eligible before ranking. "
+            "(4) Generation — A carefully designed system prompt controls voice, "
             "framing, and source priority so the chatbot sounds like Barbara, not a "
-            "generic assistant. The prompt encodes narrative priorities ('stories before "
-            "specs', 'problems before skills') and explicit failure modes observed "
-            "during testing. "
-            "Stack: Python, Gradio, ChromaDB, OpenAI API, AWS EC2."
+            "generic assistant. The prompt encodes narrative priorities and explicit "
+            "failure modes observed during testing. "
+            "Stack: Python, Gradio, Neo4j, OpenAI API, LiteLLM, AWS EC2."
         ),
         "diagram_filename": "architecture-overview_barb_twin.png",
-        "diagram_caption": "Digital Twin — document ingestion → embedding → retrieval → response",
-        "tags": ["rag", "chatbot", "embeddings", "chromadb", "gradio", "nlp"],
+        "diagram_caption": "Digital Twin — knowledge graph construction → hybrid retrieval → response generation",
+        "tags": ["rag", "graphrag", "neo4j", "knowledge-graph", "chatbot", "embeddings", "gradio", "nlp"],
         "mention_keywords": ["digital twin", "this chatbot", "this twin", "how were you built",
                              "how was this built", "how does this work", "digital twin chatbot", "your chatbot", "this bot"],
         "links": {

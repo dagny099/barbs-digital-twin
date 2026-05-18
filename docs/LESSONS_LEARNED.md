@@ -182,4 +182,10 @@ Model: `openai/gpt-4.1` | Tier: public | k=5
 
 ---
 
-<!-- Add new entries below this line -->
+**Curated Sections outcompete narrative Sections on shared topics**  
+
+Q034 ("What ML project did you build at Inflective?") retrieved Professional Positioning, Project Answer Bank, and Projects — none of which contained the ML classifier details. The Career Narrative section that did contain those details (Chapter 3a, "Applied ML at Inflective 2017–19") was indexed and queryable but lost the similarity race to curated content. Self-similarity test confirmed 3a's embedding was real and indexed.
+
+Root cause: curated content uses dense, question-shaped vocabulary ("projects I'm proud of," "applied ML"). Narrative content uses chronological, engagement-shaped vocabulary. For any ML-shaped query, curated content wins on raw similarity even when narrative content is more topically specific.
+
+Implication: retrieval is biased toward whatever content was written to be retrievable. New content (whether sub-chapters, new entity types, or future writing) must either match the curated style or be surfaced through retrieval-scoring adjustments rather than pure vector similarity.
