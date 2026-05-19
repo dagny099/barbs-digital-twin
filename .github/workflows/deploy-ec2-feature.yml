@@ -1,0 +1,99 @@
+name: Deploy feature branch to EC2 (neo4j preview)
+
+# Deploys any feat/neo4j-* branch to neo4j.twin.barbhs.com.
+# Runs the same test gate as the main deploy, then SSHes into EC2,
+# checks out the triggering branch in a dedicated directory, and
+# restarts the barbs-digital-twin-neo4j systemd service on port 7861.
+on:
+  push:
+    branches:
+      - "feat/neo4j-*"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        env:
+          OPENAI_API_KEY: "sk-test-placeholder"
+        run: pytest tests/ -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            cd ${{ secrets.EC2_FEATURE_APP_DIR }}
+
+            echo "── Fetching and checking out branch ──"
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+
+            echo "── Installing/upgrading dependencies ──"
+            source /home/ec2-user/venvs/gradio-ui-py312/bin/activate
+            pip install -q -r requirements.txt
+
+            echo "── Restarting feature service ──"
+            sudo systemctl restart ${{ secrets.EC2_FEATURE_SERVICE_NAME }}
+            sudo systemctl is-active --quiet ${{ secrets.EC2_FEATURE_SERVICE_NAME }} \
+              && echo "Feature service is running." \
+              || { echo "ERROR: feature service failed to start"; sudo journalctl -u ${{ secrets.EC2_FEATURE_SERVICE_NAME }} -n 30 --no-pager; exit 1; }
+
+      - name: Smoke test
+        run: |
+          echo "Waiting for feature app to be ready..."
+          for i in $(seq 1 6); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:${{ secrets.EC2_FEATURE_APP_PORT }} || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Smoke test passed (HTTP 200)."
+              exit 0
+            fi
+            echo "  Attempt $i: HTTP $STATUS — retrying in 5s..."
+            sleep 5
+          done
+          echo "ERROR: Feature app did not respond with HTTP 200 after 30s."
+          exit 1
+
+# ── Required GitHub Secrets ─────────────────────────────────────────────────
+# Reuse existing secrets:
+#   EC2_HOST, EC2_USER, EC2_SSH_KEY   (same instance, same deploy key)
+#
+# Add these new secrets (Settings → Secrets and variables → Actions):
+#   EC2_FEATURE_APP_DIR       Absolute path to the feature checkout on EC2
+#                             e.g. /home/ec2-user/barbs-digital-twin-neo4j
+#   EC2_FEATURE_SERVICE_NAME  systemd service name for the preview instance
+#                             e.g. barbs-digital-twin-neo4j
+#   EC2_FEATURE_APP_PORT      Port the feature Gradio app listens on
+#                             e.g. 7861
+#
+# ── EC2 one-time setup (see comments below for full commands) ────────────────
+# 1. Clone repo into feature dir and check out the branch             (~2 min)
+# 2. Create systemd unit file for the feature service                 (~5 min)
+# 3. Add sudo rule for the new service name                           (~2 min)
+# 4. Add Nginx server block for neo4j.twin.barbhs.com                 (~5 min)
+# 5. Obtain/extend TLS cert to cover the new subdomain               (~5 min)
+# 6. Add DNS A/CNAME record for neo4j.twin.barbhs.com                 (~2 min)
+# 7. Add the three new GitHub secrets                                  (~2 min)

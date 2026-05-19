@@ -22,16 +22,28 @@ graph TB
         GH[GitHub Repository<br/>main branch]
     end
 
+    subgraph "Source Control"
+        GH_MAIN[GitHub<br/>main branch]
+        GH_FEAT[GitHub<br/>feat/neo4j-* branches]
+    end
+
     subgraph "CI/CD"
         GHA1[GitHub Actions<br/>deploy-ec2.yml]
         GHA2[GitHub Actions<br/>deploy-hf.yml]
+        GHA3[GitHub Actions<br/>deploy-ec2-feature.yml]
     end
 
     subgraph "Production - EC2 Primary"
         EC2[AWS EC2 Instance<br/>Amazon Linux 2]
-        SYS[systemd Service<br/>digital-twin]
+        SYS[systemd Service<br/>digital-twin :7860]
         CHROMA1[(ChromaDB<br/>persistent storage)]
         DNS1[twin.barbhs.com]
+    end
+
+    subgraph "Preview - EC2 Feature"
+        EC2_F[same EC2 Instance]
+        SYS_F[systemd Service<br/>digital-twin-neo4j :7861]
+        DNS3[neo4j.twin.barbhs.com]
     end
 
     subgraph "Secondary - HF Spaces"
@@ -40,25 +52,31 @@ graph TB
         DNS2[huggingface.co/spaces/...]
     end
 
-    GH -->|push to main| GHA1
-    GH -->|push to main| GHA2
+    GH_MAIN -->|push to main| GHA1
+    GH_MAIN -->|push to main| GHA2
+    GH_FEAT -->|push to feat/neo4j-*| GHA3
 
     GHA1 -->|SSH deploy| EC2
     EC2 --> SYS
     SYS --> CHROMA1
     DNS1 --> EC2
 
+    GHA3 -->|SSH deploy| EC2_F
+    EC2_F --> SYS_F
+    DNS3 --> EC2_F
+
     GHA2 -->|sync code + data| HF
     HF --> CHROMA2
     DNS2 --> HF
 
     style EC2 fill:#ffd4aa
+    style EC2_F fill:#ffe4bb
     style HF fill:#d4aaff
     style CHROMA1 fill:#d4ffd4
     style CHROMA2 fill:#ffffaa
 ```
 
-Both deployments are automated via GitHub Actions and trigger on every push to `main`.
+Production deployments are automated via GitHub Actions and trigger on every push to `main`. Feature-branch preview deployments trigger on `feat/neo4j-*` branches and target a separate subdomain.
 
 ### EC2 Deployment (Primary)
 
@@ -114,6 +132,56 @@ Still active. On push to `main`, GitHub Actions syncs app code and input data to
 - Limited to free tier resources
 
 **Full setup instructions:** See `.github/workflows/deploy-hf.yml`
+
+### Feature Preview Deployment (neo4j.twin.barbhs.com)
+
+Any branch matching `feat/neo4j-*` is automatically deployed to `neo4j.twin.barbhs.com` on the same EC2 instance, running as a second systemd service on port 7861 behind Nginx.
+
+**Deploy pipeline summary:**
+```
+push to feat/neo4j-* → unit tests (pytest) → SSH deploy → smoke test (HTTP 200)
+```
+
+The feature service uses its own app directory (`barbs-digital-twin-neo4j/`) and its own `.env` file, so it is fully isolated from the production instance.
+
+**Required GitHub Secrets** (in addition to the shared `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`):
+
+| Secret | Example value |
+|--------|---------------|
+| `EC2_FEATURE_APP_DIR` | `/home/ec2-user/barbs-digital-twin-neo4j` |
+| `EC2_FEATURE_SERVICE_NAME` | `barbs-digital-twin-neo4j` |
+| `EC2_FEATURE_APP_PORT` | `7861` |
+
+**One-time EC2 setup** (run once when first creating the preview environment):
+
+```bash
+# 1. Clone repo into the feature directory and check out the branch
+git clone <repo-url> /home/ec2-user/barbs-digital-twin-neo4j
+cd /home/ec2-user/barbs-digital-twin-neo4j
+git checkout feat/neo4j-migration-phase-1
+
+# 2. Copy (or symlink) the .env from the production dir
+cp /home/ec2-user/barbs-digital-twin/.env .env
+
+# 3. Create the systemd unit — see deploy-ec2-feature.yml comments for the
+#    full unit file template, then:
+sudo systemctl daemon-reload
+sudo systemctl enable barbs-digital-twin-neo4j
+sudo systemctl start barbs-digital-twin-neo4j
+
+# 4. Add sudoers rule (append to /etc/sudoers.d/ec2-deploy):
+#    ec2-user ALL=(ALL) NOPASSWD: /bin/systemctl restart barbs-digital-twin-neo4j, /bin/systemctl is-active barbs-digital-twin-neo4j
+
+# 5. Add Nginx server block for neo4j.twin.barbhs.com → localhost:7861
+#    then: sudo nginx -t && sudo systemctl reload nginx
+
+# 6. Expand TLS cert if not using a wildcard:
+#    sudo certbot --nginx -d twin.barbhs.com -d neo4j.twin.barbhs.com --expand
+
+# 7. Add DNS A record: neo4j.twin.barbhs.com → <same EC2 IP>
+```
+
+**Full setup instructions:** See `.github/workflows/deploy-ec2-feature.yml` for artifact templates and the complete secrets list.
 
 ### Manual Deployment
 
