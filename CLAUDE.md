@@ -45,10 +45,10 @@ interactively test how a new KB change affects what the LLM actually sees.
 
 Composite scoring weights live as named constants in `neo4j_utils.py`:
 ```python
-SCORE_W_VECTOR  = 0.85   # dominant signal — do not reduce below ~0.80
-SCORE_W_PROJECT = 0.08   # graph bonus: linked to a Project node
-SCORE_W_ENTITY  = 0.05   # graph bonus: entity mentions (capped at 5)
-SCORE_W_LENGTH  = 0.02   # graph bonus: section > 2000 chars
+Wt_SEMANTIC    = 0.85   # dominant signal — do not reduce below ~0.80
+BONUS_PROJECT  = 0.08   # graph bonus: linked to a Project node
+BONUS_ENTITY   = 0.05   # graph bonus: entity mentions (capped at 5)
+BONUS_LENGTH   = 0.02   # graph bonus: section > 2000 chars
 ```
 These were rebalanced after a hallucination caused by graph bonuses overriding a higher
 vector-similarity chunk. Before changing them, read **`docs/LESSONS_LEARNED.md` Entry 001**

@@ -65,7 +65,7 @@ def run_neo4j(query: str, tier: str, k: int, fetch_k_mult: int = 4) -> list[dict
     Uses the same scoring weights as neo4j_utils.py (imported as constants)
     but with an extended RETURN clause to surface the bonus breakdown for debugging.
     """
-    from neo4j_utils import get_driver, SCORE_W_VECTOR, SCORE_W_PROJECT, SCORE_W_ENTITY, SCORE_W_LENGTH
+    from neo4j_utils import get_driver, Wt_SEMANTIC, BONUS_PROJECT, BONUS_ENTITY, BONUS_LENGTH
 
     embedding = get_embedding(query)
     allowed   = TIER_HIERARCHY.get(tier, ["public"])
@@ -87,10 +87,10 @@ def run_neo4j(query: str, tier: str, k: int, fetch_k_mult: int = 4) -> list[dict
          count(DISTINCT entity) AS entities_mentioned
 
     WITH section,
-         (vector_score * {SCORE_W_VECTOR} +
-          CASE WHEN projects_described > 0 THEN {SCORE_W_PROJECT} ELSE 0 END +
-          toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * {SCORE_W_ENTITY} +
-          (CASE WHEN section.char_count > 2000 THEN {SCORE_W_LENGTH} ELSE 0 END)) AS final_score,
+         (vector_score * {Wt_SEMANTIC} +
+          CASE WHEN projects_described > 0 THEN {BONUS_PROJECT} ELSE 0 END +
+          toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * {BONUS_ENTITY} +
+          (CASE WHEN section.char_count > 2000 THEN {BONUS_LENGTH} ELSE 0 END)) AS final_score,
          vector_score,
          projects_described,
          entities_mentioned
@@ -184,11 +184,11 @@ def _score_bar(score: float, width: int = 20) -> str:
 
 
 def print_neo4j_results(records: list[dict], preview: int, tier: str, k: int, fetch_k_mult: int):
-    from neo4j_utils import SCORE_W_VECTOR, SCORE_W_PROJECT, SCORE_W_ENTITY, SCORE_W_LENGTH
+    from neo4j_utils import Wt_SEMANTIC, BONUS_PROJECT, BONUS_ENTITY, BONUS_LENGTH
     W = 72
     print(f"\n{'═'*W}")
     print(f"  NEO4J GraphRAG  —  tier={tier}  k={k}  fetch_k={k*fetch_k_mult}")
-    print(f"  Weights: vec={SCORE_W_VECTOR}  proj={SCORE_W_PROJECT}  entity={SCORE_W_ENTITY}  length={SCORE_W_LENGTH}")
+    print(f"  Weights: vec={Wt_SEMANTIC}  proj={BONUS_PROJECT}  entity={BONUS_ENTITY}  length={BONUS_LENGTH}")
     print(f"{'─'*W}")
     for i, rec in enumerate(records):
         label     = _label(rec)
@@ -200,9 +200,9 @@ def print_neo4j_results(records: list[dict], preview: int, tier: str, k: int, fe
         text      = rec.get("text") or ""
         tiny_flag = "  ⚠️  SHORT" if char_c < MIN_CHUNK_WARN else ""
 
-        proj_bonus   = SCORE_W_PROJECT if proj_desc > 0 else 0.0
-        ent_bonus    = min(ent_ment, 5) / 5 * SCORE_W_ENTITY
-        length_bonus = SCORE_W_LENGTH if char_c > 2000 else 0.0
+        proj_bonus   = BONUS_PROJECT if proj_desc > 0 else 0.0
+        ent_bonus    = min(ent_ment, 5) / 5 * BONUS_ENTITY
+        length_bonus = BONUS_LENGTH if char_c > 2000 else 0.0
 
         print(f"\n  #{i+1}  {_score_bar(final)}  final={final:.3f}  vec={vec:.3f}")
         print(f"       +proj={proj_bonus:.2f}  +entity={ent_bonus:.2f}  +length={length_bonus:.2f}{tiny_flag}")

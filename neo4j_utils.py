@@ -28,15 +28,15 @@ _openai_client: OpenAI | None = None
 
 # Composite scoring weights — must sum to ≤ 1.0 with all bonuses at max.
 # Import these in replay_retrieval.py so the debug script stays in sync.
-SCORE_W_VECTOR  = 0.85   # pure semantic relevance — dominant signal
-SCORE_W_PROJECT = 0.08   # bonus: section is linked to a Project node
-SCORE_W_ENTITY  = 0.05   # bonus: section mentions entities (capped at 5)
-SCORE_W_LENGTH  = 0.02   # bonus: long sections (> 2000 chars)
+Wt_SEMANTIC    = 0.85   # pure semantic relevance — dominant signal
+BONUS_PROJECT  = 0.08   # graph bonus: section linked to a Project node
+BONUS_ENTITY   = 0.05   # graph bonus: entity mentions (capped at 5)
+BONUS_LENGTH   = 0.02   # graph bonus: section > 2000 chars
 
 # Cypher: vector similarity + graph-signal composite ranking.
 # Weights defined above — edit there, not here.
 # Relationship direction: Project -[:DESCRIBED_IN]-> Section.
-_HYBRID_CYPHER = """
+_HYBRID_CYPHER = f"""
 CALL db.index.vector.queryNodes('section_embeddings', $fetch_k, $query_embedding)
 YIELD node AS section, score AS vector_score
 
@@ -50,10 +50,10 @@ WITH section, vector_score,
      count(DISTINCT entity) AS entities_mentioned
 
 WITH section,
-     (vector_score * 0.85 +
-      CASE WHEN projects_described > 0 THEN 0.08 ELSE 0 END +
-      toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * 0.05 +
-      (CASE WHEN section.char_count > 2000 THEN 0.02 ELSE 0 END)) AS final_score,
+     (vector_score * {Wt_SEMANTIC} +
+      CASE WHEN projects_described > 0 THEN {BONUS_PROJECT} ELSE 0 END +
+      toFloat(CASE WHEN entities_mentioned > 5 THEN 5 ELSE entities_mentioned END) / 5 * {BONUS_ENTITY} +
+      (CASE WHEN section.char_count > 2000 THEN {BONUS_LENGTH} ELSE 0 END)) AS final_score,
      vector_score,
      projects_described
 

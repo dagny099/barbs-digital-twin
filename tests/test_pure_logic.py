@@ -70,24 +70,6 @@ class TestDetectAudienceTier:
         assert app.detect_audience_tier("oh yes the daisy 5k was great", []) == "personal"
 
 
-# ── build_sensitivity_filter ──────────────────────────────────────────────────
-
-class TestBuildSensitivityFilter:
-    def test_public_returns_eq_filter(self):
-        assert app.build_sensitivity_filter("public") == {"sensitivity": {"$eq": "public"}}
-
-    def test_personal_returns_in_filter(self):
-        result = app.build_sensitivity_filter("personal")
-        assert result == {"sensitivity": {"$in": ["public", "personal"]}}
-
-    def test_inner_circle_returns_none(self):
-        assert app.build_sensitivity_filter("inner_circle") is None
-
-    def test_unknown_tier_falls_back_to_public(self):
-        # Unrecognized tier should be treated as public (most restrictive)
-        assert app.build_sensitivity_filter("unknown_tier") == {"sensitivity": {"$eq": "public"}}
-
-
 # ── model_supports_tools ──────────────────────────────────────────────────────
 
 class TestModelSupportsTools:

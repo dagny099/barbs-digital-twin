@@ -296,8 +296,8 @@ The `--compare` flag produces a ranking-drift table that immediately reveals whe
 signals are promoting or demoting chunks relative to pure vector similarity — the most
 common source of unexpected responses.
 
-**Scoring weights** live as named constants in `neo4j_utils.py` (`SCORE_W_VECTOR`,
-`SCORE_W_PROJECT`, `SCORE_W_ENTITY`, `SCORE_W_LENGTH`) and are imported by
+**Scoring weights** live as named constants in `neo4j_utils.py` (`Wt_SEMANTIC`,
+`BONUS_PROJECT`, `BONUS_ENTITY`, `BONUS_LENGTH`) and are imported by
 `replay_retrieval.py` automatically, so the debug script and production code stay in sync.
 Before adjusting weights, read `docs/LESSONS_LEARNED.md` Entry 001 — it documents the
 hallucination that motivated the current values and includes before/after score comparisons.
@@ -450,7 +450,7 @@ this gap for project- and entity-related questions.
   queries ("What projects use Neo4j?"). See `evals/results/`.
 - **Composite weights are fragile — read the constraints before touching them.**
   See `CLAUDE.md` and `docs/LESSONS_LEARNED.md` Entry 001 before changing
-  `SCORE_W_*` constants in `neo4j_utils.py`.
+  `Wt_SEMANTIC` / `BONUS_*` constants in `neo4j_utils.py`.
 
 ### Why ChromaDB? (fallback + A/B baseline)
 - **Preserved for comparison**: The same chunks are stored in both systems.

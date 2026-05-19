@@ -148,27 +148,6 @@ def detect_audience_tier(message: str, history: list) -> str:
     return "public"
 
 
-def build_sensitivity_filter(tier: str) -> dict | None:
-    """Build a ChromaDB `where` filter for the given audience tier.
-
-    Tier escalation:
-        'public'       → only chunks with sensitivity='public'
-        'personal'     → chunks with sensitivity='public' OR 'personal'
-        'inner_circle' → all chunks (no filter needed)
-
-    Args:
-        tier: One of 'public', 'personal', 'inner_circle'
-
-    Returns:
-        A ChromaDB `where` dict, or None if no filtering is needed.
-    """
-    if tier == "inner_circle":
-        return None  # No filter — retrieve from everything
-    elif tier == "personal":
-        return {"sensitivity": {"$in": ["public", "personal"]}}
-    else:
-        return {"sensitivity": {"$eq": "public"}}
-
 # ═══════════════════════════════════════════════════════════════════
 # MULTI-PROVIDER MODEL REGISTRY
 # ═══════════════════════════════════════════════════════════════════
@@ -1296,7 +1275,6 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
  
     # ── Step 2.5: Detect audience tier from conversation signals ──
     audience_tier = detect_audience_tier(message, history)
-    sensitivity_filter = build_sensitivity_filter(audience_tier)
     if audience_tier != "public":
         print(f"SENSITIVITY: Tier escalated to '{audience_tier}'")
 
@@ -1325,7 +1303,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
     # RAG context is always included.
     # Walkthrough context is added as a SEPARATE block when present,
     # so the LLM has both the curated walkthrough notes AND whatever
-    # ChromaDB retrieved for the user's actual question.
+    # Neo4j retrieved for the user's actual question.
     system_message_enhanced = system_message + "\n\nContext:\n" + context
  
     if walkthrough_block:

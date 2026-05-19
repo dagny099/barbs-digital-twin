@@ -24,7 +24,7 @@ Pass --backend chromadb (default) or --backend neo4j.
   chromadb  — original path, queries .chroma_db_DT directly.
   neo4j     — calls query_neo4j_rag() from neo4j_utils.py, which handles
               embedding internally and applies the hybrid vector + graph
-              composite scoring (see SCORE_W_* constants in neo4j_utils.py).
+              composite scoring (see Wt_SEMANTIC / BONUS_* in neo4j_utils.py).
 
 Both backends produce the same output JSON/CSV schema so you can diff runs
 in a spreadsheet. The backend name is stamped in the output filename and in
@@ -277,8 +277,8 @@ def query_digital_twin(
         # Neo4j hybrid retrieval path
         # ------------------------------------------------------------------
         # query_neo4j_rag() handles embedding internally (OpenAI) and applies
-        # the composite vector + graph scoring defined by SCORE_W_* in
-        # neo4j_utils.py.  It returns pre-formatted context rather than raw
+        # the composite vector + graph scoring defined by Wt_SEMANTIC / BONUS_*
+        # in neo4j_utils.py.  It returns pre-formatted context rather than raw
         # chunk texts, so we reconstruct chunk-like dicts from the sources +
         # scores lists for compatibility with analyze_evals.py's chunk counts.
         from neo4j_utils import query_neo4j_rag

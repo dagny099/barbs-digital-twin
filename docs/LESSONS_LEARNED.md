@@ -102,16 +102,16 @@ this when the correct context was absent.
 **`neo4j_utils.py`** — rebalanced composite scoring weights:
 ```python
 # Before (graph signals too dominant):
-SCORE_W_VECTOR  = 0.60
-SCORE_W_PROJECT = 0.25   # +0.25 per project link
-SCORE_W_ENTITY  = 0.10   # +0.10 max entity mentions
-SCORE_W_LENGTH  = 0.05   # +0.05 for long chunks
+Wt_SEMANTIC    = 0.60
+BONUS_PROJECT  = 0.25   # +0.25 per project link
+BONUS_ENTITY   = 0.10   # +0.10 max entity mentions
+BONUS_LENGTH   = 0.05   # +0.05 for long chunks
 
 # After (vector similarity restored as primary signal):
-SCORE_W_VECTOR  = 0.85
-SCORE_W_PROJECT = 0.08
-SCORE_W_ENTITY  = 0.05
-SCORE_W_LENGTH  = 0.02
+Wt_SEMANTIC    = 0.85
+BONUS_PROJECT  = 0.08
+BONUS_ENTITY   = 0.05
+BONUS_LENGTH   = 0.02
 ```
 Graph signals still apply as tiebreakers (max +0.15) but can no longer
 override a clear vector similarity lead. With the new weights, the beekeeping
