@@ -371,8 +371,9 @@ def on_runs_changed(path_a, path_b):
     choices = build_question_choices(run_a, run_b)
     radio = gr.update(choices=choices, value=(choices[0][1] if choices else None))
     blank = '<div style="color:#888;padding:8px;">(no question selected)</div>'
+    # meta, radio, header, resp_a, resp_b, stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
     return (meta_html, radio,
-            blank, blank, "", "", blank, blank, blank, blank, blank)
+            blank, "", "", "", "", blank, blank, blank, blank, blank)
 
 
 def on_question_changed(path_a, path_b, qid):
