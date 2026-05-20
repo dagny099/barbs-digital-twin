@@ -358,14 +358,8 @@ def build_question_choices(run_a, run_b):
             if abs(d) >= 0.005:
                 arrow = "▴" if d > 0 else "▾"
                 delta = f"  Δsim {arrow}{d:+.2f}"
-        len_flag = ""
-        la = a.get("response_length_words")
-        lb = b.get("response_length_words")
-        if la and lb:
-            if abs(lb - la) / max(la, lb) > 0.5:
-                len_flag = "  ●len"
         qtype = (a.get("question_type") or b.get("question_type") or "")
-        label = f"{qid}  {qtype}{delta}{len_flag}".strip()
+        label = f"{qid}  {qtype}{delta}".strip()
         choices.append((label, qid))
     return choices
 
@@ -382,19 +376,33 @@ def _col_header(side, run):
     )
 
 
-def on_runs_changed(path_a, path_b):
+def on_runs_changed(path_a, path_b, current_qid):
+    """Re-render everything when either dropdown changes.
+
+    The radio's `change` event only fires if its *value* changes, so
+    if the previously selected qid still exists in the new run pair
+    the panel below would never refresh. We therefore compute the
+    full panel here, keeping the prior selection when valid.
+    """
     run_a = load_run(path_a)
     run_b = load_run(path_b)
     meta_html = render_metadata_strip(run_a, run_b)
     choices = build_question_choices(run_a, run_b)
-    radio = gr.update(choices=choices, value=(choices[0][1] if choices else None))
-    blank = '<div style="color:#888;padding:8px;">(no question selected)</div>'
+    qids = [c[1] for c in choices]
+    selected = current_qid if (current_qid in qids) else (qids[0] if qids else None)
+    radio = gr.update(choices=choices, value=selected)
     header_a = _col_header("A", run_a)
     header_b = _col_header("B", run_b)
-    # meta, radio, col_a, col_b, q_header, resp_a, resp_b,
-    # stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
-    return (meta_html, radio, header_a, header_b,
-            blank, "", "", "", "", blank, blank, blank, blank, blank)
+
+    if selected is None:
+        blank = '<div style="color:#888;padding:8px;">(select two runs to begin)</div>'
+        # meta, radio, col_a, col_b, q_header, resp_a, resp_b,
+        # stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
+        return (meta_html, radio, header_a, header_b,
+                blank, "", "", "", "", blank, blank, blank, blank, blank)
+
+    panel = on_question_changed(path_a, path_b, selected)
+    return (meta_html, radio, header_a, header_b, *panel)
 
 
 def on_question_changed(path_a, path_b, qid):
@@ -484,7 +492,8 @@ def build_app(results_dir=RESULTS_DIR):
         with gr.Row():
             with gr.Column(scale=1, min_width=240):
                 gr.Markdown("**Questions**")
-                question_radio = gr.Radio(choices=[], label="", interactive=True)
+                question_radio = gr.Radio(choices=[], show_label=False,
+                                          container=False, interactive=True)
             with gr.Column(scale=4):
                 with gr.Group(elem_classes=["question-block"]):
                     question_header = gr.HTML()
@@ -520,11 +529,14 @@ def build_app(results_dir=RESULTS_DIR):
             projects_a_html, projects_b_html, rubric_html,
         ]
 
-        # When runs change: refresh metadata strip + question list, and clear panels.
-        run_a_dd.change(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
-        run_b_dd.change(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
+        runs_changed_inputs = [run_a_dd, run_b_dd, question_radio]
 
-        # When the selected question changes: refresh the main panel.
+        # When runs change: refresh everything, keeping the current question
+        # selection if it still exists in the new pair.
+        run_a_dd.change(on_runs_changed, runs_changed_inputs, runs_changed_outputs)
+        run_b_dd.change(on_runs_changed, runs_changed_inputs, runs_changed_outputs)
+
+        # When the selected question changes: refresh just the main panel.
         question_radio.change(
             on_question_changed, [run_a_dd, run_b_dd, question_radio],
             [question_header, response_a_md, response_b_md,
@@ -534,7 +546,7 @@ def build_app(results_dir=RESULTS_DIR):
         )
 
         # Initial population on load.
-        demo.load(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
+        demo.load(on_runs_changed, runs_changed_inputs, runs_changed_outputs)
 
     return demo
 
