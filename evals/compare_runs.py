@@ -364,6 +364,12 @@ def build_question_choices(run_a, run_b):
 # CALLBACKS
 # ═══════════════════════════════════════════════════════════════════
 
+def _col_header(side, run):
+    model = (run or {}).get("run_metadata", {}).get("model") if run else None
+    suffix = f": {model}" if model else ""
+    return f"### Run {side}{suffix}"
+
+
 def on_runs_changed(path_a, path_b):
     run_a = load_run(path_a)
     run_b = load_run(path_b)
@@ -371,8 +377,11 @@ def on_runs_changed(path_a, path_b):
     choices = build_question_choices(run_a, run_b)
     radio = gr.update(choices=choices, value=(choices[0][1] if choices else None))
     blank = '<div style="color:#888;padding:8px;">(no question selected)</div>'
-    # meta, radio, header, resp_a, resp_b, stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
-    return (meta_html, radio,
+    header_a = _col_header("A", run_a)
+    header_b = _col_header("B", run_b)
+    # meta, radio, col_a, col_b, q_header, resp_a, resp_b,
+    # stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
+    return (meta_html, radio, header_a, header_b,
             blank, "", "", "", "", blank, blank, blank, blank, blank)
 
 
@@ -431,7 +440,14 @@ def build_app(results_dir=RESULTS_DIR):
             run_a_dd = gr.Dropdown(choices=runs, value=default_a, label="Run A", scale=1)
             run_b_dd = gr.Dropdown(choices=runs, value=default_b, label="Run B", scale=1)
 
-        meta_strip = gr.HTML()
+        gr.HTML(
+            '<div style="font-size:12px;color:#888;margin:-4px 0 8px 2px;">'
+            'Tip: pick a different JSON run in each dropdown to see a side-by-side diff. '
+            'Newest runs appear first.</div>'
+        )
+
+        with gr.Accordion("Run metadata (model, params, counts)", open=True):
+            meta_strip = gr.HTML()
 
         with gr.Row():
             with gr.Column(scale=1, min_width=240):
@@ -439,9 +455,11 @@ def build_app(results_dir=RESULTS_DIR):
                 question_radio = gr.Radio(choices=[], label="", interactive=True)
             with gr.Column(scale=4):
                 question_header = gr.HTML()
+                with gr.Accordion("Rubric with Scoring Hints", open=False):
+                    rubric_html = gr.HTML()
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown("### Run A")
+                        col_a_header = gr.Markdown("### Run A")
                         stats_a_html = gr.HTML()
                         response_a_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
@@ -449,33 +467,26 @@ def build_app(results_dir=RESULTS_DIR):
                         with gr.Accordion("Specific projects mentioned", open=False):
                             projects_a_html = gr.HTML()
                     with gr.Column():
-                        gr.Markdown("### Run B")
+                        col_b_header = gr.Markdown("### Run B")
                         stats_b_html = gr.HTML()
                         response_b_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
                             chunks_b_html = gr.HTML()
                         with gr.Accordion("Specific projects mentioned", open=False):
                             projects_b_html = gr.HTML()
-                with gr.Accordion("Rubric (shared per question)", open=False):
-                    rubric_html = gr.HTML()
+
+        runs_changed_outputs = [
+            meta_strip, question_radio,
+            col_a_header, col_b_header,
+            question_header, response_a_md, response_b_md,
+            stats_a_html, stats_b_html,
+            chunks_a_html, chunks_b_html,
+            projects_a_html, projects_b_html, rubric_html,
+        ]
 
         # When runs change: refresh metadata strip + question list, and clear panels.
-        run_a_dd.change(
-            on_runs_changed, [run_a_dd, run_b_dd],
-            [meta_strip, question_radio,
-             question_header, response_a_md, response_b_md,
-             stats_a_html, stats_b_html,
-             chunks_a_html, chunks_b_html,
-             projects_a_html, projects_b_html, rubric_html],
-        )
-        run_b_dd.change(
-            on_runs_changed, [run_a_dd, run_b_dd],
-            [meta_strip, question_radio,
-             question_header, response_a_md, response_b_md,
-             stats_a_html, stats_b_html,
-             chunks_a_html, chunks_b_html,
-             projects_a_html, projects_b_html, rubric_html],
-        )
+        run_a_dd.change(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
+        run_b_dd.change(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
 
         # When the selected question changes: refresh the main panel.
         question_radio.change(
@@ -487,14 +498,7 @@ def build_app(results_dir=RESULTS_DIR):
         )
 
         # Initial population on load.
-        demo.load(
-            on_runs_changed, [run_a_dd, run_b_dd],
-            [meta_strip, question_radio,
-             question_header, response_a_md, response_b_md,
-             stats_a_html, stats_b_html,
-             chunks_a_html, chunks_b_html,
-             projects_a_html, projects_b_html, rubric_html],
-        )
+        demo.load(on_runs_changed, [run_a_dd, run_b_dd], runs_changed_outputs)
 
     return demo
 
