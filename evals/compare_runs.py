@@ -317,8 +317,8 @@ def render_question_header(result_a, result_b):
         if v:
             meta_bits.append(f'<span style="color:#888;">{k}:</span> {html_lib.escape(str(v))}')
     return (
-        f'<div style="padding:8px 4px;">'
-        f'<div style="font-size:15px;font-weight:500;margin-bottom:4px;">{html_lib.escape(q)}</div>'
+        f'<div style="padding:4px 2px 8px 2px;">'
+        f'<div style="font-size:17px;font-weight:700;margin-bottom:6px;">{html_lib.escape(q)}</div>'
         f'<div style="font-size:11px;display:flex;gap:14px;flex-wrap:wrap;">'
         + " ".join(meta_bits) + '</div></div>'
     )
@@ -367,7 +367,9 @@ def build_question_choices(run_a, run_b):
 def _col_header(side, run):
     model = (run or {}).get("run_metadata", {}).get("model") if run else None
     suffix = f": {model}" if model else ""
-    return f"### Run {side}{suffix}"
+    return (
+        f'<span style="font-size:16px;font-weight:400;">Run {side}{suffix}</span>'
+    )
 
 
 def on_runs_changed(path_a, path_b):
@@ -433,7 +435,19 @@ def build_app(results_dir=RESULTS_DIR):
     default_a = runs[0][1]
     default_b = runs[1][1] if len(runs) > 1 else runs[0][1]
 
-    with gr.Blocks(title="Eval Run Comparison", theme=gr.themes.Soft()) as demo:
+    custom_css = """
+    .question-block {
+        border: 1px solid var(--border-color-primary, #ccc);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin: 4px 0 12px 0;
+        background: var(--background-fill-secondary, #fafafa);
+    }
+    .question-block .label-wrap { font-weight: 500; }
+    """
+
+    with gr.Blocks(title="Eval Run Comparison", theme=gr.themes.Soft(),
+                   css=custom_css) as demo:
         gr.Markdown("## Eval Run Comparison")
 
         with gr.Row():
@@ -454,12 +468,15 @@ def build_app(results_dir=RESULTS_DIR):
                 gr.Markdown("**Questions**")
                 question_radio = gr.Radio(choices=[], label="", interactive=True)
             with gr.Column(scale=4):
-                question_header = gr.HTML()
-                with gr.Accordion("Rubric with Scoring Hints", open=False):
-                    rubric_html = gr.HTML()
+                with gr.Group(elem_classes=["question-block"]):
+                    question_header = gr.HTML()
+                    with gr.Accordion("Rubric with Scoring Hints", open=False):
+                        rubric_html = gr.HTML()
                 with gr.Row():
                     with gr.Column():
-                        col_a_header = gr.Markdown("### Run A")
+                        col_a_header = gr.Markdown(
+                            '<span style="font-size:16px;font-weight:400;">Run A</span>'
+                        )
                         stats_a_html = gr.HTML()
                         response_a_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
@@ -467,7 +484,9 @@ def build_app(results_dir=RESULTS_DIR):
                         with gr.Accordion("Specific projects mentioned", open=False):
                             projects_a_html = gr.HTML()
                     with gr.Column():
-                        col_b_header = gr.Markdown("### Run B")
+                        col_b_header = gr.Markdown(
+                            '<span style="font-size:16px;font-weight:400;">Run B</span>'
+                        )
                         stats_b_html = gr.HTML()
                         response_b_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
