@@ -444,6 +444,10 @@ def build_app(results_dir=RESULTS_DIR):
         background: var(--background-fill-secondary, #fafafa);
     }
     .question-block .label-wrap { font-weight: 500; }
+    .run-picker-label { flex: 0 0 auto !important; min-width: 0 !important;
+                        display: flex !important; align-items: center !important;
+                        padding-right: 6px !important; }
+    .run-picker-label p { margin: 0 !important; white-space: nowrap !important; }
     """
 
     with gr.Blocks(title="Eval Run Comparison", theme=gr.themes.Soft(),
@@ -451,14 +455,16 @@ def build_app(results_dir=RESULTS_DIR):
         gr.Markdown("## Eval Run Comparison")
 
         with gr.Row():
-            run_a_dd = gr.Dropdown(choices=runs, value=default_a, label="Run A", scale=1)
-            run_b_dd = gr.Dropdown(choices=runs, value=default_b, label="Run B", scale=1)
-
-        gr.HTML(
-            '<div style="font-size:12px;color:#888;margin:-4px 0 8px 2px;">'
-            'Tip: pick a different JSON run in each dropdown to see a side-by-side diff. '
-            'Newest runs appear first.</div>'
-        )
+            with gr.Column(scale=1):
+                with gr.Row(equal_height=True):
+                    gr.Markdown("**Select Run A:**", elem_classes=["run-picker-label"])
+                    run_a_dd = gr.Dropdown(choices=runs, value=default_a,
+                                           show_label=False, container=False, scale=4)
+            with gr.Column(scale=1):
+                with gr.Row(equal_height=True):
+                    gr.Markdown("**Select Run B:**", elem_classes=["run-picker-label"])
+                    run_b_dd = gr.Dropdown(choices=runs, value=default_b,
+                                           show_label=False, container=False, scale=4)
 
         with gr.Accordion("Run metadata (model, params, counts)", open=True):
             meta_strip = gr.HTML()
