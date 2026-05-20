@@ -288,7 +288,11 @@ RUBRIC_FIELDS = [
 
 
 def render_rubric_html(result_a, result_b):
-    """Rubric is shared per question — prefer A, fall back to B."""
+    """Rubric is shared per question — prefer A, fall back to B.
+
+    Rendered as a native <details> so it nests cleanly inside the
+    question-block panel without adding a second border.
+    """
     src = result_a or result_b or {}
     rows = []
     for k, label in RUBRIC_FIELDS:
@@ -300,11 +304,17 @@ def render_rubric_html(result_a, result_b):
             f'white-space:nowrap;">{label}</td>'
             f'<td style="padding:4px 10px;font-size:12px;">{html_lib.escape(str(v))}</td></tr>'
         )
-    if not rows:
-        return '<div style="color:#888;padding:8px;">(no rubric fields populated)</div>'
-    return (
-        '<table style="border-collapse:collapse;width:100%;">'
+    body = (
+        '<table style="border-collapse:collapse;width:100%;margin-top:6px;">'
         + "".join(rows) + '</table>'
+    ) if rows else (
+        '<div style="color:#888;padding:6px 0;font-size:12px;">(no rubric fields populated)</div>'
+    )
+    return (
+        '<details style="margin-top:6px;">'
+        '<summary style="cursor:pointer;font-size:13px;font-weight:500;padding:4px 0;">'
+        'Rubric with Scoring Hints</summary>'
+        f'{body}</details>'
     )
 
 
@@ -432,8 +442,9 @@ def build_app(results_dir=RESULTS_DIR):
             gr.Markdown(f"### {empty_msg}")
         return demo
 
-    default_a = runs[0][1]
-    default_b = runs[1][1] if len(runs) > 1 else runs[0][1]
+    # Start with both pickers empty so the user explicitly chooses each run.
+    default_a = None
+    default_b = None
 
     custom_css = """
     .question-block {
@@ -443,7 +454,8 @@ def build_app(results_dir=RESULTS_DIR):
         margin: 4px 0 12px 0;
         background: var(--background-fill-secondary, #fafafa);
     }
-    .question-block .label-wrap { font-weight: 500; }
+    /* Strip Gradio Group's own border so only .question-block's frame shows. */
+    .question-block > div { border: none !important; background: transparent !important; }
     .run-picker-label { flex: 0 0 auto !important; min-width: 0 !important;
                         display: flex !important; align-items: center !important;
                         padding-right: 6px !important; }
@@ -476,8 +488,7 @@ def build_app(results_dir=RESULTS_DIR):
             with gr.Column(scale=4):
                 with gr.Group(elem_classes=["question-block"]):
                     question_header = gr.HTML()
-                    with gr.Accordion("Rubric with Scoring Hints", open=False):
-                        rubric_html = gr.HTML()
+                    rubric_html = gr.HTML()
                 with gr.Row():
                     with gr.Column():
                         col_a_header = gr.Markdown(
