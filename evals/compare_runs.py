@@ -94,7 +94,7 @@ def format_eval_chunks_html(chunks, only_in_self_keys=None):
         sim_str = f"{sim:.3f}" if sim is not None else "—"
         cards.append(f"""
         <div style="border:1px solid var(--border-color-primary, #ddd);border-radius:8px;
-                    padding:10px 12px;margin-bottom:8px;">
+                    margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:11px;font-weight:500;padding:2px 10px;border-radius:99px;
@@ -152,7 +152,9 @@ def discover_runs(results_dir=RESULTS_DIR):
                 f"k={meta.get('top_k', '?')}",
             ]
             label = " · ".join(b for b in label_bits if b)
-            items.append((f"{label}    [{f.name}]", str(f)))
+            #items.append((f"{label}    [{f.name}]", str(f)))
+            items.append((label, str(f))) #do not show json filename in dropdown label text
+
         except Exception as e:
             items.append((f"(unreadable) {f.name}: {e}", str(f)))
     return items
@@ -193,7 +195,7 @@ META_FIELDS = [
 
 def render_metadata_strip(run_a, run_b):
     if not run_a or not run_b:
-        return '<div style="color:#888;padding:8px;">Pick two runs to compare.</div>'
+        return '<div style="color:#cc0000;padding:8px;">Pick two runs to compare.</div>'
     ma = run_a.get("run_metadata", {}) or {}
     mb = run_b.get("run_metadata", {}) or {}
 
@@ -311,8 +313,8 @@ def render_rubric_html(result_a, result_b):
         '<div style="color:#888;padding:6px 0;font-size:12px;">(no rubric fields populated)</div>'
     )
     return (
-        '<details style="margin-top:6px;">'
-        '<summary style="cursor:pointer;font-size:13px;font-weight:500;padding:4px 0;">'
+        '<details style="margin-top:2px;">'
+        '<summary style="cursor:pointer;font-size:13px;font-weight:500;">'
         'Rubric with Scoring Hints</summary>'
         f'{body}</details>'
     )
@@ -327,7 +329,7 @@ def render_question_header(result_a, result_b):
         if v:
             meta_bits.append(f'<span style="color:#888;">{k}:</span> {html_lib.escape(str(v))}')
     return (
-        f'<div style="padding:4px 2px 8px 2px;">'
+       # f'<div style="padding:4px 2px 8px 2px;">'
         f'<div style="font-size:17px;font-weight:700;margin-bottom:6px;">{html_lib.escape(q)}</div>'
         f'<div style="font-size:11px;display:flex;gap:14px;flex-wrap:wrap;">'
         + " ".join(meta_bits) + '</div></div>'
@@ -395,7 +397,7 @@ def on_runs_changed(path_a, path_b, current_qid):
     header_b = _col_header("B", run_b)
 
     if selected is None:
-        blank = '<div style="color:#888;padding:8px;">(select two runs to begin)</div>'
+        blank = '<div>&nbsp</div>'
         # meta, radio, col_a, col_b, q_header, resp_a, resp_b,
         # stats_a, stats_b, chunks_a, chunks_b, proj_a, proj_b, rubric
         return (meta_html, radio, header_a, header_b,
@@ -441,6 +443,21 @@ def on_question_changed(path_a, path_b, qid):
 # UI
 # ═══════════════════════════════════════════════════════════════════
 
+custom_css = """
+.question-block {
+    border: 1px solid var(--border-color-primary, #ccc);
+    border-radius: 8px;
+    margin: 4px 0 12px 0;
+    background: var(--background-fill-secondary, #fafafa);
+}
+/* Strip Gradio Group's own border so only .question-block's frame shows. */
+.question-block > div { border: none !important; background: transparent !important; }
+.run-picker-label { flex: 0 0 auto !important; min-width: 0 !important;
+                    display: flex !important; align-items: center !important;
+                    padding-right: 6px !important; }
+.run-picker-label p { margin: 0 !important; white-space: nowrap !important; }
+"""
+
 def build_app(results_dir=RESULTS_DIR):
     runs = discover_runs(results_dir)
     if not runs:
@@ -451,27 +468,13 @@ def build_app(results_dir=RESULTS_DIR):
         return demo
 
     # Start with both pickers empty so the user explicitly chooses each run.
-    default_a = None
-    default_b = None
-
-    custom_css = """
-    .question-block {
-        border: 1px solid var(--border-color-primary, #ccc);
-        border-radius: 8px;
-        padding: 12px 14px;
-        margin: 4px 0 12px 0;
-        background: var(--background-fill-secondary, #fafafa);
-    }
-    /* Strip Gradio Group's own border so only .question-block's frame shows. */
-    .question-block > div { border: none !important; background: transparent !important; }
-    .run-picker-label { flex: 0 0 auto !important; min-width: 0 !important;
-                        display: flex !important; align-items: center !important;
-                        padding-right: 6px !important; }
-    .run-picker-label p { margin: 0 !important; white-space: nowrap !important; }
-    """
-
-    with gr.Blocks(title="Eval Run Comparison", theme=gr.themes.Soft(),
-                   css=custom_css) as demo:
+    #default_a, default_b = None, None
+    # OR
+    # Autopopulate the most recent 2 files!
+    default_a = runs[0][1]
+    default_b = runs[1][1] if len(runs) > 1 else runs[0][1]
+    
+    with gr.Blocks(title="Eval Run Comparison") as demo:
         gr.Markdown("## Eval Run Comparison")
 
         with gr.Row():
@@ -486,7 +489,7 @@ def build_app(results_dir=RESULTS_DIR):
                     run_b_dd = gr.Dropdown(choices=runs, value=default_b,
                                            show_label=False, container=False, scale=4)
 
-        with gr.Accordion("Run metadata (model, params, counts)", open=True):
+        with gr.Accordion("Run configuration: ", open=True):
             meta_strip = gr.HTML()
 
         with gr.Row():
@@ -504,6 +507,7 @@ def build_app(results_dir=RESULTS_DIR):
                             '<span style="font-size:16px;font-weight:400;">Run A</span>'
                         )
                         stats_a_html = gr.HTML()
+                        gr.HTML('<hr style="border:none;border-top:2px solid #6367f0; padding: 0; margin: 0; width: 100%">')
                         response_a_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
                             chunks_a_html = gr.HTML()
@@ -514,6 +518,7 @@ def build_app(results_dir=RESULTS_DIR):
                             '<span style="font-size:16px;font-weight:400;">Run B</span>'
                         )
                         stats_b_html = gr.HTML()
+                        gr.HTML('<hr style="border:none;border-top:2px solid #6367f0; padding: 0; margin: 0; width: 100%">')
                         response_b_md = gr.Markdown()
                         with gr.Accordion("Retrieved chunks", open=False):
                             chunks_b_html = gr.HTML()
@@ -560,8 +565,8 @@ def main():
     args = parser.parse_args()
 
     demo = build_app(Path(args.results_dir))
-    demo.launch(server_port=args.port, share=args.share)
-
+    demo.launch(server_port=args.port, share=args.share,
+                theme=gr.themes.Soft(), css=custom_css)
 
 if __name__ == "__main__":
     main()
