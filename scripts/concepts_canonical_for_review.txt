@@ -1,0 +1,27 @@
+CANONICAL CONCEPTS (post-canonicalization)
+Total: 22 canonical nodes
+Format: canonical name  →  alt_labels (merged synonyms)
+======================================================================
+
+Attention as a limited resource  →  ['Attention allocation', 'Resource allocation under constraints', 'Attention Allocation Under Uncertainty', 'Exploration vs Exploitation']
+Bayesian reasoning  →  ['Bayesian thinking', 'Bayesian updating under uncertainty', 'Belief updating', 'Base rates', 'Priors']
+Contextual guidance  →  ['Scene context', 'contextual priors', 'Context-Driven Attention', 'Context-guided attention', 'Prior knowledge']
+David Marr's levels of analysis  →  ["Marr's levels of analysis", 'Computational level', 'Algorithmic level', 'Implementation level', 'Levels of analysis', 'Information-processing systems']
+Design for the downstream mental model  →  ['Downstream decision-making', 'decision grounding', 'Problem representation']
+Durable knowledge systems  →  ['durable value', 'Timestamp-grounded traceability', 'data generation tracing']
+Evaluation as a design problem  →  ['Evaluation mindset', 'Evaluation framework', 'Ground-truth evaluation', 'Evaluation Habit', 'Evaluation as shared understanding']
+Explainability  →  ['Explainable AI', 'Interpretability', 'AI system trustability', 'Inspectable AI Systems']
+Grounded AI Systems  →  ['Grounded generation', 'Data Trustability', 'Operational readiness', 'Readiness for real operation', 'Real-world usability']
+Human-centered design
+Hypothesis-driven design  →  ['hypothesis-driven design', 'Experimental rigor', 'Hypothesis revision']
+Knowledge representation  →  ['Knowledge legibility', 'information navigability', 'knowledge organization', 'Entity-relationship modeling', 'Semantic Rigor']
+Meaning-making  →  ['Making Meaning from Messy Data', 'Meaning from messy data', 'Data and meaning', 'Data legibility', 'knowledge usability']
+Mental Models  →  ['Internal models', 'mental model alignment']
+Ontology  →  ['Ontology extraction']
+Pragmatic design  →  ['Design philosophy', 'Gap between technically correct and actually useful', 'Build things people actually use', 'Build-adopt gap', 'Durable value creation', 'Durable value']
+Representations and Constraints Framework  →  ['Representational Constraints', 'Representational framing', 'Prior Knowledge in Perception']
+Semantic Web  →  ['Linked Open Data', 'JSON-LD']
+Sensemaking  →  ['Contextual sensemaking', 'Collaborative sensemaking', 'Organizational sensemaking']
+Systems thinking  →  ['systems-level thinking', 'Systems-level mindset']
+Transfer of domain knowledge  →  ['Transfer of Cognitive Habits', 'Cognitive Journey', 'Cognitive Science in Engineering']
+Translational Research  →  ['Cognitive science applied to AI', 'cognitive science applied to AI systems']

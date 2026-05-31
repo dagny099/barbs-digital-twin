@@ -9,6 +9,7 @@ from openai import OpenAI
 import gradio as gr
 import litellm
 import chromadb
+from neo4j_utils import query_neo4j_rag
 import json
 import re
 import requests
@@ -146,27 +147,6 @@ def detect_audience_tier(message: str, history: list) -> str:
 
     return "public"
 
-
-def build_sensitivity_filter(tier: str) -> dict | None:
-    """Build a ChromaDB `where` filter for the given audience tier.
-
-    Tier escalation:
-        'public'       → only chunks with sensitivity='public'
-        'personal'     → chunks with sensitivity='public' OR 'personal'
-        'inner_circle' → all chunks (no filter needed)
-
-    Args:
-        tier: One of 'public', 'personal', 'inner_circle'
-
-    Returns:
-        A ChromaDB `where` dict, or None if no filtering is needed.
-    """
-    if tier == "inner_circle":
-        return None  # No filter — retrieve from everything
-    elif tier == "personal":
-        return {"sensitivity": {"$in": ["public", "personal"]}}
-    else:
-        return {"sensitivity": {"$eq": "public"}}
 
 # ═══════════════════════════════════════════════════════════════════
 # MULTI-PROVIDER MODEL REGISTRY
@@ -1295,55 +1275,35 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
  
     # ── Step 2.5: Detect audience tier from conversation signals ──
     audience_tier = detect_audience_tier(message, history)
-    sensitivity_filter = build_sensitivity_filter(audience_tier)
     if audience_tier != "public":
         print(f"SENSITIVITY: Tier escalated to '{audience_tier}'")
 
     # ── Step 3: RAG retrieval on the ORIGINAL message ───────────
-    # (Not the enriched one — this is the key change for hybrid mode)
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=[message]   # ← user's actual question, unmodified
+    # Neo4j hybrid: vector similarity + graph-signal composite ranking.
+    rag_result = query_neo4j_rag(
+        user_query=message,
+        visitor_tier=audience_tier,
+        k=actual_top_k,
     )
-    query_embedded = response.data[0].embedding
-
-    query_kwargs = {
-        "query_embeddings": [query_embedded],
-        "n_results": actual_top_k,
-    }
-    if sensitivity_filter:
-        query_kwargs["where"] = sensitivity_filter
-
-    results = collection.query(**query_kwargs)
+    context = rag_result["context"]
 
     # ── Compute retrieval quality metrics (Phase 2 logging) ─────
-    similarity_stats = _compute_similarity_stats(results.get('distances', [[]])[0])
+    # Neo4j returns composite scores in [0,1]; reuse the same stats shape.
+    scores = rag_result["scores"]
+    similarity_stats = {
+        "avg": round(sum(scores) / len(scores), 3) if scores else 0.0,
+        "max": round(max(scores), 3) if scores else 0.0,
+    }
 
-    # ── Step 4: Build context from RAG chunks ───────────────────
-    context_parts = []
-    for doc, meta in zip(results['documents'][0], results['metadatas'][0]):
-        src     = meta.get('source', '')
-        section = meta.get('section', '')
-        project = meta.get('project_name', '')
-        if project and section:
-            prefix = f"[{project} — {section}]"
-        elif section:
-            prefix = f"[{src} — {section}]"
-        else:
-            prefix = f"[{src}]"
-        context_parts.append(f"{prefix}\n{doc}")
-    context = "\n---\n".join(context_parts)
- 
-    print(f"Retrieved chunks:")
-    for doc, meta in zip(results['documents'][0], results['metadatas'][0]):
-        section_info = f" >> {meta.get('section', 'N/A')}" if meta.get('section') else ""
-        print(f"<<Document {meta['source']}{section_info} -- Chunk {meta['chunk_index']}>>\n{doc}\n")
+    print(f"Retrieved sections (Neo4j):")
+    for src, score in zip(rag_result["sources"], scores):
+        print(f"<<Section: {src}  score={score:.3f}>>")
  
     # ── Step 5: Assemble system message (HYBRID) ────────────────
     # RAG context is always included.
     # Walkthrough context is added as a SEPARATE block when present,
     # so the LLM has both the curated walkthrough notes AND whatever
-    # ChromaDB retrieved for the user's actual question.
+    # Neo4j retrieved for the user's actual question.
     system_message_enhanced = system_message + "\n\nContext:\n" + context
  
     if walkthrough_block:
@@ -1573,7 +1533,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
         model            = actual_model,
         temperature      = actual_temp,
         # Phase 1: RAG metrics
-        n_chunks_retrieved = len(results['documents'][0]),
+        n_chunks_retrieved = len(rag_result["sources"]),
         # Phase 1: Response metrics
         response_chars   = len(collected),
         workflow_type    = workflow_type,

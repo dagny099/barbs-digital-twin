@@ -49,7 +49,8 @@ SENSITIVITY_BY_SOURCE = {
     "kb-intellectual-foundations":  "public",
     "project-summaries":           "public",
     "project-walkthroughs":        "public",
-    "jekyll":                      "public",
+    "jekyll-post":                 "public",
+    "jekyll-story":                "public",
 
     # ── Personal (shared after familiarity signals) ─────────────
     "kb-origins":                  "personal",

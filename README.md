@@ -3,17 +3,18 @@
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)
-![RAG](https://img.shields.io/badge/architecture-RAG-orange.svg)
+![GraphRAG](https://img.shields.io/badge/architecture-GraphRAG-orange.svg)
 ![LLM](https://img.shields.io/badge/LLM-multi--provider-purple.svg)
+![Neo4j](https://img.shields.io/badge/graph-Neo4j-brightgreen.svg)
 
-A conversational AI digital twin powered by RAG (Retrieval-Augmented Generation) that embodies Barbara Hidalgo-Sotelo's professional knowledge, project portfolio, and personal expertise. Built with Python, Gradio, ChromaDB, and multi-provider LLM support via LiteLLM.
+A conversational AI digital twin powered by GraphRAG — retrieval-augmented generation backed by a Neo4j knowledge graph — that embodies Barbara Hidalgo-Sotelo's professional knowledge, project portfolio, and personal expertise. Built with Python, Gradio, Neo4j, and multi-provider LLM support via LiteLLM.
 
 ## Overview
 
-This digital twin serves as an intelligent interface to explore Barbara's professional background, technical projects, and expertise. It uses vector embeddings and semantic search to retrieve relevant context from multiple knowledge sources, then generates responses in Barbara's voice and personality.
+This digital twin is an intelligent interface for exploring Barbara's professional background, technical projects, and expertise. It retrieves context from a structured knowledge graph — combining vector similarity with graph signals (project links, entity mentions) — and generates responses in Barbara's voice and personality.
 
 **For Visitors**: Chat with the twin at [twin.barbhs.com](https://twin.barbhs.com)
-**For Developers**: Clone this repo to explore the RAG architecture, evaluation suite, and admin debugging tools
+**For Developers**: Clone this repo to explore the GraphRAG architecture, Neo4j knowledge graph, evaluation suite, and admin debugging tools
 
 ## Screenshots
 
@@ -35,16 +36,16 @@ Want to run it locally in 5 minutes?
 
 ## Features
 
-- **Multi-Source Knowledge Base**: Structured knowledge base documents, project PDFs, publications, and live website content
-- **Semantic Search & RAG**: ChromaDB vector store for intelligent context retrieval
-- **Section-Aware Ingestion**: Precise provenance tracking for every retrieved chunk
+- **Multi-Source Knowledge Base**: Structured KB docs, project PDFs, publications, and website content — parsed into named sections with provenance metadata
+- **GraphRAG Retrieval**: Hybrid Neo4j retrieval combines vector similarity (dominant signal) with graph bonuses for project-linked and entity-rich sections. ChromaDB retained as fallback and A/B comparison baseline.
+- **Neo4j Knowledge Graph**: Documents, Sections, Projects, and 167 canonical entity nodes (Skills, Methods, Technologies, Concepts) connected via typed relationships
+- **Section-Aware Ingestion**: Provenance tracked at the section level — every retrieved chunk knows its parent section, source document, and sensitivity tier
 - **Conversational Interface**: Natural conversations via Gradio ChatInterface
 - **Multi-Provider LLM Support**: OpenAI, Anthropic, Google, and Ollama via LiteLLM
 - **Tool Integration**: Function calling for notifications and interactive features
 - **First-Person Perspective**: Responds as Barbara with consistent voice and personality
 - **Production-Grade Logging**: Tracks model performance, cost, and visitor satisfaction
-- **Persistent Vector Database**: Incremental updates without full reprocessing
-- **Interactive Admin Interface**: Debug tool with retrieval inspector and semantic probe
+- **Interactive Admin Interface**: Debug tool with retrieval inspector, semantic probe, and side-by-side Neo4j vs. ChromaDB comparison
 
 ## Tech Stack
 
@@ -52,20 +53,22 @@ Want to run it locally in 5 minutes?
 |-----------|------------|
 | **LLM** | Multi-provider support via LiteLLM (OpenAI, Anthropic, Google, Ollama)<br>Model configurable via `LLM_MODEL` env var (see `.env.example`) |
 | **Embeddings** | OpenAI text-embedding-3-small (1536 dimensions) |
-| **Vector Database** | ChromaDB (persistent local storage) |
+| **Knowledge Graph** | Neo4j — hybrid vector + graph retrieval (production) |
+| **Vector Database** | ChromaDB — pure vector fallback and A/B comparison baseline |
 | **UI Framework** | Gradio |
 | **Language** | Python 3.11 |
 | **Deployment** | AWS EC2 (primary), Hugging Face Spaces (secondary) |
 
 ## How It Works
 
-This digital twin uses **RAG (Retrieval-Augmented Generation)** to combine semantic search with LLM generation:
+This digital twin uses **GraphRAG** — retrieval-augmented generation backed by a Neo4j knowledge graph:
 
-1. **Knowledge Base**: Curated content from structured markdown docs, project PDFs, publications, and Barbara's website
-2. **Semantic Search**: User queries are embedded and matched against a ChromaDB vector database
-3. **Context Injection**: Top-K most relevant chunks are retrieved and injected into the LLM prompt
-4. **Response Generation**: Multi-provider LLM generates responses in Barbara's voice
-5. **Tool Integration**: Optional function calling for notifications and interactive features
+1. **Knowledge Base**: Curated content from structured KB docs, project PDFs, publications, and Barbara's website — parsed into named sections using `##` header boundaries
+2. **Graph Construction**: Sections become nodes in a Neo4j graph, embedded with OpenAI's `text-embedding-3-small`. An entity extraction pipeline populates 167 canonical entity nodes (Skills, Methods, Technologies, Concepts) connected to sections via `MENTIONS` relationships. Projects link to their descriptive sections via `DESCRIBED_IN`.
+3. **Hybrid Retrieval**: User query is embedded and matched against Neo4j's vector index. A composite scoring formula — vector similarity (×0.85) plus graph bonuses for project links (×0.08), entity mentions (×0.05), and section length (×0.02) — reranks candidates. Graph signals act as tiebreakers, not overrides.
+4. **Tier Gating**: A sensitivity tier system (`public` / `personal` / `inner_circle`) controls which sections are eligible for retrieval. Deeper tiers unlock via passphrase.
+5. **Response Generation**: Top-K sections injected as context into a carefully designed system prompt. Multi-provider LLM generates responses in Barbara's voice.
+6. **Tool Integration**: Optional function calling for notifications and interactive features.
 
 **Want the technical details?** See [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for architecture diagrams, data flow, and design decisions.
 

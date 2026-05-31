@@ -95,52 +95,63 @@ Every push to `main` runs the tests automatically before deploying to EC2. If an
 
 ## Architecture
 
+**Both Neo4j and ChromaDB are active.** Neo4j is the production retrieval system.
+ChromaDB remains intact as a fallback and A/B comparison baseline — do not remove it.
+The Neo4j graph stores the same sections as ChromaDB, but adds graph signals (project
+links, entity mentions, section length) that modulate the composite retrieval score.
+
 ### RAG Query Flow
 
 ```mermaid
 graph TD
     A[User Query] --> B[Gradio Interface]
-    B --> C[Query Embedding<br/>Embedding Model]
-    C --> D[Semantic Search<br/>ChromaDB]
-    D --> E[Retrieve Top-K Chunks<br/>with cosine similarity scores]
-    E --> F[Build Context<br/>System Prompt + Retrieved Chunks + Query]
-    F --> G[LLM Generation<br/>Multi-provider via LiteLLM]
-    G --> H{Tool Call Needed?}
-    H -->|Yes| I[Execute Tool<br/>notifications, dice roll]
-    I --> G
-    H -->|No| J[Final Response<br/>as Barbara]
+    B --> C[Query Embedding<br/>text-embedding-3-small]
+    C --> D[Neo4j Hybrid Search<br/>vector index · graph signals]
+    D --> E[Composite Scoring<br/>vector×0.85 · project×0.08 · entity×0.05 · length×0.02]
+    E --> F[Tier-Gated Top-K Sections<br/>public · personal · inner_circle]
+    F --> G[Context Injection<br/>SYSTEM_PROMPT.md + Retrieved Sections]
+    G --> H[LLM Generation<br/>Multi-provider via LiteLLM]
+    H --> I{Tool Call Needed?}
+    I -->|Yes| J[Execute Tool<br/>notifications, dice roll]
+    J --> H
+    I -->|No| K[Final Response<br/>as Barbara]
+    D -.->|fallback / A-B eval| L[(ChromaDB<br/>pure vector)]
 
     style C fill:#e1f5ff
-    style D fill:#fff4e1
-    style G fill:#ffe1f5
-    style I fill:#e1ffe1
+    style D fill:#f3e8ff
+    style E fill:#fef3c7
+    style H fill:#ffe1f5
+    style J fill:#e1ffe1
+    style L fill:#f1f5f9
 ```
 
 ### Data Processing Pipeline
 
 ```mermaid
 graph LR
-    A[Source Documents<br/>MD, PDF, HTML] --> B[Parse Sections<br/>Headers & Delimiters]
-    B --> C[Chunk Prose<br/>Configurable size & overlap]
-    C --> D[Generate Embeddings<br/>Embedding Model]
-    D --> E[Store in ChromaDB<br/>with metadata]
-    E --> F[Vector Database<br/>.chroma_db_DT/]
+    A[Source Documents<br/>MD · PDF · HTML · py] --> B[Section-Aware Parsing<br/>## headers → named sections]
+    B --> C[Paragraph-Aware Chunking<br/>≈500 chars · 50 overlap]
+    C --> D[Generate Embeddings<br/>text-embedding-3-small]
 
-    G[Query] --> H[Embed Query]
-    H --> I[Semantic Search]
-    F -.-> I
-    I --> J[Top-K Retrieval]
+    D --> E[(ChromaDB<br/>fallback + A/B eval)]
+    D --> F[Load Section Nodes<br/>Neo4j vector index]
+    F --> G[(Neo4j Graph<br/>Document → Section → Entity)]
+
+    EX[LLM Entity Extraction<br/>Skills · Methods · Tech · Concepts] --> G
+    A --> EX
 
     style D fill:#e1f5ff
-    style F fill:#fff4e1
-    style I fill:#ffe1e1
+    style E fill:#f1f5f9
+    style G fill:#f3e8ff
+    style EX fill:#fef3c7
 ```
 
 **Key Processing Steps:**
-1. **Chunking**: Text split into configurable chunks with overlap
-2. **Embedding**: Each chunk embedded via embedding model
-3. **Storage**: Chunks + embeddings + metadata stored in ChromaDB
-4. **Retrieval**: Query embedded → top-k semantic search → context injection
+1. **Parse**: `##` headers create named Section boundaries — provenance tracked at the section level
+2. **Chunk**: Paragraph-aware splitting; `chunk_index` resets per section (not global)
+3. **Embed**: Each section embedded via `text-embedding-3-small` (1536 dimensions)
+4. **Load**: Section nodes + embeddings loaded into Neo4j vector index; same chunks also stored in ChromaDB
+5. **Entity extraction**: LLM extracts Skills, Methods, Technologies, Concepts from project walkthroughs; canonicalized into graph nodes with `MENTIONS` edges
 
 ## Prompt Engineering
 
@@ -266,6 +277,31 @@ python chunk_inspector.py --query "..." --n 12   # Retrieve N chunks
 3. Retrieval simulation — embed a query, show the chunks retrieved, formatted exactly as the LLM would see them
 4. Gap detection — sections with suspiciously few chunks
 
+### Debugging Neo4j Retrieval
+
+`replay_retrieval.py` is the Neo4j counterpart to `chunk_inspector.py`. While
+`chunk_inspector.py` audits ChromaDB chunk quality, `replay_retrieval.py` shows exactly
+what context the LLM received from Neo4j — with each chunk's composite score decomposed
+into its vector, project-link, entity-mention, and length components.
+
+```bash
+python replay_retrieval.py --query "How did you get into beekeeping?"
+python replay_retrieval.py --query "..." --compare          # Neo4j vs ChromaDB side-by-side
+python replay_retrieval.py --replay "beekeeping" --compare  # find in query_log.jsonl and replay
+python replay_retrieval.py --query "..." --tier personal    # unlock personal-tier chunks
+python replay_retrieval.py --query "..." --full             # show full chunk text
+```
+
+The `--compare` flag produces a ranking-drift table that immediately reveals when graph
+signals are promoting or demoting chunks relative to pure vector similarity — the most
+common source of unexpected responses.
+
+**Scoring weights** live as named constants in `neo4j_utils.py` (`Wt_SEMANTIC`,
+`BONUS_PROJECT`, `BONUS_ENTITY`, `BONUS_LENGTH`) and are imported by
+`replay_retrieval.py` automatically, so the debug script and production code stay in sync.
+Before adjusting weights, read `docs/LESSONS_LEARNED.md` Entry 001 — it documents the
+hallucination that motivated the current values and includes before/after score comparisons.
+
 ### Wiping the DB
 
 ```bash
@@ -337,10 +373,10 @@ The knowledge base uses **section-aware metadata** so the LLM knows exactly wher
 
 ### 9. Project Walkthroughs
 - **Source**: `featured_projects.py` (the `walkthrough_context` field of each featured project)
-- **Source key**: `project-walkthroughs`
-- **Script**: `embed_walkthroughs.py`
-- **Content**: One chunk per featured project — title + summary + walkthrough notes + tags — enabling normal RAG to surface this content without triggering walkthrough mode
-- **Metadata**: `project_name`, `section="walkthrough"`, `char_count`
+- **Source key**: `project-walkthrough:{project-id}` (Neo4j Section node ID)
+- **Script**: `scripts/populate_neo4j_graph.py` step [2b] — `create_walkthrough_sections()`
+- **Content**: One Section node per featured project — composite of title + summary + design_insight + walkthrough_context + tags. Linked to its Project node via `Project -[:DESCRIBED_IN]-> Section`, so it earns the +0.08 project graph bonus in composite scoring.
+- **Note**: `scripts/embed_walkthroughs.py` still exists for ChromaDB ingestion but is no longer the active path. Neo4j walkthroughs are populated during `populate_neo4j_graph.py` and embedded by `scripts/embed_sections.py`.
 
 ## Shared Utilities (utils.py)
 
@@ -398,11 +434,33 @@ Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to 
 
 ## Key Design Decisions
 
-### Why ChromaDB?
-- **Persistent storage**: No re-embedding on restart
-- **Lightweight**: Runs locally without external dependencies
-- **Python-native**: Seamless integration with OpenAI SDK
-- **Metadata filtering**: Supports source-based filtering and priority rules
+### Why Neo4j + hybrid retrieval? (production system)
+Pure vector similarity is the dominant signal (weight 0.85) but has one structural
+blind spot: it ranks chunks by how well they *sound like* the query, not by how
+*factually connected* they are to the topics the query raises. Graph signals close
+this gap for project- and entity-related questions.
+
+- **Graph-aware tiebreaking**: Sections linked to a `Project` node (+0.08) or
+  mentioning relevant entities (+0.05, capped at 5) rank slightly higher among
+  otherwise-equal candidates. For project-specific questions, this surfaces the
+  right context without overriding a clear semantic leader.
+- **Sensitivity tier gating**: `allowed_tiers` on the Cypher query cleanly gates
+  which sections are eligible — no post-filter hacks.
+- **Relationship coverage**: +34.3% vs ChromaDB baseline on relationship-style
+  queries ("What projects use Neo4j?"). See `evals/results/`.
+- **Composite weights are fragile — read the constraints before touching them.**
+  See `CLAUDE.md` and `docs/LESSONS_LEARNED.md` Entry 001 before changing
+  `Wt_SEMANTIC` / `BONUS_*` constants in `neo4j_utils.py`.
+
+### Why ChromaDB? (fallback + A/B baseline)
+- **Preserved for comparison**: The same chunks are stored in both systems.
+  `replay_retrieval.py --compare` shows ranking drift between Neo4j and ChromaDB
+  for any query — the fastest way to diagnose whether a graph signal is helping
+  or hurting.
+- **Fallback**: If Neo4j is unavailable, ChromaDB provides pure-vector retrieval
+  with no code changes to `app.py`.
+- **Do not remove** until Neo4j has run in production for 72h without incident
+  and the `evals/run_evals.py` full suite passes at 90%+.
 
 ### Why multi-provider support?
 - **Flexibility**: Test OpenAI, Anthropic, Google, and Ollama models without code changes

@@ -97,15 +97,21 @@ Run these tests on the **current ChromaDB system** to establish baseline:
 ```
 
 **Measurement**:
-For each query, manually score retrieved chunks on coherence:
+For each query, manually score the retrieved chunks on coherence. Chunk order does
+not matter — the LLM reads the full context window before generating. Score these
+three dimensions:
+
+- **Fragmentation**: are chunks cut mid-sentence or mid-thought?
+- **Coverage**: do the chunks together contain enough to fully answer?
+- **Noise**: are off-topic chunks diluting the context?
 
 | Score | Definition | Example |
 |-------|-----------|---------|
-| **5** | Complete, coherent section with full context | Entire "Education" section returned intact |
-| **4** | Mostly complete, minor fragmentation | 90% of section, one small chunk missing |
-| **3** | Multiple chunks but requires stitching | 3-4 related chunks from same section |
-| **2** | Fragments from different sections | Chunks from bio + projects mixed |
-| **1** | Incoherent or wrong content | Unrelated chunks returned |
+| **5** | Complete coverage, no fragmentation, no noise | Full Education section returned, nothing cut or mixed in |
+| **4** | Mostly complete; one small gap or one minor off-topic chunk | Education 90% there; one unrelated chunk slipped in |
+| **3** | Answerable but requires working around gaps, cuts, or noise | 3–4 education chunks but one cuts mid-sentence; another is from Professional Experience |
+| **2** | Significant noise or fragmentation; LLM would struggle | Half the chunks from wrong sections; key facts missing |
+| **1** | Wrong content or so fragmented it's unusable | Unrelated topic returned; or every chunk cuts before completing a thought |
 
 **Baseline Target**: Average score ~2.5-3.0 (based on known fragmentation issues)
 

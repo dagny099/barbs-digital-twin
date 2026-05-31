@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="490" viewBox="0 0 900 490"
+     font-family="system-ui, -apple-system, 'Segoe UI', Helvetica Neue, sans-serif">
+
+  <defs>
+    <marker id="ah-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M 0 0 L 8 3 L 0 6 Z" fill="#3B82F6"/>
+    </marker>
+    <marker id="ah-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M 0 0 L 8 3 L 0 6 Z" fill="#10B981"/>
+    </marker>
+    <marker id="ah-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M 0 0 L 8 3 L 0 6 Z" fill="#8B5CF6"/>
+    </marker>
+    <marker id="ah-gray" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M 0 0 L 8 3 L 0 6 Z" fill="#94A3B8"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-8%" width="115%" height="132%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000018"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="490" fill="#FFFFFF" rx="12" stroke="#E2E8F0" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" font-size="15" font-weight="700"
+        fill="#0F172A" letter-spacing="0.4">Digital Twin — Neo4j Graph Schema</text>
+  <line x1="40" y1="48" x2="860" y2="48" stroke="#E2E8F0" stroke-width="1"/>
+
+  <!-- ══════════ EDGES (drawn before nodes so nodes sit on top) ══════════ -->
+
+  <!-- Document → Section : HAS_SECTION -->
+  <path d="M 210,122 C 290,122 310,241 355,241"
+        fill="none" stroke="#3B82F6" stroke-width="2" marker-end="url(#ah-blue)"/>
+  <text font-size="10.5" font-weight="600" fill="#3B82F6"
+        transform="translate(255,183) rotate(-24)">HAS_SECTION</text>
+
+  <!-- Project → Section : DESCRIBED_IN (bold — key graph signal) -->
+  <path d="M 695,122 C 615,122 600,241 545,241"
+        fill="none" stroke="#10B981" stroke-width="2.5" marker-end="url(#ah-green)"/>
+  <text font-size="10.5" font-weight="700" fill="#10B981"
+        transform="translate(626,181) rotate(24)">DESCRIBED_IN</text>
+  <text font-size="9" fill="#065F46"
+        transform="translate(631,195) rotate(24)">▲ +0.08 score bonus</text>
+
+  <!-- Section NEXT_SECTION self-loop -->
+  <path d="M 392,195 C 377,162 523,162 508,195"
+        fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"
+        marker-end="url(#ah-gray)"/>
+  <text x="450" y="157" text-anchor="middle" font-size="9.5" fill="#94A3B8">NEXT_SECTION</text>
+
+  <!-- Project RELATED_TO self-loop -->
+  <path d="M 752,88 C 736,60 852,60 836,88"
+        fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"
+        marker-end="url(#ah-gray)"/>
+  <text x="793" y="55" text-anchor="middle" font-size="9.5" fill="#94A3B8">RELATED_TO</text>
+
+  <!-- Section → Skill : MENTIONS (dashed violet) -->
+  <path d="M 388,287 C 352,332 200,358 140,383"
+        fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="5,3"
+        marker-end="url(#ah-violet)"/>
+
+  <!-- Section → Method : MENTIONS -->
+  <path d="M 420,287 C 400,332 330,358 285,383"
+        fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="5,3"
+        marker-end="url(#ah-violet)"/>
+
+  <!-- Section → Technology : MENTIONS -->
+  <path d="M 460,287 C 460,332 475,358 477,383"
+        fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="5,3"
+        marker-end="url(#ah-violet)"/>
+
+  <!-- Section → Concept : MENTIONS -->
+  <path d="M 505,287 C 525,332 618,358 670,383"
+        fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="5,3"
+        marker-end="url(#ah-violet)"/>
+
+  <!-- MENTIONS label (annotates all four dashed arrows) -->
+  <text x="336" y="340" font-size="10.5" font-weight="600" font-style="italic"
+        fill="#8B5CF6">MENTIONS</text>
+
+  <!-- ══════════ NODES ══════════ -->
+
+  <!-- Document node -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="88" width="170" height="68" rx="8"
+          fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+    <text x="125" y="112" text-anchor="middle" font-size="13" font-weight="700"
+          fill="#1D4ED8">📄 Document</text>
+    <text x="125" y="128" text-anchor="middle" font-size="10" fill="#3B82F6">id · source_type · title</text>
+    <text x="125" y="143" text-anchor="middle" font-size="10" fill="#3B82F6">sensitivity · content_hash</text>
+  </g>
+
+  <!-- Section node — central retrieval unit, larger, amber -->
+  <g filter="url(#shadow)">
+    <rect x="355" y="195" width="190" height="92" rx="10"
+          fill="#FFFBEB" stroke="#F59E0B" stroke-width="3"/>
+    <!-- header band -->
+    <rect x="355" y="195" width="190" height="30" rx="10" fill="#FEF3C7"/>
+    <rect x="355" y="210" width="190" height="15" fill="#FEF3C7"/>
+    <text x="450" y="217" text-anchor="middle" font-size="14" font-weight="700"
+          fill="#92400E">🔍 Section</text>
+    <text x="450" y="233" text-anchor="middle" font-size="10" fill="#78350F">id · name · full_text</text>
+    <!-- Embedding badge -->
+    <rect x="371" y="239" width="158" height="19" rx="5"
+          fill="#FDE68A" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="450" y="252" text-anchor="middle" font-size="10" font-weight="600"
+          fill="#92400E">⊕ embedding: vector(1536)</text>
+    <text x="450" y="272" text-anchor="middle" font-size="10" fill="#78350F">sensitivity · char_count</text>
+  </g>
+
+  <!-- Project node -->
+  <g filter="url(#shadow)">
+    <rect x="695" y="88" width="175" height="68" rx="8"
+          fill="#D1FAE5" stroke="#10B981" stroke-width="2"/>
+    <text x="782" y="112" text-anchor="middle" font-size="13" font-weight="700"
+          fill="#065F46">🏗 Project</text>
+    <text x="782" y="128" text-anchor="middle" font-size="10" fill="#10B981">id · title · summary</text>
+    <text x="782" y="143" text-anchor="middle" font-size="10" fill="#10B981">design_insight · tags</text>
+  </g>
+
+  <!-- Skill -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="383" width="140" height="58" rx="8"
+          fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+    <text x="110" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#4C1D95">Skill</text>
+    <text x="110" y="421" text-anchor="middle" font-size="9.5" fill="#6D28D9">name · category</text>
+    <text x="110" y="434" text-anchor="middle" font-size="9.5" fill="#6D28D9">alt_labels</text>
+  </g>
+
+  <!-- Method -->
+  <g filter="url(#shadow)">
+    <rect x="215" y="383" width="140" height="58" rx="8"
+          fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+    <text x="285" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#4C1D95">Method</text>
+    <text x="285" y="421" text-anchor="middle" font-size="9.5" fill="#6D28D9">name · category</text>
+    <text x="285" y="434" text-anchor="middle" font-size="9.5" fill="#6D28D9">description</text>
+  </g>
+
+  <!-- Technology -->
+  <g filter="url(#shadow)">
+    <rect x="400" y="383" width="155" height="58" rx="8"
+          fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+    <text x="477" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#4C1D95">Technology</text>
+    <text x="477" y="421" text-anchor="middle" font-size="9.5" fill="#6D28D9">name · category</text>
+    <text x="477" y="434" text-anchor="middle" font-size="9.5" fill="#6D28D9">alt_labels</text>
+  </g>
+
+  <!-- Concept -->
+  <g filter="url(#shadow)">
+    <rect x="600" y="383" width="140" height="58" rx="8"
+          fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+    <text x="670" y="405" text-anchor="middle" font-size="12" font-weight="700" fill="#4C1D95">Concept</text>
+    <text x="670" y="421" text-anchor="middle" font-size="9.5" fill="#6D28D9">name · source</text>
+    <text x="670" y="434" text-anchor="middle" font-size="9.5" fill="#6D28D9">description</text>
+  </g>
+
+  <!-- ══════════ LEGEND BOX ══════════ -->
+  <rect x="752" y="314" width="136" height="112" rx="6"
+        fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="820" y="331" text-anchor="middle" font-size="10" font-weight="700"
+        fill="#475569">Project also links to:</text>
+  <line x1="762" y1="337" x2="878" y2="337" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="768" y="352" font-size="9.5" fill="#64748B">→ DEMONSTRATES → Skill</text>
+  <text x="768" y="366" font-size="9.5" fill="#64748B">→ USES_METHOD → Method</text>
+  <text x="768" y="380" font-size="9.5" fill="#64748B">→ USES_TECHNOLOGY → Tech</text>
+  <line x1="762" y1="387" x2="878" y2="387" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="768" y="401" font-size="9" fill="#94A3B8">role: core / secondary</text>
+  <text x="768" y="414" font-size="9" fill="#94A3B8">stage: ingestion / retrieval</text>
+
+  <!-- ══════════ FOOTER ══════════ -->
+  <rect x="16" y="458" width="868" height="22" rx="5"
+        fill="#FFFBEB" stroke="#FDE68A" stroke-width="1"/>
+  <text x="450" y="473" text-anchor="middle" font-size="9.5" fill="#92400E">
+    Retrieval: embed query → query section_embeddings index → composite score = vector_similarity × 0.85 + graph_bonus (DESCRIBED_IN · MENTIONS) × 0.15
+  </text>
+
+</svg>

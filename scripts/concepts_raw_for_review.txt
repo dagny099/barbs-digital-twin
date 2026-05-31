@@ -1,0 +1,382 @@
+RAW EXTRACTED CONCEPTS (pre-canonicalization)
+Total: 377 unique names
+Format: concept name  |  source section(s)
+======================================================================
+
+A/B testing methodology  |  kb_projects
+Adoption  |  kb_project_answer_bank
+Advertising Effectiveness Measurement  |  kb_career_narrative
+AI Experimentation to AI Operations  |  kb_project_answer_bank
+AI Governance  |  kb_project_answer_bank
+AI Operations  |  kb_professional_positioning
+AI system trustability  |  kb_professional_positioning
+Algorithmic level  |  kb_intellectual_foundations
+Ambiguous domain navigation  |  kb_professional_positioning
+Anomaly detection  |  kb_projects
+Applied AI  |  kb_professional_positioning
+Attention allocation  |  kb_dissertation_overview
+Attention Allocation Under Uncertainty  |  kb_dissertation_modern_relevance
+Attention and Visual Scanning  |  kb_dissertation_philosophy
+Attention as limited resource  |  kb_dissertation_modern_relevance
+Attention mechanism  |  kb_dissertation_modern_relevance
+Attention modeling  |  kb_career_narrative
+Attentional biasing  |  kb_dissertation_overview
+Attentional selection  |  kb_dissertation_overview
+autonomous deep work with regular touchpoints  |  kb_professional_positioning
+Base rates  |  kb_intellectual_foundations
+Bayesian reasoning  |  kb_intellectual_foundations
+Bayesian thinking  |  kb_project_answer_bank
+Bayesian updating under uncertainty  |  kb_project_answer_bank
+be here now  |  kb_project_answer_bank
+Belief updating  |  kb_project_answer_bank
+Biological attention  |  kb_dissertation_modern_relevance
+Bottom-up features  |  kb_dissertation_modern_relevance
+Bottom-up visual processing  |  kb_publications
+Build things people actually use  |  kb_career_narrative
+Build-adopt gap  |  kb_professional_positioning
+Business-technology translation  |  kb_project_answer_bank
+Career Knowledge Graphs  |  kb_philosophy-and-approach
+Catalog rationalization  |  kb_career_narrative
+CDMP certification  |  kb_career_narrative
+Checkpointing  |  kb_projects
+Chunking  |  kb_project_answer_bank
+Citation Prediction  |  kb_projects
+citation-grounded retrieval  |  kb_professional_positioning
+Claims adjudication  |  kb_biosketch
+Claims adjudication workflow design  |  kb_professional_positioning
+Classification confidence  |  kb_projects
+Cognitive Journey  |  kb_dissertation_philosophy
+Cognitive saliency  |  kb_publications
+cognitive science  |  kb_career_narrative
+Cognitive Science  |  kb_career_narrative
+Cognitive science  |  kb_career_narrative; kb_dissertation_philosophy; kb_philosophy-and-approach
+cognitive science applied to AI systems  |  kb_philosophy-and-approach
+Cognitive Science in Engineering  |  kb_philosophy-and-approach
+cognitive science of retrieval  |  kb_professional_positioning
+Cognitive science research methodology  |  kb_career_narrative
+Collaborative sensemaking  |  kb_philosophy-and-approach
+Colony health monitoring  |  kb_projects
+Combined source model  |  kb_biosketch
+Combined source model of eye guidance  |  kb_dissertation_overview
+Comparative Map Analysis  |  kb_dissertation_philosophy
+Comparative RNA sequence analysis  |  kb_biosketch
+Complex systems under pressure  |  kb_biosketch
+Computational attention  |  kb_dissertation_modern_relevance
+Computational level  |  kb_intellectual_foundations
+Confidence in Communication  |  kb_easter_eggs
+Context-Driven Attention  |  kb_intellectual_foundations
+Context-guided attention  |  kb_project_answer_bank
+Context-specific learning  |  kb_publications
+Contextual cueing  |  kb_dissertation_overview
+Contextual guidance  |  kb_biosketch
+Contextual Guidance  |  kb_publications
+Contextual object priors  |  kb_dissertation_overview
+contextual priors  |  kb_career_narrative
+Contextual Priors  |  kb_dissertation_modern_relevance; kb_publications
+Contextual priors  |  kb_intellectual_foundations; kb_philosophy-and-approach; kb_professional_positioning; kb_project_answer_bank
+Contextual sensemaking  |  kb_project_answer_bank
+Conviction  |  kb_biosketch
+Cross-pollination  |  kb_dissertation_overview
+Current reality  |  kb_intellectual_foundations
+DAMA-DMBOK  |  kb_career_narrative
+Data and meaning  |  kb_dissertation_philosophy
+Data drift  |  kb_projects
+data generation tracing  |  kb_professional_positioning
+Data governance  |  kb_career_narrative
+Data integrity  |  kb_career_narrative
+Data Layer  |  kb_project_answer_bank
+Data legibility  |  kb_career_narrative
+Data Management Professional (CDMP)  |  kb_professional_positioning
+Data quality frameworks  |  kb_career_narrative
+Data representation  |  kb_career_narrative
+Data trust and validation  |  kb_project_answer_bank
+Data Trustability  |  kb_project_answer_bank
+Data vs. Data Implications distinction  |  kb_philosophy-and-approach
+David Marr's levels of analysis  |  kb_intellectual_foundations; kb_project_answer_bank
+David Marr's levels-of-analysis framework  |  kb_professional_positioning
+DCAM certification  |  kb_career_narrative
+DCAM methodology  |  kb_career_narrative
+DCAM v2 Accreditation  |  kb_professional_positioning
+decision grounding  |  kb_professional_positioning
+Decisions under uncertainty  |  kb_intellectual_foundations
+Deep Memory Retrieval  |  kb_dissertation_philosophy
+Delayed Search  |  kb_dissertation_philosophy
+Design for the downstream mental model  |  kb_career_narrative
+Design philosophy  |  kb_dissertation_philosophy
+Design thinking  |  kb_professional_positioning
+Digital Transformation  |  kb_career_narrative
+digital twin  |  kb_professional_positioning
+Digital twin  |  kb_project_answer_bank
+Domain adaptability  |  kb_career_narrative
+Domain expert adoption  |  kb_project_answer_bank
+Domain transfer  |  kb_career_narrative
+domain-specific AI  |  kb_project_answer_bank
+double major in Electrical Engineering and Biology  |  kb_biosketch
+Downstream decision-making  |  kb_professional_positioning
+durable knowledge  |  kb_project_answer_bank
+Durable value  |  kb_project_answer_bank
+durable value creation  |  kb_professional_positioning
+Efficiency vs. Speed Tradeoff  |  kb_dissertation_philosophy
+Efficient coding  |  kb_dissertation_overview
+End-to-end continuity  |  kb_project_answer_bank
+Entity-relationship modeling  |  kb_philosophy-and-approach
+ESCO  |  kb_career_narrative
+ESCO European Skills Taxonomy  |  kb_projects
+ESCO taxonomy  |  kb_professional_positioning
+Evaluation as a design problem  |  kb_intellectual_foundations
+Evaluation as shared understanding  |  kb_professional_positioning
+Evaluation framework  |  kb_projects
+Evaluation Habit  |  kb_dissertation_philosophy
+Evaluation mindset  |  kb_projects
+Evidence-based confidence updating  |  kb_intellectual_foundations
+Experimental rigor  |  kb_career_narrative
+Explainability  |  kb_projects
+Explainable AI  |  kb_biosketch
+Exploration vs Exploitation  |  kb_dissertation_modern_relevance
+Eye guidance  |  kb_biosketch
+Eye guidance modeling  |  kb_dissertation_overview
+Eye Guidance Modeling  |  kb_publications
+Eye movement data analysis  |  kb_intellectual_foundations
+Eye movement guidance  |  kb_biosketch
+Eye Movement Guidance  |  kb_dissertation_overview; kb_publications
+Eye-movement research  |  kb_biosketch
+Feature importance  |  kb_projects
+Foveal resolution  |  kb_dissertation_modern_relevance
+Gap between technically correct and actually useful  |  kb_philosophy-and-approach
+Gaze behavior  |  kb_publications
+gaze pattern prediction  |  kb_career_narrative
+GenAI systems  |  kb_professional_positioning
+genomics  |  kb_biosketch
+Graph representation  |  kb_project_answer_bank
+Graph structures  |  kb_philosophy-and-approach
+Graph Topology  |  kb_projects
+Graph-based career representation  |  kb_philosophy-and-approach
+GraphRAG  |  kb_projects
+Ground-truth evaluation  |  kb_projects
+Grounded AI Systems  |  kb_project_answer_bank
+Grounded generation  |  kb_project_answer_bank
+Guided Search model  |  kb_dissertation_overview
+Hierarchical skill classification  |  kb_professional_positioning
+Human Vision  |  kb_dissertation_philosophy
+Human-centered design  |  kb_biosketch
+Hypothesis revision  |  kb_intellectual_foundations
+hypothesis-driven design  |  kb_career_narrative
+Idempotency  |  kb_projects
+Image memorability  |  kb_dissertation_overview
+Implementation level  |  kb_intellectual_foundations
+Influence Pattern Identification  |  kb_projects
+Information Design  |  kb_dissertation_philosophy
+information navigability  |  kb_project_answer_bank
+Information Processing  |  kb_dissertation_philosophy
+Information representation  |  kb_project_answer_bank
+Information retrieval  |  kb_project_answer_bank
+Information-processing systems  |  kb_intellectual_foundations
+Information-Seeking Strategies  |  kb_dissertation_philosophy
+Insight vs. meaning distinction  |  kb_philosophy-and-approach
+Inspectable AI Systems  |  kb_project_answer_bank
+Intellectual foundations  |  kb_intellectual_foundations
+Intellectual frameworks  |  kb_intellectual_foundations
+Intellectual Lineage Mapping  |  kb_projects
+Intelligence as information processing  |  kb_dissertation_modern_relevance
+Internal logic (worldbuilding)  |  kb_biosketch
+Internal models  |  kb_dissertation_overview
+Interpretability  |  kb_intellectual_foundations
+invitation, not recognition  |  kb_easter_eggs
+JSON-LD  |  kb_projects
+Knowing your limits as a value signal  |  kb_professional_positioning
+Knowledge engineering  |  kb_professional_positioning
+Knowledge graph  |  kb_projects
+Knowledge Graph Representation  |  kb_projects
+Knowledge graphs  |  kb_dissertation_philosophy; kb_easter_eggs; kb_projects
+Knowledge Graphs  |  kb_projects
+Knowledge legibility  |  kb_project_answer_bank
+knowledge organization  |  kb_professional_positioning
+Knowledge Representation  |  kb_dissertation_modern_relevance; kb_project_answer_bank
+Knowledge representation  |  kb_projects
+knowledge usability  |  kb_professional_positioning
+Learned priors  |  kb_dissertation_modern_relevance
+Learned representations  |  kb_dissertation_overview
+Legacy preservation  |  kb_philosophy-and-approach
+Legacy Preservation  |  kb_projects
+Levels of analysis  |  kb_project_answer_bank
+Linked Open Data  |  kb_professional_positioning
+lived-domain AI  |  kb_project_answer_bank
+Local-first architecture  |  kb_projects
+local-first processing  |  kb_projects
+Low Prevalence Effect  |  kb_publications
+Making Meaning from Messy Data  |  kb_philosophy-and-approach
+Making meaning from messy data  |  kb_project_answer_bank
+marine biology  |  kb_project_answer_bank
+Marr's levels of analysis  |  kb_intellectual_foundations
+Meaning from messy data  |  kb_projects
+Meaning-making  |  kb_philosophy-and-approach
+Memorial Graph  |  kb_project_answer_bank
+Memorial Knowledge Graph  |  kb_projects
+Memory bandwidth  |  kb_dissertation_modern_relevance
+Memory retrieval  |  kb_dissertation_modern_relevance
+Memory retrieval during visual search  |  kb_dissertation_overview
+Mental model  |  kb_professional_positioning
+mental model alignment  |  kb_philosophy-and-approach
+Mental Models  |  kb_personal_origin_stories
+Methodology-driven problem solving  |  kb_career_narrative
+metric optimization  |  kb_philosophy-and-approach
+Model Adoptability  |  kb_career_narrative
+Model-building (perception)  |  kb_philosophy-and-approach
+model-building as perception  |  kb_career_narrative
+Modular architecture  |  kb_projects
+Multi-provider LLM integration  |  kb_projects
+Multi-stage ingestion pipeline  |  kb_projects
+Multimodal data integration  |  kb_projects
+Narrative Synthesis  |  kb_philosophy-and-approach; kb_projects
+Navigability  |  kb_dissertation_overview
+No Apologizing Ethos  |  kb_easter_eggs
+Normalization pipeline  |  kb_career_narrative
+Object Search  |  kb_publications
+object size perception  |  kb_easter_eggs
+Object/person search  |  kb_biosketch
+Observer agreement  |  kb_dissertation_overview
+Observer-Dependent Scene Context  |  kb_publications
+Oculomotor guidance  |  kb_dissertation_overview
+Ontology  |  kb_philosophy-and-approach; kb_projects
+ontology  |  kb_professional_positioning
+Ontology extraction  |  kb_projects
+OPEN Government Data Act  |  kb_career_narrative
+Openness  |  kb_dissertation_overview
+Operational AI integration  |  kb_professional_positioning
+Operational readiness  |  kb_intellectual_foundations
+Operational reality  |  kb_project_answer_bank
+Operational success criteria  |  kb_intellectual_foundations
+Operational understanding of healthcare  |  kb_career_narrative
+Organizational Trust in Data  |  kb_project_answer_bank
+Pattern recognition  |  kb_philosophy-and-approach; kb_projects
+Payer requirements  |  kb_professional_positioning
+Perceptual science  |  kb_career_narrative
+Personal search history  |  kb_dissertation_overview
+Portfolio Methodology  |  kb_projects
+Portfolio navigation  |  kb_projects
+Pragmatic design  |  kb_philosophy-and-approach
+Prior assumptions and interpretation  |  kb_intellectual_foundations
+Prior experience shaping behavior  |  kb_dissertation_overview
+Prior knowledge  |  kb_dissertation_modern_relevance; kb_intellectual_foundations; kb_project_answer_bank
+Prior Knowledge in Perception  |  kb_intellectual_foundations
+Priors  |  kb_project_answer_bank
+Problem representation  |  kb_intellectual_foundations
+Process Inefficiency Identification  |  kb_career_narrative
+Proof of delivery  |  kb_projects
+Provider-agnostic LLM extraction  |  kb_career_narrative
+Provider-agnostic LLM pipelines  |  kb_professional_positioning
+RAG (Retrieval-Augmented Generation)  |  kb_professional_positioning
+Rapid serial visual presentation (RSVP)  |  kb_dissertation_overview
+RDF  |  kb_projects
+Readiness  |  kb_project_answer_bank
+Readiness for real operation  |  kb_intellectual_foundations
+Real-world scene perception  |  kb_biosketch
+real-world scene representation  |  kb_easter_eggs
+Real-world usability  |  kb_project_answer_bank
+Reasoning under uncertainty  |  kb_professional_positioning
+Relationship triples  |  kb_projects
+Relevance  |  kb_dissertation_modern_relevance
+Representation  |  kb_project_answer_bank
+representation design  |  kb_philosophy-and-approach
+Representation Layer  |  kb_personal_origin_stories
+Representational Constraints  |  kb_intellectual_foundations
+Representational framing  |  kb_philosophy-and-approach
+Representations and Constraints Framework  |  kb_dissertation_philosophy
+Research methodology  |  kb_dissertation_philosophy
+Research-oriented honors education  |  kb_biosketch
+Resource allocation under constraints  |  kb_dissertation_modern_relevance
+Retrieval  |  kb_project_answer_bank
+Retrieval Augmented Generation  |  kb_project_answer_bank
+Retrieval Layer  |  kb_project_answer_bank
+Retrieval metrics  |  kb_professional_positioning
+Retrieval-augmented generation  |  kb_project_answer_bank
+Retrieval-Augmented Generation  |  kb_projects
+Retrieval-Augmented Generation (RAG)  |  kb_intellectual_foundations; kb_publications
+Retrieval-based AI  |  kb_project_answer_bank
+Ribosomal RNA structure  |  kb_biosketch
+Rigorous Comparison Condition  |  kb_dissertation_philosophy
+robotics for molecular biology workflows  |  kb_biosketch
+Role clarity  |  kb_intellectual_foundations; kb_project_answer_bank
+Saccade Latency  |  kb_publications
+Salience  |  kb_publications
+Saliency  |  kb_biosketch
+Scene context  |  kb_biosketch; kb_dissertation_modern_relevance; kb_dissertation_overview; kb_dissertation_philosophy; kb_intellectual_foundations
+Scene Context  |  kb_publications
+Scene memory  |  kb_dissertation_overview
+scene navigability  |  kb_easter_eggs
+scene openness  |  kb_easter_eggs
+Scene Perception  |  kb_publications
+Scene recognition  |  kb_dissertation_overview
+Scene Specific Location Priors  |  kb_dissertation_overview
+Scene structure  |  kb_professional_positioning
+Scene-Specific Location Priors  |  kb_dissertation_modern_relevance
+Schema Design  |  kb_personal_origin_stories
+Schema Layer  |  kb_project_answer_bank
+Selective attention  |  kb_publications
+Self-organization  |  kb_easter_eggs
+Self-trust  |  kb_biosketch
+Semantic Rigor  |  kb_philosophy-and-approach
+Semantic Web  |  kb_projects
+Sensemaking  |  kb_project_answer_bank
+Sequential eye movements  |  kb_dissertation_modern_relevance
+Sexual conditioning  |  kb_biosketch
+Skill topology  |  kb_philosophy-and-approach
+skills taxonomy  |  kb_professional_positioning
+SKOS  |  kb_career_narrative; kb_intellectual_foundations; kb_projects
+SKOS Core  |  kb_professional_positioning
+socioeconomic bias in AI  |  kb_easter_eggs
+socioeconomic biases in AI scene classification  |  kb_dissertation_overview
+solution space exploration  |  kb_professional_positioning
+Spatial pattern analysis  |  kb_intellectual_foundations
+Structured Intelligence  |  kb_intellectual_foundations
+structured representation  |  kb_career_narrative
+Structured representation  |  kb_career_narrative; kb_intellectual_foundations; kb_project_answer_bank
+Structured representations  |  kb_career_narrative; kb_philosophy-and-approach; kb_professional_positioning
+System evaluation  |  kb_intellectual_foundations
+System prompt design  |  kb_project_answer_bank
+Systems thinking  |  kb_dissertation_philosophy; kb_intellectual_foundations
+Systems-level mindset  |  kb_project_answer_bank
+systems-level thinking  |  kb_professional_positioning
+Target state  |  kb_intellectual_foundations
+Task-relevant spatial weighting  |  kb_dissertation_modern_relevance
+Taste aversion learning  |  kb_biosketch
+temporal pattern analysis  |  kb_projects
+temporal pattern extraction  |  kb_professional_positioning
+Temporal pattern recognition  |  kb_philosophy-and-approach
+Temporal Patterns  |  kb_projects
+Temporal relationship patterns  |  kb_professional_positioning
+Temporal Relationship Patterns  |  kb_projects
+Timestamp-grounded traceability  |  kb_projects
+Token-cost measurement  |  kb_projects
+Tool-style routing  |  kb_projects
+Top-down scene knowledge  |  kb_publications
+Topic extraction  |  kb_projects
+Transfer of Cognitive Habits  |  kb_dissertation_philosophy
+Transformer architecture  |  kb_dissertation_modern_relevance
+Transformer-based attention mechanisms  |  kb_dissertation_modern_relevance
+Translational Research  |  kb_dissertation_philosophy
+tribal memory  |  kb_project_answer_bank
+Turtle  |  kb_projects
+Typed edges  |  kb_projects
+Uncertainty  |  kb_intellectual_foundations; kb_project_answer_bank
+User Behavior Analysis  |  kb_career_narrative
+Vector RAG  |  kb_projects
+Visual attention  |  kb_biosketch; kb_professional_positioning; kb_project_answer_bank; kb_publications
+visual attention  |  kb_career_narrative
+Visual attention allocation  |  kb_dissertation_modern_relevance
+Visual attention modeling  |  kb_philosophy-and-approach
+Visual Cognition  |  kb_dissertation_overview
+visual framing  |  kb_dissertation_overview; kb_easter_eggs
+visual knowledge organization  |  kb_easter_eggs
+visual long-term memory  |  kb_dissertation_overview
+Visual memory  |  kb_publications
+Visual Question Answering (VQA)  |  kb_dissertation_modern_relevance
+Visual saliency  |  kb_dissertation_modern_relevance; kb_dissertation_overview; kb_dissertation_philosophy; kb_intellectual_foundations; kb_publications
+Visual Scene Familiarity  |  kb_dissertation_overview; kb_publications
+Visual Search  |  kb_dissertation_modern_relevance; kb_dissertation_philosophy
+Visual search  |  kb_dissertation_overview; kb_publications
+visual thinking  |  kb_project_answer_bank
+Vocabulary alignment  |  kb_career_narrative
+VQA  |  kb_dissertation_modern_relevance
+Wikidata Enrichment  |  kb_projects
+Workflow fit  |  kb_project_answer_bank
