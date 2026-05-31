@@ -1596,7 +1596,7 @@ def _build_title_html() -> str:
     return (
         '<div class="title-header-wrap">'
         '<div class="title-row">'
-        '<h2>Barbara\'s Digital Twin</h2>'
+        '<h2>Barbara\'s Digital Twin with Neo4j</h2>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
         '</div>'
@@ -1618,12 +1618,12 @@ def _build_contact_cta_html() -> str:
 if __name__ == "__main__":
     _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
-    with gr.Blocks(title="Barbara's Digital Twin", fill_width=True) as demo:
+    with gr.Blocks(title="Barbara's Digital Twin with Neo4j", fill_width=True) as demo:
         # ── TITLE with circular headshot ──────────────────────────
         gr.HTML(_build_title_html())
         owner_toggle = gr.Checkbox(
             label="exclude my traffic",
-            value=False,
+            value=True,
             container=False,
             elem_classes=["owner-traffic-toggle"],
             render=False,
