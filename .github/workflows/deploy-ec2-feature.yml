@@ -97,10 +97,10 @@ jobs:
 # 5. Obtain/extend TLS cert to cover the new subdomain               (~5 min)
 # 6. Add DNS A/CNAME record for neo4j.twin.barbhs.com                 (~2 min)
 # 7. Add the three new GitHub secrets                                  (~2 min)
-EC2_GRAPHY_APP_DIR=/home/ec2-user/barbs-digital-twin-graphy
-EC2_GRAPHY_SERVICE_NAME=barbs-digital-twin-graphy
-EC2_GRAPHY_HEALTH_URL=https://graphy.twin.barbhs.com/
-EC2_FEATURE_APP_DIR=/home/ec2-user/barbs-digital-twin-graphy
-EC2_FEATURE_SERVICE_NAME=barbs-digital-twin-graphy
-EC2_FEATURE_APP_PORT=7866
+#EC2_GRAPHY_APP_DIR=/home/ec2-user/barbs-digital-twin-graphy
+#EC2_GRAPHY_SERVICE_NAME=barbs-digital-twin-graphy
+#EC2_GRAPHY_HEALTH_URL=https://graphy.twin.barbhs.com/
+#EC2_FEATURE_APP_DIR=/home/ec2-user/barbs-digital-twin-graphy
+#EC2_FEATURE_SERVICE_NAME=barbs-digital-twin-graphy
+#EC2_FEATURE_APP_PORT=7866
 
