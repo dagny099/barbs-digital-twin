@@ -1596,7 +1596,7 @@ def _build_title_html() -> str:
     return (
         '<div class="title-header-wrap">'
         '<div class="title-row">'
-        '<h2>Barbara\'s Digital Twin</h2>'
+        '<h2>Barbara\'s Digital Twin with Neo4j</h2>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
         '</div>'
