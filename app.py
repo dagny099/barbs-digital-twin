@@ -10,6 +10,7 @@ import gradio as gr
 import litellm
 import chromadb
 from neo4j_utils import query_neo4j_rag
+from chroma_utils import query_chroma_rag
 import json
 import re
 import requests
@@ -55,6 +56,11 @@ load_dotenv(override=True)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:
     raise Exception("API key is missing")
+
+# Retrieval backend: "neo4j" (graph-hybrid, default) or "chromadb" (vector-only).
+# Set via RETRIEVAL_BACKEND env var. Both deployments use this same codebase;
+# the .env on each server controls which backend is active.
+RETRIEVAL_BACKEND = os.getenv("RETRIEVAL_BACKEND", "neo4j")
 
 # Model used for all LLM completions. Override via env to switch without code changes.
 # Auto-prefixes "openai/" if no provider specified (backward compatibility).
@@ -1279,12 +1285,19 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
         print(f"SENSITIVITY: Tier escalated to '{audience_tier}'")
 
     # ── Step 3: RAG retrieval on the ORIGINAL message ───────────
-    # Neo4j hybrid: vector similarity + graph-signal composite ranking.
-    rag_result = query_neo4j_rag(
-        user_query=message,
-        visitor_tier=audience_tier,
-        k=actual_top_k,
-    )
+    if RETRIEVAL_BACKEND == "neo4j":
+        rag_result = query_neo4j_rag(
+            user_query=message,
+            visitor_tier=audience_tier,
+            k=actual_top_k,
+        )
+    else:
+        rag_result = query_chroma_rag(
+            collection, client,
+            user_query=message,
+            visitor_tier=audience_tier,
+            k=actual_top_k,
+        )
     context = rag_result["context"]
 
     # ── Compute retrieval quality metrics (Phase 2 logging) ─────
@@ -1585,6 +1598,9 @@ _current_settings = {
 
 def _build_title_html() -> str:
     """Build HTML header with circular headshot + title."""
+    _backend_label = {"neo4j": "Neo4j", "chromadb": "ChromaDB"}.get(
+        RETRIEVAL_BACKEND, RETRIEVAL_BACKEND.title()
+    )
     img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "assets", "bhs_forweb.png")
     try:
@@ -1596,7 +1612,7 @@ def _build_title_html() -> str:
     return (
         '<div class="title-header-wrap">'
         '<div class="title-row">'
-        '<h2>Barbara\'s Digital Twin with Neo4j</h2>'
+        f'<h2>Barbara\'s Digital Twin with {_backend_label}</h2>'
         f'{img_tag}</div>'
         '<p class="title-subtitle">I\'m a conversational guide to explore her work, research and the way she thinks</p>'
         '</div>'

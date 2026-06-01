@@ -42,6 +42,7 @@ cp .env.example .env
 **Minimum required:** `OPENAI_API_KEY`
 
 **Optional variables:**
+- `RETRIEVAL_BACKEND` - `"neo4j"` (default) or `"chromadb"` — selects the active retrieval backend
 - `LLM_MODEL` - Default LLM to use (see `.env.example` for options)
 - `ANTHROPIC_API_KEY` - For Claude models
 - `GEMINI_API_KEY` - For Google models
@@ -95,10 +96,14 @@ Every push to `main` runs the tests automatically before deploying to EC2. If an
 
 ## Architecture
 
-**Both Neo4j and ChromaDB are active.** Neo4j is the production retrieval system.
-ChromaDB remains intact as a fallback and A/B comparison baseline — do not remove it.
-The Neo4j graph stores the same sections as ChromaDB, but adds graph signals (project
-links, entity mentions, section length) that modulate the composite retrieval score.
+**Both Neo4j and ChromaDB are active**, selected via the `RETRIEVAL_BACKEND` env var.
+- `RETRIEVAL_BACKEND=neo4j` (default): graph-hybrid retrieval — vector similarity + graph
+  signals (project links, entity mentions, section length).
+- `RETRIEVAL_BACKEND=chromadb`: vector-only retrieval — pure cosine similarity on chunks.
+
+Both backends share the same knowledge base content. The deployment at
+`graphy.twin.barbhs.com` uses Neo4j; `twin.barbhs.com` uses ChromaDB.
+See `chroma_utils.py` and `neo4j_utils.py` — both return identical `{"context", "sources", "scores"}` dicts.
 
 ### RAG Query Flow
 

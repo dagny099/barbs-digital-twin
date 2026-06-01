@@ -1,5 +1,9 @@
 # Neo4j Prototype Evaluation Plan
 
+> **Historical document** — This plan was written 2026-05-11 to evaluate the Neo4j prototype.
+> The migration is complete. For current deployment status, see
+> `docs/NEO4J_MIGRATION_PLAN_2026-05-14.md`.
+
 **Date**: 2026-05-11
 **Purpose**: Define metrics and test cases to evaluate if Neo4j graph-based retrieval improves on ChromaDB limitations
 **Scope**: Small prototype with 2-3 KB documents before full migration

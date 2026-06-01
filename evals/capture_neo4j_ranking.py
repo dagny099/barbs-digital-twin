@@ -20,6 +20,7 @@ Usage (from project root):
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -74,6 +75,11 @@ def get_rank(n_results: int) -> int:
 
 
 def main() -> int:
+    if os.getenv("RETRIEVAL_BACKEND", "") == "chromadb":
+        print("⚠️  RETRIEVAL_BACKEND=chromadb — this script captures Neo4j metrics.")
+        print("    Results reflect Neo4j, not your active ChromaDB backend.")
+        print()
+
     print("Neo4j Ranking Eval")
     print("Baseline (ChromaDB): top1=46.7%  top3=80.0%  MRR=0.621")
     print("─" * 60)

@@ -146,12 +146,19 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
     sources = []
     scores = []
     related_projects_list = []
+    chunks = []
 
     for rec in records:
         source_label = f"{rec['source']} — {rec['section_name']}"
         sources.append(source_label)
         scores.append(rec["final_score"])
         related_projects_list.append(rec["related_projects"])
+        chunks.append({
+            "text":    rec["text"] or "",
+            "source":  rec["source"] or "",
+            "section": rec["section_name"] or "",
+            "score":   rec["final_score"],
+        })
 
         context_parts.append(f"[{source_label}]")
         context_parts.append(rec["text"] or "")
@@ -167,4 +174,5 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
         "sources": sources,
         "scores": scores,
         "related_projects": related_projects_list,
+        "chunks": chunks,   # raw records for admin panel / debug tools
     }

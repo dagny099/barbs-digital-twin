@@ -57,6 +57,11 @@ QUERIES = [
 
 
 def main() -> int:
+    if os.getenv("RETRIEVAL_BACKEND", "") == "neo4j":
+        print("⚠️  RETRIEVAL_BACKEND=neo4j — this script captures ChromaDB baseline metrics.")
+        print("    Results reflect ChromaDB, not your active backend.")
+        print()
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("ERROR: OPENAI_API_KEY not set")

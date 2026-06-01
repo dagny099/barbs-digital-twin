@@ -26,11 +26,17 @@ Usage (from project root):
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
-import chromadb
+try:
+    import chromadb
+    _CHROMA_AVAILABLE = True
+except ImportError:
+    _CHROMA_AVAILABLE = False
+
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -128,9 +134,28 @@ def project_coverage(text: str, expected: list[str]) -> tuple[float, list[str]]:
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main(run_latency: bool = True) -> int:
-    api_key = __import__("os").getenv("OPENAI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("ERROR: OPENAI_API_KEY not set")
+        return 1
+
+    # Warn when RETRIEVAL_BACKEND restricts to a single backend — this script
+    # needs both. Use --backends both to override, or ensure both backends are
+    # reachable regardless of the deployment's active backend.
+    active_backend = os.getenv("RETRIEVAL_BACKEND", "")
+    if active_backend and active_backend != "both":
+        print(f"NOTE: RETRIEVAL_BACKEND={active_backend!r} — this script compares both backends.")
+        print("      Results reflect both regardless of which is your production backend.")
+
+    if not _CHROMA_AVAILABLE:
+        print("ERROR: chromadb not installed — cannot run ChromaDB side of comparison.")
+        print("       Install with: pip install chromadb")
+        return 1
+
+    neo4j_uri = os.getenv("NEO4J_URI")
+    if not neo4j_uri:
+        print("ERROR: NEO4J_URI not set — cannot run Neo4j side of comparison.")
+        print("       Set NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD in .env")
         return 1
 
     oai = OpenAI(api_key=api_key)

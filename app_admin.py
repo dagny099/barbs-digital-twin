@@ -55,6 +55,7 @@ if OPENAI_API_KEY is None:
 
 _raw_model = os.getenv("LLM_MODEL", "openai/gpt-4.1")
 LLM_MODEL  = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
+RETRIEVAL_BACKEND = os.getenv("RETRIEVAL_BACKEND", "neo4j")
 N_CHUNKS_RETRIEVE = int(os.getenv("N_CHUNKS_RETRIEVE", 7))
 LLM_TEMPERATURE   = float(os.getenv("LLM_TEMPERATURE", "0.4"))
 SERVER_PORT       = int(os.getenv("ADMIN_PORT", 7862))
@@ -434,15 +435,49 @@ session_tracker = SessionTracker()
 
 def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE,
                           sensitivity_filter=None):
-    """Embed query and retrieve top-K chunks, optionally filtered by sensitivity tier."""
+    """Embed query and retrieve top-K chunks, optionally filtered by sensitivity tier.
+
+    Returns a dict with keys: documents, metadatas, distances, query_embedding,
+    retrieval_time_ms, n_results — same shape regardless of backend so all
+    downstream rendering code works unchanged.
+    """
     start = time.time()
- 
+
+    if RETRIEVAL_BACKEND == "neo4j":
+        import math
+        from neo4j_utils import query_neo4j_rag
+        # Derive visitor tier from the sensitivity_filter shape
+        if sensitivity_filter is None:
+            tier = "inner_circle"
+        elif isinstance(sensitivity_filter.get("sensitivity"), dict):
+            tier = "personal"
+        else:
+            tier = "public"
+        neo4j_result = query_neo4j_rag(user_query=message, visitor_tier=tier, k=n_results)
+        chunks = neo4j_result.get("chunks", [])
+        documents = [c["text"] for c in chunks]
+        metadatas = [
+            {"source": c["source"], "section": c["section"], "project_name": ""}
+            for c in chunks
+        ]
+        # Convert [0,1] composite scores to approximate L2 distances for display
+        distances = [math.sqrt(max(0.0, 2.0 * (1.0 - c["score"]))) for c in chunks]
+        return {
+            "documents": documents,
+            "metadatas": metadatas,
+            "distances": distances,
+            "query_embedding": [],  # not exposed by Neo4j path
+            "retrieval_time_ms": (time.time() - start) * 1000,
+            "n_results": len(chunks),
+        }
+
+    # ChromaDB path (original)
     resp = openai_client.embeddings.create(
         model="text-embedding-3-small", input=[message],
     )
     session_tracker.log_embedding(resp)
     query_embedding = resp.data[0].embedding
- 
+
     query_kwargs = {
         "query_embeddings": [query_embedding],
         "n_results": n_results,
@@ -450,9 +485,9 @@ def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE,
     }
     if sensitivity_filter:
         query_kwargs["where"] = sensitivity_filter
- 
+
     results = collection.query(**query_kwargs)
- 
+
     return {
         "documents": results["documents"][0],
         "metadatas": results["metadatas"][0],
@@ -1276,7 +1311,21 @@ if __name__ == "__main__":
     _source_filter_choices = ["All"] + _source_types
     _initial_browse = build_browse_dataframe(max_rows=100)  # Limit initial display for performance
 
+    _backend_label = {"neo4j": "Neo4j", "chromadb": "ChromaDB"}.get(
+        RETRIEVAL_BACKEND, RETRIEVAL_BACKEND.title()
+    )
+    _backend_color = "#256B68" if RETRIEVAL_BACKEND == "neo4j" else "#7A5C1A"
+    _banner_html = (
+        f'<div style="background:{_backend_color}12;border:1px solid {_backend_color}44;'
+        f'border-radius:8px;padding:8px 14px;font-size:13px;color:{_backend_color};">'
+        f'<strong>Retrieval backend: {_backend_label}</strong>'
+        f'{"  ·  Collection Browser &amp; Semantic Probe always show the ChromaDB cache regardless of backend." if RETRIEVAL_BACKEND == "neo4j" else ""}'
+        f'</div>'
+    )
+
     with gr.Blocks(title="Digital Twin — Admin") as demo:
+
+        gr.HTML(_banner_html)
 
         # ── Output components (render=False) ────────────────────
         metrics_display = gr.HTML(value=_initial_metrics(), render=False)

@@ -16,15 +16,14 @@ This guide covers deployment, continuous evaluation, logging analytics, and oper
 
 ### Deployment Architecture
 
+Both production deployments pull from the **same `main` branch**. A single
+`RETRIEVAL_BACKEND` env var in each server's `.env` file controls which backend
+is active — the CI/CD deploys code only, not configuration.
+
 ```mermaid
 graph TB
     subgraph "Source Control"
-        GH[GitHub Repository<br/>main branch]
-    end
-
-    subgraph "Source Control"
-        GH_MAIN[GitHub<br/>main branch]
-        GH_FEAT[GitHub<br/>feat/neo4j-* branches]
+        GH_MAIN[GitHub<br/>main branch — single codebase]
     end
 
     subgraph "CI/CD"
@@ -36,47 +35,51 @@ graph TB
     subgraph "Production - EC2 Primary"
         EC2[AWS EC2 Instance<br/>Amazon Linux 2]
         SYS[systemd Service<br/>digital-twin :7860]
-        CHROMA1[(ChromaDB<br/>persistent storage)]
+        ENV1[.env: RETRIEVAL_BACKEND=chromadb]
         DNS1[twin.barbhs.com]
     end
 
-    subgraph "Preview - EC2 Feature"
+    subgraph "Preview - EC2 Graphy"
         EC2_F[same EC2 Instance]
         SYS_F[systemd Service<br/>digital-twin-neo4j :7861]
-        DNS3[neo4j.twin.barbhs.com]
+        ENV2[.env: RETRIEVAL_BACKEND=neo4j]
+        DNS3[graphy.twin.barbhs.com]
     end
 
     subgraph "Secondary - HF Spaces"
         HF[Hugging Face Space<br/>Docker Container]
-        CHROMA2[(ChromaDB<br/>ephemeral, rebuilds on restart)]
+        ENV3[Space secret: RETRIEVAL_BACKEND=chromadb]
         DNS2[huggingface.co/spaces/...]
     end
 
     GH_MAIN -->|push to main| GHA1
     GH_MAIN -->|push to main| GHA2
-    GH_FEAT -->|push to feat/neo4j-*| GHA3
+    GH_MAIN -->|push to main| GHA3
 
     GHA1 -->|SSH deploy| EC2
     EC2 --> SYS
-    SYS --> CHROMA1
+    SYS --> ENV1
     DNS1 --> EC2
 
     GHA3 -->|SSH deploy| EC2_F
     EC2_F --> SYS_F
+    SYS_F --> ENV2
     DNS3 --> EC2_F
 
     GHA2 -->|sync code + data| HF
-    HF --> CHROMA2
+    HF --> ENV3
     DNS2 --> HF
 
     style EC2 fill:#ffd4aa
     style EC2_F fill:#ffe4bb
     style HF fill:#d4aaff
-    style CHROMA1 fill:#d4ffd4
-    style CHROMA2 fill:#ffffaa
+    style ENV1 fill:#d4ffd4
+    style ENV2 fill:#d4e8ff
+    style ENV3 fill:#ffffaa
 ```
 
-Production deployments are automated via GitHub Actions and trigger on every push to `main`. Feature-branch preview deployments trigger on `feat/neo4j-*` branches and target a separate subdomain.
+Both EC2 deployments and HF Spaces trigger on every push to `main`. The backend is
+controlled by `RETRIEVAL_BACKEND` in each environment's `.env` — never by branch.
 
 ### EC2 Deployment (Primary)
 
@@ -102,7 +105,7 @@ python scripts/healthcheck.py --checks env chroma
 python scripts/healthcheck.py --notify
 ```
 
-Checks covered: environment variables, OpenAI LLM (live completion), OpenAI embeddings, ChromaDB collection count, Pushover credentials. All pass in ~3 seconds. Exit code 1 if anything fails.
+Checks covered: environment variables, OpenAI LLM (live completion), OpenAI embeddings, the active retrieval backend (ChromaDB collection count **or** Neo4j driver connectivity, based on `RETRIEVAL_BACKEND`), and Pushover credentials. All pass in ~3 seconds. Exit code 1 if anything fails.
 
 **Required GitHub Secrets** (Settings → Secrets and variables → Actions):
 
@@ -133,13 +136,15 @@ Still active. On push to `main`, GitHub Actions syncs app code and input data to
 
 **Full setup instructions:** See `.github/workflows/deploy-hf.yml`
 
-### Feature Preview Deployment (neo4j.twin.barbhs.com)
+### Graphy Preview Deployment (graphy.twin.barbhs.com — Neo4j backend)
 
-Any branch matching `feat/neo4j-*` is automatically deployed to `neo4j.twin.barbhs.com` on the same EC2 instance, running as a second systemd service on port 7861 behind Nginx.
+The graphy preview runs on the same EC2 instance as production, deployed from `main`
+via `deploy-ec2-feature.yml`. It uses a separate app directory and `.env` with
+`RETRIEVAL_BACKEND=neo4j`, making it a live comparison against the ChromaDB deployment.
 
 **Deploy pipeline summary:**
 ```
-push to feat/neo4j-* → unit tests (pytest) → SSH deploy → smoke test (HTTP 200)
+push to main → unit tests (pytest) → SSH deploy to graphy dir → smoke test (HTTP 200)
 ```
 
 The feature service uses its own app directory (`barbs-digital-twin-neo4j/`) and its own `.env` file, so it is fully isolated from the production instance.

@@ -484,8 +484,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Run offline evaluations (richer schema aware)")
-    parser.add_argument("--backend",     type=str, default="chromadb", choices=["chromadb", "neo4j"],
-                        help="Retrieval backend: 'chromadb' (default) or 'neo4j'")
+    _default_backend = os.getenv("RETRIEVAL_BACKEND", "chromadb")
+    parser.add_argument("--backend",     type=str, default=_default_backend, choices=["chromadb", "neo4j"],
+                        help="Retrieval backend: 'chromadb' or 'neo4j' (default: RETRIEVAL_BACKEND env var, else 'chromadb')")
     parser.add_argument("--category",   type=str, help="Filter by legacy category")
     parser.add_argument("--limit",      type=int, help="Limit number of questions")
     parser.add_argument("--questions",  type=str, default=QUESTIONS_FILE, help="Path to questions CSV")

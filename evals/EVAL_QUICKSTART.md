@@ -22,7 +22,7 @@ It does **not** fully exercise:
 ## Core files
 
 - `eval_questions.csv` — question bank
-- `run_evals.py` — evaluation runner (supports `--backend chromadb` or `--backend neo4j`)
+- `run_evals.py` — evaluation runner (reads `RETRIEVAL_BACKEND` env var; also accepts `--backend chromadb|neo4j`)
 - `analyze_evals.py` — analysis and export
 - `eval_results/*.json` — saved run outputs (filename includes backend name)
 
@@ -54,9 +54,9 @@ Run both backends against the full question bank, then export both to CSV and
 diff the `response` column side-by-side in a spreadsheet.
 
 ```bash
-# Step 1 — capture both backends
-python evals/run_evals.py --backend chromadb --label chroma-baseline
-python evals/run_evals.py --backend neo4j    --label neo4j-phase3
+# Step 1 — capture both backends (use RETRIEVAL_BACKEND env var or --backend flag)
+RETRIEVAL_BACKEND=chromadb python evals/run_evals.py --label chroma-baseline
+RETRIEVAL_BACKEND=neo4j    python evals/run_evals.py --label neo4j-phase3
 
 # Step 2 — export each to a review CSV
 python evals/analyze_evals.py \

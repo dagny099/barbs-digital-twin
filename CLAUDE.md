@@ -6,12 +6,15 @@ Lives at twin.barbhs.com (EC2 primary) and HuggingFace Spaces (secondary).
 
 ## Architecture
 
-**Both Neo4j and ChromaDB are live.** Neo4j handles production retrieval (`query_neo4j_rag()`
-in `neo4j_utils.py`). ChromaDB remains intact as a fallback and comparison baseline.
-Do not assume one replaced the other.
+**Both Neo4j and ChromaDB are live.** The active backend is controlled by the
+`RETRIEVAL_BACKEND` env var (`"neo4j"` default, or `"chromadb"`). Both deployments
+use the same codebase; each server's `.env` file selects the backend:
+- `graphy.twin.barbhs.com` → `RETRIEVAL_BACKEND=neo4j`
+- `twin.barbhs.com` → `RETRIEVAL_BACKEND=chromadb`
 
-Retrieval flow: user query → OpenAI embedding → Neo4j hybrid (vector + graph signals)
-→ context injected into system prompt → LiteLLM multi-provider completion → Gradio stream.
+Retrieval flow: user query → OpenAI embedding → selected backend (Neo4j hybrid or
+ChromaDB vector) → context injected into system prompt → LiteLLM multi-provider
+completion → Gradio stream.
 
 ## Key commands
 
@@ -67,6 +70,7 @@ debugging sessions.
 | File | Purpose |
 |------|---------|
 | `neo4j_utils.py` | Neo4j driver, `query_neo4j_rag()`, scoring weight constants |
+| `chroma_utils.py` | ChromaDB vector retrieval, `query_chroma_rag()` — same return shape as Neo4j |
 | `app.py` | Main Gradio app — RAG pipeline, streaming, tool calls, logging |
 | `SYSTEM_PROMPT.md` | Persona, voice, factual accuracy rules, failure mode table |
 | `replay_retrieval.py` | Neo4j retrieval debugger (new — 2026-05-17) |
@@ -78,9 +82,12 @@ debugging sessions.
 
 ## Conventions
 
+- `RETRIEVAL_BACKEND` env var: `"neo4j"` (default) or `"chromadb"`. Controls which
+  retrieval backend is active for `app.py`, `app_admin.py`, `healthcheck.py`, and
+  `run_evals.py`. Set in each deployment's `.env` — never hardcode.
 - Sensitivity tiers: `public` → `personal` → `inner_circle`. Controlled by passphrase
-  detection in `detect_audience_tier()`. The Neo4j `allowed_tiers` list gates which
-  Section nodes are eligible for retrieval.
+  detection in `detect_audience_tier()`. The Neo4j `allowed_tiers` list and the ChromaDB
+  `where` filter both use the same tier logic.
 - `fetch_k = k × 4` (wider candidate pool before graph reranking). Currently set inline
   in `query_neo4j_rag()` — not exposed as an env var.
 - Temperature default: 0.6 (set via `LLM_TEMPERATURE` env var or settings panel).

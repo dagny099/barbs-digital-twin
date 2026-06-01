@@ -15,7 +15,8 @@ Checks:
     env      Required and optional environment variables are present
     openai   OpenAI API key is valid and the configured LLM model resolves
     embed    Embedding endpoint responds correctly
-    chroma   ChromaDB collection exists and is non-empty
+    chroma   ChromaDB collection exists and is non-empty (skipped if RETRIEVAL_BACKEND=neo4j)
+    neo4j    Neo4j driver connects and schema is present (skipped if RETRIEVAL_BACKEND=chromadb)
     pushover Pushover credentials are accepted (--notify sends a real notification)
 
 Exit codes:
@@ -44,11 +45,12 @@ PUSHOVER_SEND_URL = "https://api.pushover.net/1/messages.json"
 
 _raw_model = os.getenv("LLM_MODEL", "gpt-4.1")
 LLM_MODEL = _raw_model if "/" in _raw_model else f"openai/{_raw_model}"
+RETRIEVAL_BACKEND = os.getenv("RETRIEVAL_BACKEND", "neo4j")
 
 REQUIRED_ENV_VARS = ["OPENAI_API_KEY"]
-OPTIONAL_ENV_VARS = ["PUSHOVER_USER", "PUSHOVER_TOKEN", "PUSHOVER_DEVICE", "LLM_MODEL"]
+OPTIONAL_ENV_VARS = ["PUSHOVER_USER", "PUSHOVER_TOKEN", "PUSHOVER_DEVICE", "LLM_MODEL", "RETRIEVAL_BACKEND"]
 
-ALL_CHECKS = ["env", "openai", "embed", "chroma", "pushover"]
+ALL_CHECKS = ["env", "openai", "embed", "chroma", "neo4j", "pushover"]
 
 # ── Result tracking ───────────────────────────────────────────────────────────
 
@@ -126,6 +128,9 @@ def check_embed():
 
 
 def check_chroma():
+    if RETRIEVAL_BACKEND == "neo4j":
+        _record("SKIP", "chroma:collection", "RETRIEVAL_BACKEND=neo4j — skipping ChromaDB check")
+        return True
     try:
         import chromadb
 
@@ -145,6 +150,37 @@ def check_chroma():
         return True
     except Exception as e:
         _record("FAIL", "chroma:collection", f"{type(e).__name__}: {e}")
+        return False
+
+
+def check_neo4j():
+    if RETRIEVAL_BACKEND == "chromadb":
+        _record("SKIP", "neo4j:connection", "RETRIEVAL_BACKEND=chromadb — skipping Neo4j check")
+        return True
+    try:
+        sys.path.insert(0, str(ROOT))
+        from neo4j_utils import get_driver
+
+        start = time.time()
+        driver = get_driver()
+        driver.verify_connectivity()
+        elapsed = round((time.time() - start) * 1000)
+
+        # Quick sanity: confirm Section nodes exist
+        with driver.session() as session:
+            count = session.run("MATCH (s:Section) RETURN count(s) AS n").single()["n"]
+
+        if count == 0:
+            _record("FAIL", "neo4j:connection", "connected but no Section nodes found")
+            return False
+
+        _record("PASS", "neo4j:connection", f"{count} Section nodes | {elapsed}ms")
+        return True
+    except KeyError as e:
+        _record("FAIL", "neo4j:connection", f"missing env var: {e}")
+        return False
+    except Exception as e:
+        _record("FAIL", "neo4j:connection", f"{type(e).__name__}: {e}")
         return False
 
 
@@ -225,9 +261,10 @@ def main():
     args = parser.parse_args()
 
     print(f"\nHealthcheck — {ROOT.name}")
-    print(f"  LLM model : {LLM_MODEL}")
-    print(f"  ChromaDB  : {CHROMA_PATH}")
-    print(f"  Mode      : {'--notify (will send Pushover notification)' if args.notify else 'validate only (no notification sent)'}")
+    print(f"  LLM model         : {LLM_MODEL}")
+    print(f"  Retrieval backend : {RETRIEVAL_BACKEND}")
+    print(f"  ChromaDB path     : {CHROMA_PATH}")
+    print(f"  Mode              : {'--notify (will send Pushover notification)' if args.notify else 'validate only (no notification sent)'}")
     print()
 
     check_map = {
@@ -235,6 +272,7 @@ def main():
         "openai": check_openai,
         "embed": check_embed,
         "chroma": check_chroma,
+        "neo4j": check_neo4j,
         "pushover": lambda: check_pushover(send_notification=args.notify),
     }
 

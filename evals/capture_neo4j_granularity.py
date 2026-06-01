@@ -20,6 +20,7 @@ Usage (from project root):
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -111,6 +112,11 @@ def get_score() -> int:
 
 
 def main() -> int:
+    if os.getenv("RETRIEVAL_BACKEND", "") == "chromadb":
+        print("⚠️  RETRIEVAL_BACKEND=chromadb — this script captures Neo4j metrics.")
+        print("    Results reflect Neo4j, not your active ChromaDB backend.")
+        print()
+
     print("Neo4j Granularity Eval")
     print("Baseline (ChromaDB): avg_coherence=3.4/5  keyword_coverage=71%")
     print("─" * 60)

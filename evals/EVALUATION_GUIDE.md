@@ -238,12 +238,18 @@ This is where you define:
 Run the offline harness against a selected question bank.
 
 ```bash
-python evals/run_evals.py --backend chromadb   # original ChromaDB path
+# Preferred: use RETRIEVAL_BACKEND env var (matches your deployment's .env)
+RETRIEVAL_BACKEND=neo4j    python evals/run_evals.py
+RETRIEVAL_BACKEND=chromadb python evals/run_evals.py
+
+# Or use --backend flag to override (backward-compatible)
 python evals/run_evals.py --backend neo4j      # Neo4j hybrid vector + graph path
+python evals/run_evals.py --backend chromadb   # original ChromaDB path
 ```
 
-The `--backend` flag controls which retrieval pipeline is used. Both produce
-identical output JSON/CSV schemas so runs can be compared in a spreadsheet.
+The active backend is read from `RETRIEVAL_BACKEND` env var first, then the
+`--backend` flag. Both produce identical output JSON/CSV schemas so runs can be
+compared in a spreadsheet.
 Output filenames include the backend name (e.g. `eval_results_neo4j_<timestamp>.json`).
 
 This produces:

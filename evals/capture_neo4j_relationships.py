@@ -25,6 +25,7 @@ Usage (from project root):
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -169,6 +170,11 @@ def run_graph_traversal(cypher: str) -> list[str]:
 
 
 def main() -> int:
+    if os.getenv("RETRIEVAL_BACKEND", "") == "chromadb":
+        print("⚠️  RETRIEVAL_BACKEND=chromadb — this script captures Neo4j metrics.")
+        print("    Results reflect Neo4j, not your active ChromaDB backend.")
+        print()
+
     print("Neo4j Relationship Eval")
     print("Baseline (ChromaDB): success_rate=37.5%  (3/8 queries)")
     print("─" * 60)

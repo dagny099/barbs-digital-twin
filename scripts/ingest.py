@@ -718,6 +718,11 @@ Source keys: kb-biosketch, kb-philosophy, kb-positioning, kb-projects,
 def main():
     args = parse_args()
 
+    if os.getenv("RETRIEVAL_BACKEND", "neo4j") == "neo4j":
+        print("⚠️  RETRIEVAL_BACKEND=neo4j — ingest.py only populates ChromaDB.")
+        print("    For Neo4j, run: python scripts/populate_neo4j_graph.py")
+        print()
+
     # If any non-interactive flag is set, go straight to CLI mode
     if args.status or args.check_drift or args.all or args.source or args.dry_run:
         cli_mode(args)

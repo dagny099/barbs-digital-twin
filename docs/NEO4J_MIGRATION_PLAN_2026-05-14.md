@@ -1,8 +1,18 @@
 # Neo4j Migration Plan: ChromaDB → Graph-Based Retrieval
 
 **Date**: 2026-05-11
-**Status**: Phase 6 In Progress — last updated 2026-05-17
+**Status**: Phase 7 Complete — last updated 2026-06-01
 **Goal**: Replace ChromaDB vector-only retrieval with Neo4j graph-based approach to solve granularity, connection, and ranking issues
+
+> **Phase 7 (2026-06-01) — Branch consolidation**: Merged `feat/graphy-preview` into `main`
+> via fast-forward. Both production deployments now run the same codebase. The active backend
+> is selected by `RETRIEVAL_BACKEND` in each deployment's `.env`:
+> - `graphy.twin.barbhs.com` → `RETRIEVAL_BACKEND=neo4j`
+> - `twin.barbhs.com` → `RETRIEVAL_BACKEND=chromadb`
+>
+> Both CI/CD workflows (`deploy-ec2.yml` and `deploy-ec2-feature.yml`) now trigger on `main`.
+> `chroma_utils.py` added as the ChromaDB counterpart to `neo4j_utils.py` with identical
+> return shape. HF Spaces uses `RETRIEVAL_BACKEND=chromadb` (set as Space secret).
 
 ---
 
