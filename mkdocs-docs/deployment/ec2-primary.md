@@ -105,17 +105,22 @@ du -sh .chroma_db_DT/    # ChromaDB can grow over time
 
 ---
 
-## Feature Preview Deployment
+## Dual-Backend Deployment
 
-Branches matching `feat/neo4j-*` are automatically deployed to `neo4j.twin.barbhs.com` on the same EC2 instance, running as a second `systemd` service on port 7861.
+Both `twin.barbhs.com` and `graphy.twin.barbhs.com` run from the same `main` branch — same codebase, different `.env` files. The `RETRIEVAL_BACKEND` variable in each server's `.env` selects the active backend:
 
 ```
-push to feat/neo4j-* → unit tests (pytest) → SSH deploy → smoke test (HTTP 200)
+push to main → unit tests (pytest) → deploy-ec2.yml (ChromaDB) + deploy-ec2-feature.yml (Neo4j)
 ```
 
-The feature service uses its own app directory (`barbs-digital-twin-neo4j/`) and its own `.env` file — fully isolated from the production instance.
+The second service runs on port 7861 in its own app directory with its own `.env`. Both services are deployed on every push to `main`.
 
-**Additional secrets required:**
+| Deployment | Domain | `RETRIEVAL_BACKEND` | Workflow |
+|---|---|---|---|
+| Primary | `twin.barbhs.com` | `chromadb` | `deploy-ec2.yml` |
+| Graphy preview | `graphy.twin.barbhs.com` | `neo4j` | `deploy-ec2-feature.yml` |
+
+**Additional secrets required for graphy preview:**
 
 | Secret | Example value |
 |---|---|

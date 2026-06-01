@@ -58,7 +58,7 @@ python app.py
 Open [http://localhost:7860](http://localhost:7860) and you're live.
 
 !!! note "Minimum requirement"
-    Only `OPENAI_API_KEY` is required to run the app. Neo4j and Pushover credentials are optional — the app falls back gracefully to ChromaDB if Neo4j isn't configured.
+    Only `OPENAI_API_KEY` is required to run the app. Set `RETRIEVAL_BACKEND=chromadb` in your `.env` to use the ChromaDB vector backend (no Neo4j credentials needed). The default backend is `neo4j` — if you leave it as default without Neo4j credentials, the app will error on queries.
 
 ---
 

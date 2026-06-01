@@ -44,7 +44,7 @@ The knowledge base is built from nine source types, each embedded separately so 
 
 ## Featured Projects
 
-These four projects get proactive surfacing — the twin brings them up when they're relevant proof points:
+These five projects get proactive surfacing — the twin brings them up when they're relevant proof points:
 
 | Project | What it demonstrates |
 |---|---|

@@ -81,22 +81,3 @@ For production use, EC2 is the correct primary. The HF Space is a convenience mi
 
 ---
 
-## Quick Deploy Reference
-
-### For these MkDocs docs
-
-```bash
-# Install dependencies
-pip install mkdocs-material
-
-# Local preview
-mkdocs serve          # http://localhost:8000
-
-# Build for publishing
-mkdocs build          # outputs to site/
-
-# Deploy to GitHub Pages (if configured)
-mkdocs gh-deploy
-```
-
-The `site/` directory is the static build. Copy it to the appropriate path on `docs.barbhs.com/barbs-digital-twin/` to publish.

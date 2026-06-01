@@ -78,7 +78,7 @@ python app_admin.py   # http://localhost:7862 (or $ADMIN_PORT if set)
 
 ## Optional: Neo4j Setup
 
-The app defaults to ChromaDB if Neo4j credentials aren't configured. For full hybrid retrieval:
+The default `RETRIEVAL_BACKEND` is `neo4j`. If you don't have Neo4j credentials, set `RETRIEVAL_BACKEND=chromadb` in your `.env` to use the ChromaDB vector backend instead — there is no automatic fallback. For full hybrid retrieval with Neo4j:
 
 1. Create a Neo4j AuraDB instance (or run Neo4j locally)
 2. Add credentials to `.env`:
@@ -157,5 +157,6 @@ barbs-digital-twin/
 │   ├── run_evals.py
 │   ├── analyze_evals.py
 │   └── eval_questions.csv
-└── docs/                     # Markdown source docs
+├── docs/                     # Older developer docs (DEVELOPER_GUIDE.md, LESSONS_LEARNED.md, etc.)
+└── mkdocs-docs/              # MkDocs documentation source (this site)
 ```

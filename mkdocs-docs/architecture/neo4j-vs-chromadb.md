@@ -22,7 +22,7 @@ Both databases are active. They store the same chunks. They serve different purp
 | **Tier gating** | `WHERE s.sensitivity_tier IN $allowed_tiers` | Post-filter on metadata |
 | **Entity links** | Yes — 167 canonical entity nodes via `MENTIONS` | No |
 | **Project links** | Yes — `Project -[:DESCRIBED_IN]-> Section` | No |
-| **Fallback if unavailable** | ChromaDB takes over automatically | — |
+| **Fallback if unavailable** | Set `RETRIEVAL_BACKEND=chromadb` to switch | — |
 | **Debugging** | `replay_retrieval.py --compare` shows ranking drift | `chunk_inspector.py` |
 
 ---
@@ -50,7 +50,7 @@ Neo4j's hybrid retrieval closes this gap:
 
 1. **A/B comparison baseline** — The same chunks stored in both systems means `replay_retrieval.py --compare` can produce a ranking-drift table for any query. This is the fastest diagnostic for determining whether a graph signal is helping or hurting. Without ChromaDB, this comparison is impossible.
 
-2. **Fallback** — If Neo4j is unavailable (network issue, credentials problem, cold start), `app.py` falls back to ChromaDB automatically. No code changes needed; the app degrades gracefully.
+2. **Fallback** — To switch to ChromaDB (e.g., Neo4j unavailable or credentials not configured), set `RETRIEVAL_BACKEND=chromadb` in `.env` and restart. There is no automatic runtime fallback — the backend is selected at startup.
 
 3. **Data integrity** — Both stores are kept in sync during ingestion. If you need to audit Neo4j content, ChromaDB provides an independent reference.
 

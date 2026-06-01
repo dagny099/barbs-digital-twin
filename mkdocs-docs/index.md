@@ -77,8 +77,13 @@ This digital twin uses **GraphRAG** — retrieval-augmented generation backed by
 
 ## Status & Roadmap
 
-!!! success "Live at [twin.barbhs.com](https://twin.barbhs.com)"
-    The primary deployment runs on AWS EC2 with automated GitHub Actions CI/CD. A secondary mirror is available on Hugging Face Spaces.
+!!! success "Live on AWS EC2"
+    Two deployments run from the same `main` branch — same codebase, different `.env` files:
+
+    - **[twin.barbhs.com](https://twin.barbhs.com)** — ChromaDB backend (`RETRIEVAL_BACKEND=chromadb`)
+    - **[graphy.twin.barbhs.com](https://graphy.twin.barbhs.com)** — Neo4j GraphRAG backend (`RETRIEVAL_BACKEND=neo4j`)
+
+    A secondary mirror is also available on Hugging Face Spaces. Both EC2 deployments use automated GitHub Actions CI/CD.
 
 === "Completed"
 

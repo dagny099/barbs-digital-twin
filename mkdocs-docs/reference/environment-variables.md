@@ -58,6 +58,22 @@ Ollama requires a local server running at the default port (`http://localhost:11
 
 ---
 
+## Retrieval Backend
+
+| Variable | Default | Description |
+|---|---|---|
+| `RETRIEVAL_BACKEND` | `neo4j` | Which retrieval backend to use: `"neo4j"` (hybrid graph + vector) or `"chromadb"` (pure vector). Set in each deployment's `.env` — never hardcode. |
+
+Both production deployments use the same codebase; the `.env` file on each server selects the backend:
+
+- `graphy.twin.barbhs.com` → `RETRIEVAL_BACKEND=neo4j`
+- `twin.barbhs.com` → `RETRIEVAL_BACKEND=chromadb`
+
+!!! warning "No automatic fallback"
+    There is no automatic fallback between backends. If `RETRIEVAL_BACKEND=neo4j` (the default) and Neo4j credentials are missing or the connection fails, the app will error. To use ChromaDB, set `RETRIEVAL_BACKEND=chromadb` explicitly.
+
+---
+
 ## Neo4j
 
 | Variable | Description |
@@ -66,7 +82,7 @@ Ollama requires a local server running at the default port (`http://localhost:11
 | `NEO4J_USERNAME` | Neo4j username (typically `neo4j`) |
 | `NEO4J_PASSWORD` | Neo4j password |
 
-If Neo4j credentials are not set, the app falls back to ChromaDB automatically.
+Required when `RETRIEVAL_BACKEND=neo4j`. Not needed for ChromaDB-only deployments.
 
 ---
 
@@ -104,4 +120,5 @@ Without these, the notification tool is silently disabled. The app runs normally
 | Variable | Default | Description |
 |---|---|---|
 | `CHROMA_DB_PATH` | `.chroma_db_DT/` | Local path to ChromaDB persistent storage |
-| `CHROMA_COLLECTION_NAME` | `barbara_knowledge` | Collection name within ChromaDB |
+
+The collection name (`barb-twin`) is hardcoded in `app.py` and `scripts/healthcheck.py` and is not configurable via environment variable.

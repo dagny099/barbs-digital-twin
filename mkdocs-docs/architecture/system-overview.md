@@ -114,28 +114,33 @@ graph TB
         GH_MAIN["GitHub\nmain branch"]
         GHA1["GitHub Actions\ndeploy-ec2.yml"]
         GHA2["GitHub Actions\ndeploy-hf.yml"]
+        GHA3["GitHub Actions\ndeploy-ec2-feature.yml"]
     end
 
     subgraph "Production — EC2"
-        EC2["AWS EC2\nAmazon Linux 2"]
-        SYS["systemd Service\ndigital-twin :7860"]
+        EC2A["systemd :7860\nRETRIEVAL_BACKEND=chromadb"]
+        EC2B["systemd :7861\nRETRIEVAL_BACKEND=neo4j"]
         DNS1["twin.barbhs.com"]
+        DNS2["graphy.twin.barbhs.com"]
     end
 
     subgraph "Secondary — HF Spaces"
         HF["Hugging Face Space\nDocker Container"]
-        DNS2["huggingface.co/spaces/..."]
+        DNS3["huggingface.co/spaces/..."]
     end
 
     GH_MAIN -->|"push to main"| GHA1
     GH_MAIN -->|"push to main"| GHA2
-    GHA1 -->|"unit tests → SSH deploy"| EC2
-    EC2 --> SYS
-    DNS1 --> EC2
+    GH_MAIN -->|"push to main"| GHA3
+    GHA1 -->|"unit tests → SSH deploy"| EC2A
+    GHA3 -->|"unit tests → SSH deploy"| EC2B
+    DNS1 --> EC2A
+    DNS2 --> EC2B
     GHA2 -->|"sync code + data"| HF
-    DNS2 --> HF
+    DNS3 --> HF
 
-    style EC2 fill:#ffd4aa,stroke:#FF9800
+    style EC2A fill:#ffd4aa,stroke:#FF9800
+    style EC2B fill:#f3e5f5,stroke:#9C27B0
     style HF fill:#d4aaff,stroke:#9C27B0
 ```
 
