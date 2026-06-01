@@ -106,3 +106,4 @@ scripts/.embedding_cache
 
 # FOR NOW, dont commit this until I have the tested graphrag more; this stores the LLM entity extraction results (skills, methods, technologies per project); these are non-deterministic; commit if I want the graph can be rebuild without paying for re-extraction to get same entity set
 scripts/.extraction_cache.json
+site/

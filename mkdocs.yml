@@ -1,0 +1,132 @@
+site_name: "Barb's Digital Twin"
+site_description: "An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo in her own voice — backed by a Neo4j knowledge graph and a GraphRAG retrieval pipeline."
+site_url: https://docs.barbhs.com/barbs-digital-twin/
+repo_url: https://github.com/dagny099/barbs-digital-twin
+repo_name: dagny099/barbs-digital-twin
+copyright: "&copy; 2026 Barbara Hidalgo-Sotelo &nbsp;|&nbsp; Built with Material for MkDocs"
+
+docs_dir: mkdocs-docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/brain
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+
+plugins:
+  - search:
+      lang: en
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dagny099
+      name: dagny099 on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/barbara-hidalgo-sotelo
+      name: Barbara on LinkedIn
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: Helpful
+          data: 1
+          note: Thanks for the feedback!
+        - icon: material/thumb-down-outline
+          name: Not helpful
+          data: 0
+          note: Thanks — we'll work on it.
+  generator: false
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Passphrase & Tiers: getting-started/tiers.md
+  - User Guide:
+    - Asking Good Questions: user-guide/asking-good-questions.md
+    - What the Twin Knows: user-guide/what-the-twin-knows.md
+    - Conversation Tips: user-guide/conversation-tips.md
+  - Architecture:
+    - System Overview: architecture/system-overview.md
+    - Knowledge Base Design: architecture/knowledge-base-design.md
+    - Retrieval & Scoring: architecture/retrieval-and-scoring.md
+    - Neo4j vs ChromaDB: architecture/neo4j-vs-chromadb.md
+  - Developer Docs:
+    - Local Setup: developer-docs/local-setup.md
+    - KB Ingestion: developer-docs/kb-ingestion.md
+    - Debug Tools: developer-docs/debug-tools.md
+    - Running Tests: developer-docs/running-tests.md
+  - Deployment:
+    - EC2 Primary: deployment/ec2-primary.md
+    - HuggingFace Spaces: deployment/huggingface-spaces.md
+  - Lessons Learned:
+    - Overview: lessons-learned/index.md
+    - Entry 001 — Graph Signals & Hallucination: lessons-learned/entry-001.md
+    - Entry 002 — Curated vs. Narrative Content: lessons-learned/entry-002.md
+  - Reference:
+    - Key Files & API: reference/key-files.md
+    - Environment Variables: reference/environment-variables.md
+    - Scoring Weights: reference/scoring-weights.md
+  - Tags: tags.md
