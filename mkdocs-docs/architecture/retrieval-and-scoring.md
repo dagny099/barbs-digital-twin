@@ -77,10 +77,31 @@ fetch_k = N_CHUNKS_RETRIEVE * 4   # default N_CHUNKS_RETRIEVE = 10 → fetch_k =
 Before any scoring happens, ineligible sections are excluded at the query level:
 
 ```cypher
-WHERE s.sensitivity_tier IN $allowed_tiers
+WHERE section.sensitivity IN $allowed_tiers
 ```
 
 This means `inner_circle` sections never enter the scoring pool for a `public`-tier query — they're not scored and demoted, they're not retrieved at all.
+
+---
+
+## Neighbor Expansion
+
+After the top-k sections are selected, each anchor fetches its `NEXT_SECTION` neighbor in the same Cypher query:
+
+```cypher
+OPTIONAL MATCH (section)-[:NEXT_SECTION]->(neighbor:Section)
+WHERE neighbor.sensitivity IN $allowed_tiers
+```
+
+If the neighbor exists, passes the sensitivity filter, and is **not already in the top-k anchor set**, its text is appended inline after the anchor under a `[continued: source — section_name]` label. This gives the LLM the continuation of narrative sections rather than an isolated fragment — important for timeline-sensitive queries ("What did you do after MIT?").
+
+**What neighbor expansion does NOT affect:**
+
+- `sources`, `scores`, and `n_chunks_retrieved` — these reflect the k anchor sections only
+- The comparison baseline (`--compare` in `replay_retrieval.py`) — ChromaDB has no NEXT_SECTION relationships
+- ChromaDB retrieval — neighbor expansion is Neo4j only
+
+The `↓ continued:` label appears in `replay_retrieval.py` output so you can verify exactly what neighbor text the LLM received.
 
 ---
 

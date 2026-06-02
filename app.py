@@ -268,8 +268,9 @@ def handle_vote(data: gr.LikeData, history, request: gr.Request = None):
             "message_index":    data.index,
             "user_message":     _redact_log_text(user_message),
             "response_snippet": _build_response_preview(_redact_log_text(str(data.value)), n=300),
-            "model":            last_call.model if last_call else _current_settings.get("model"),
+            "model":             last_call.model if last_call else _current_settings.get("model"),
             "temperature":      _current_settings.get("temperature"),
+            "retrieval_backend": RETRIEVAL_BACKEND,
             "cost_usd":         last_call.cost_usd if last_call else None,
             "is_owner_traffic": _get_owner_flag(request),
         }
@@ -1113,8 +1114,9 @@ def _log_query(message, project_title, walkthrough, tool_name, had_error,
             "empty_response": bool(empty_response),
 
             # Phase 1: Model & config
-            "model":       model,
-            "temperature": temperature,
+            "model":             model,
+            "temperature":       temperature,
+            "retrieval_backend": RETRIEVAL_BACKEND,
 
             # Phase 1: RAG metrics
             "n_chunks_retrieved": n_chunks_retrieved,

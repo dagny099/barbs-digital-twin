@@ -98,7 +98,7 @@ Every push to `main` runs the tests automatically before deploying to EC2. If an
 
 **Both Neo4j and ChromaDB are active**, selected via the `RETRIEVAL_BACKEND` env var.
 - `RETRIEVAL_BACKEND=neo4j` (default): graph-hybrid retrieval — vector similarity + graph
-  signals (project links, entity mentions, section length).
+  signals (project links, entity mentions, section length) + NEXT_SECTION neighbor expansion.
 - `RETRIEVAL_BACKEND=chromadb`: vector-only retrieval — pure cosine similarity on chunks.
 
 Both backends share the same knowledge base content. The deployment at
@@ -114,7 +114,8 @@ graph TD
     C --> D[Neo4j Hybrid Search<br/>vector index · graph signals]
     D --> E[Composite Scoring<br/>vector×0.85 · project×0.08 · entity×0.05 · length×0.02]
     E --> F[Tier-Gated Top-K Sections<br/>public · personal · inner_circle]
-    F --> G[Context Injection<br/>SYSTEM_PROMPT.md + Retrieved Sections]
+    F --> N[Neighbor Expansion<br/>NEXT_SECTION appended per anchor<br/>if not already in top-k]
+    N --> G[Context Injection<br/>SYSTEM_PROMPT.md + Retrieved Sections]
     G --> H[LLM Generation<br/>Multi-provider via LiteLLM]
     H --> I{Tool Call Needed?}
     I -->|Yes| J[Execute Tool<br/>notifications, dice roll]
@@ -125,6 +126,7 @@ graph TD
     style C fill:#e1f5ff
     style D fill:#f3e8ff
     style E fill:#fef3c7
+    style N fill:#e8f5e9
     style H fill:#ffe1f5
     style J fill:#e1ffe1
     style L fill:#f1f5f9
@@ -155,8 +157,9 @@ graph LR
 1. **Parse**: `##` headers create named Section boundaries — provenance tracked at the section level
 2. **Chunk**: Paragraph-aware splitting; `chunk_index` resets per section (not global)
 3. **Embed**: Each section embedded via `text-embedding-3-small` (1536 dimensions)
-4. **Load**: Section nodes + embeddings loaded into Neo4j vector index; same chunks also stored in ChromaDB
+4. **Load**: Section nodes + embeddings loaded into Neo4j vector index; same chunks also stored in ChromaDB. Sequential sections are linked via `NEXT_SECTION` relationships during graph population.
 5. **Entity extraction**: LLM extracts Skills, Methods, Technologies, Concepts from project walkthroughs; canonicalized into graph nodes with `MENTIONS` edges
+6. **Neighbor expansion** (Neo4j only): at query time, each top-k anchor section fetches its `NEXT_SECTION` neighbor. If the neighbor is not already in the top-k result set and passes the sensitivity filter, its text is appended inline after the anchor in the LLM context. This gives the LLM the continuation of narrative sections rather than isolated fragments. Logged chunk count (`n_chunks_retrieved`) reflects the k anchors only.
 
 ## Prompt Engineering
 
@@ -300,6 +303,17 @@ python replay_retrieval.py --query "..." --full             # show full chunk te
 The `--compare` flag produces a ranking-drift table that immediately reveals when graph
 signals are promoting or demoting chunks relative to pure vector similarity — the most
 common source of unexpected responses.
+
+**Neighbor expansion** — each top-k section pulls in its `NEXT_SECTION` continuation
+(if it exists and passes the sensitivity filter). The debug output shows `↓ continued:`
+when a neighbor is included, and `(neighbor already in top-k — skipped)` when dedup
+fires. Walkthrough sections from `featured_projects.py` are not wired into the
+`NEXT_SECTION` chain and will never show a neighbor. If you suspect a Section node is
+silently losing its neighbor due to a missing `sensitivity` property, run:
+```cypher
+MATCH (s:Section) WHERE s.sensitivity IS NULL RETURN count(s)
+```
+Any non-zero result means those sections can never appear as neighbors regardless of tier.
 
 **Scoring weights** live as named constants in `neo4j_utils.py` (`Wt_SEMANTIC`,
 `BONUS_PROJECT`, `BONUS_ENTITY`, `BONUS_LENGTH`) and are imported by

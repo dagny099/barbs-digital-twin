@@ -73,6 +73,7 @@ def run_neo4j(query: str, tier: str, k: int, fetch_k_mult: int = 4) -> list[dict
 
     # Extended version of _HYBRID_CYPHER — same weights, extra debug fields returned.
     # Weights come from neo4j_utils constants so they stay in sync automatically.
+    # Also mirrors the NEXT_SECTION neighbor expansion from _HYBRID_CYPHER.
     cypher = f"""
     CALL db.index.vector.queryNodes('section_embeddings', $fetch_k, $query_embedding)
     YIELD node AS section, score AS vector_score
@@ -100,6 +101,8 @@ def run_neo4j(query: str, tier: str, k: int, fetch_k_mult: int = 4) -> list[dict
 
     MATCH (doc:Document)-[:HAS_SECTION]->(section)
     OPTIONAL MATCH (section)<-[:DESCRIBED_IN]-(project:Project)
+    OPTIONAL MATCH (section)-[:NEXT_SECTION]->(neighbor:Section)
+    WHERE neighbor.sensitivity IN $allowed_tiers
 
     RETURN section.full_text  AS text,
            section.name       AS section_name,
@@ -110,7 +113,9 @@ def run_neo4j(query: str, tier: str, k: int, fetch_k_mult: int = 4) -> list[dict
            vector_score,
            projects_described,
            entities_mentioned,
-           collect(DISTINCT project.title) AS related_projects
+           collect(DISTINCT project.title) AS related_projects,
+           neighbor.full_text AS neighbor_text,
+           neighbor.name      AS neighbor_section_name
     """
 
     driver = get_driver()
@@ -190,6 +195,9 @@ def print_neo4j_results(records: list[dict], preview: int, tier: str, k: int, fe
     print(f"  NEO4J GraphRAG  —  tier={tier}  k={k}  fetch_k={k*fetch_k_mult}")
     print(f"  Weights: vec={Wt_SEMANTIC}  proj={BONUS_PROJECT}  entity={BONUS_ENTITY}  length={BONUS_LENGTH}")
     print(f"{'─'*W}")
+    # Mirror the dedup logic in query_neo4j_rag(): skip neighbors whose
+    # (source, section_name) is already an anchor in the top-k result set.
+    anchor_keys = {(r.get("source", ""), r.get("section_name", "")) for r in records}
     for i, rec in enumerate(records):
         label     = _label(rec)
         final     = rec.get("final_score", 0)
@@ -214,6 +222,19 @@ def print_neo4j_results(records: list[dict], preview: int, tier: str, k: int, fe
             excerpt += "…"
         for line in textwrap.wrap(excerpt, width=W - 7):
             print(f"       {line}")
+
+        neighbor_text = rec.get("neighbor_text")
+        neighbor_name = rec.get("neighbor_section_name")
+        src = rec.get("source", "")
+        if neighbor_text and neighbor_name and (src, neighbor_name) not in anchor_keys:
+            neighbor_excerpt = neighbor_text[:preview].replace("\n", " ")
+            if len(neighbor_text) > preview:
+                neighbor_excerpt += "…"
+            print(f"       ↓ continued: {neighbor_name}")
+            for line in textwrap.wrap(neighbor_excerpt, width=W - 7):
+                print(f"         {line}")
+        elif neighbor_text and neighbor_name:
+            print(f"       ↓ (neighbor '{neighbor_name}' already in top-k — skipped)")
     print(f"\n{'═'*W}\n")
 
 

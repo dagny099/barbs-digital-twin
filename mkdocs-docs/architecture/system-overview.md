@@ -25,8 +25,9 @@ flowchart TD
 
     E --> F["Composite Scoring\nWt_SEMANTIC × 0.85\n+ project link × 0.08\n+ entity mentions × 0.05\n+ section length × 0.02"]
     F --> G["Top-K Sections\n(fetch_k = k × 4 → rerank → top k)"]
+    G --> N["Neighbor Expansion\nNEXT_SECTION appended per anchor\nif not already in top-k · tier-filtered"]
 
-    G --> H["Context Injection\nSYSTEM_PROMPT.md\n+ Retrieved Sections"]
+    N --> H["Context Injection\nSYSTEM_PROMPT.md\n+ Retrieved Sections + Neighbors"]
     H --> I["LiteLLM Completion\nOpenAI · Anthropic · Google · Ollama"]
     I --> J{Tool Call\nNeeded?}
     J -->|"Yes"| K["Execute Tool\nsend_notification\ndice_roll"]
@@ -71,8 +72,9 @@ flowchart LR
 1. **Parse** — `##` headers create named Section boundaries. Every chunk knows its parent section, source document, and sensitivity tier.
 2. **Chunk** — Paragraph-aware splitting with configurable size (~500 chars) and overlap (50 chars). `chunk_index` resets per section, not globally.
 3. **Embed** — Each section is embedded via `text-embedding-3-small` (1536 dimensions).
-4. **Load** — Section nodes and embeddings are loaded into Neo4j's vector index. The same chunks are also stored in ChromaDB for fallback and A/B comparison.
+4. **Load** — Section nodes and embeddings are loaded into Neo4j's vector index. The same chunks are also stored in ChromaDB for fallback and A/B comparison. Sequential sections are linked via `NEXT_SECTION` relationships during graph population.
 5. **Entity Extraction** — An LLM extracts Skills, Methods, Technologies, and Concepts from project walkthroughs. These become 167 canonical entity nodes, connected to sections via `MENTIONS` edges. Projects link to their descriptive sections via `DESCRIBED_IN`.
+6. **Neighbor Expansion** (Neo4j only, at query time) — After top-k scoring, each anchor section fetches its `NEXT_SECTION` neighbor. If the neighbor passes the sensitivity filter and is not already in the top-k, its text is appended inline in the LLM context. Logged metrics (`n_chunks_retrieved`) reflect anchor sections only.
 
 ---
 
@@ -81,12 +83,13 @@ flowchart LR
 The graph has three primary node types:
 
 ```
-(Document) -[:HAS_SECTION]-> (Section) -[:MENTIONS]-> (Entity)
+(Document) -[:HAS_SECTION]-> (Section) -[:NEXT_SECTION]-> (Section)
+(Section)  -[:MENTIONS]-> (Entity)
 (Project)  -[:DESCRIBED_IN]-> (Section)
 ```
 
 - **Document** — a source file (KB doc, PDF, website page)
-- **Section** — a named chunk with embedding vector and `sensitivity_tier`
+- **Section** — a named chunk with embedding vector and `sensitivity` property
 - **Entity** — a canonical node (Skill, Method, Technology, Concept)
 - **Project** — a named project in Barbara's portfolio
 
@@ -98,8 +101,8 @@ Graph connectivity is what enables the hybrid scoring: a Section linked to a Pro
 
 The `allowed_tiers` parameter is passed directly into the Cypher `WHERE` clause — no post-filter. Tier detection runs before embedding, so ineligible sections are never scored.
 
-```python
-WHERE s.sensitivity_tier IN $allowed_tiers
+```cypher
+WHERE section.sensitivity IN $allowed_tiers
 ```
 
 See [Passphrase & Tiers](../getting-started/tiers.md) for how tiers are detected.

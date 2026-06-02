@@ -16,7 +16,7 @@ Every user query now captures:
 ### New Enhanced Fields (Phase 1 + 2)
 - **model**: LLM model used (e.g., "gpt-4.1")
 - **temperature**: Generation temperature
-- **n_chunks_retrieved**: How many chunks returned
+- **n_chunks_retrieved**: How many anchor sections returned (= k). **Does not include neighbor sections** added by NEXT_SECTION expansion — the Neo4j backend may inject up to k additional continuation sections into the LLM context that are not counted here. When comparing `n_chunks_retrieved` between `retrieval_backend=neo4j` and `retrieval_backend=chromadb` rows, be aware that Neo4j context can be up to 2× larger in practice. Use `retrieval_backend` to segment before computing any per-chunk metrics (e.g. chars-per-chunk, tokens-per-chunk).
 - **n_chunks_config**: Top-K config value
 - **response_chars**: Response length
 - **latency_ms**: Total response time

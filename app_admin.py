@@ -440,6 +440,11 @@ def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE,
     Returns a dict with keys: documents, metadatas, distances, query_embedding,
     retrieval_time_ms, n_results — same shape regardless of backend so all
     downstream rendering code works unchanged.
+
+    For Neo4j, also returns "neo4j_context": the formatted context string from
+    query_neo4j_rag() including neighbor expansion. Callers should use this key
+    directly rather than rebuilding context from documents/metadatas, so the
+    admin panel sends the same context to the LLM as the live app.
     """
     start = time.time()
 
@@ -469,6 +474,8 @@ def retrieve_with_context(message, n_results=N_CHUNKS_RETRIEVE,
             "query_embedding": [],  # not exposed by Neo4j path
             "retrieval_time_ms": (time.time() - start) * 1000,
             "n_results": len(chunks),
+            "neo4j_context": neo4j_result.get("context", ""),  # includes neighbor expansion
+            "neighbors": neo4j_result.get("neighbors", []),     # parallel to documents
         }
 
     # ChromaDB path (original)
@@ -586,6 +593,9 @@ def format_chunks_html(ctx):
     if not ctx["documents"]:
         return '<div style="padding:24px;text-align:center;color:#888;">No chunks retrieved.</div>'
 
+    neighbors = ctx.get("neighbors", [])  # parallel list; None = no neighbor for that anchor
+    n_with_neighbors = sum(1 for n in neighbors if n is not None)
+
     cards = []
     for i, (doc, meta, dist) in enumerate(
         zip(ctx["documents"], ctx["metadatas"], ctx["distances"])
@@ -609,6 +619,31 @@ def format_chunks_html(ctx):
             f'border-radius:99px;background:{sens_bg};color:{sens_fg};">'
             f'{sensitivity}</span>'
         ) if sensitivity != "public" else ""
+
+        # Build neighbor sub-card if this anchor has an eligible continuation
+        neighbor = neighbors[i] if i < len(neighbors) else None
+        neighbor_html = ""
+        if neighbor:
+            neighbor_text_display = html_lib.escape(neighbor["text"][:600]) + (
+                " …" if len(neighbor["text"]) > 600 else ""
+            )
+            neighbor_section_display = html_lib.escape(neighbor["section"])
+            neighbor_html = f"""
+        <div style="margin-top:6px;margin-left:12px;
+                    border-left:3px solid #9C27B0;border-radius:0 6px 6px 0;
+                    background:#faf7ff;padding:8px 10px;">
+            <div style="font-size:11px;font-weight:600;color:#7B1FA2;margin-bottom:4px;">
+                ↓ continued &nbsp;·&nbsp;
+                <span style="font-weight:400;font-style:italic;">{neighbor_section_display}</span>
+            </div>
+            <div style="font-size:12px;font-family:monospace;line-height:1.5;
+                        max-height:120px;overflow-y:auto;
+                        white-space:pre-wrap;word-break:break-word;
+                        color:var(--body-text-color, #333);">{neighbor_text_display}</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:4px;">
+                chars: {len(neighbor["text"])} &nbsp;·&nbsp; injected into LLM context
+            </div>
+        </div>"""
 
         cards.append(f"""
         <div style="border:1px solid var(--border-color-primary, #ddd);border-radius:8px;
@@ -638,18 +673,24 @@ def format_chunks_html(ctx):
             <span>chunk: #{chunk_idx}</span>
             {sens_badge}
         </div>
+        {neighbor_html}
         </div>""")
 
+    neighbor_note = (
+        f" · {n_with_neighbors} with neighbor expansion" if n_with_neighbors else ""
+    )
     header = (
         f'<div style="font-size:13px;color:var(--body-text-color-subdued, #888);'
         f'margin-bottom:8px;padding:0 4px;">'
-        f'{len(ctx["documents"])} chunks ranked by cosine similarity</div>'
+        f'{len(ctx["documents"])} chunks ranked by cosine similarity{neighbor_note}</div>'
     )
     return header + "\n".join(cards)
 
 
 def format_metadata_json(ctx, active_config=None, walkthrough_info=None,
                          audience_tier="public"):
+    # Note: neighbor text (from NEXT_SECTION expansion) is not included in this export.
+    # For the full LLM context including neighbors, see ctx["neo4j_context"].
     cfg = active_config or {}
     chunks = []
     for i, (doc, meta, dist) in enumerate(
@@ -1054,19 +1095,24 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     similarity_stats = _compute_similarity_stats(ctx.get('distances', []))
 
     # ── Build metadata-prefixed context (matches app.py) ───────
-    context_parts = []
-    for doc, meta in zip(ctx["documents"], ctx["metadatas"]):
-        src     = meta.get("source", "")
-        section = meta.get("section", "")
-        proj_name = meta.get("project_name", "")
-        if proj_name and section:
-            prefix = f"[{proj_name} — {section}]"
-        elif section:
-            prefix = f"[{src} — {section}]"
-        else:
-            prefix = f"[{src}]"
-        context_parts.append(f"{prefix}\n{doc}")
-    context = "\n---\n".join(context_parts)
+    # For Neo4j: use the pre-built context string which includes neighbor expansion.
+    # For ChromaDB: build from documents/metadatas as before.
+    if "neo4j_context" in ctx:
+        context = ctx["neo4j_context"]
+    else:
+        context_parts = []
+        for doc, meta in zip(ctx["documents"], ctx["metadatas"]):
+            src     = meta.get("source", "")
+            section = meta.get("section", "")
+            proj_name = meta.get("project_name", "")
+            if proj_name and section:
+                prefix = f"[{proj_name} — {section}]"
+            elif section:
+                prefix = f"[{src} — {section}]"
+            else:
+                prefix = f"[{src}]"
+            context_parts.append(f"{prefix}\n{doc}")
+        context = "\n---\n".join(context_parts)
 
     # ── Assemble system message (hybrid) ───────────────────────
     system_enhanced = active_prompt + "\n\nContext:\n" + context

@@ -125,6 +125,7 @@ nav:
     - Overview: lessons-learned/index.md
     - Entry 001 — Graph Signals & Hallucination: lessons-learned/entry-001.md
     - Entry 002 — Curated vs. Narrative Content: lessons-learned/entry-002.md
+    - Entry 003 — NEXT_SECTION Neighbor Expansion: lessons-learned/entry-003.md
   - Reference:
     - Key Files & API: reference/key-files.md
     - Environment Variables: reference/environment-variables.md

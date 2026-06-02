@@ -29,7 +29,10 @@ python scripts/healthcheck.py          # Validate all external service connectio
 
 **`replay_retrieval.py`** — Neo4j retrieval debugger. Shows exactly what context the LLM
 received for any query, with composite score breakdown (+proj/+entity/+length). Use `--compare`
-to see Neo4j vs ChromaDB rankings side-by-side.
+to see Neo4j vs ChromaDB rankings side-by-side. Shows `↓ continued:` when a NEXT_SECTION
+neighbor is appended; shows `(neighbor already in top-k — skipped)` when dedup fires.
+Note: walkthrough sections (from `featured_projects.py`) are not wired into the NEXT_SECTION
+chain and will never show a neighbor — this is expected, not a bug.
 ```bash
 python replay_retrieval.py --query "How did you get into beekeeping?" --compare
 python replay_retrieval.py --replay "some past query" --compare   # finds entry in query_log.jsonl

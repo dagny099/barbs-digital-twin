@@ -317,7 +317,7 @@ def main():
     parser = argparse.ArgumentParser(description="Analyze evaluation results (richer schema aware)")
     parser.add_argument("--file", type=str, help="Specific results file to analyze")
     parser.add_argument("--export", action="store_true", help="Export richer CSV for manual review")
-    parser.add_argument("--output", type=str, default="eval_review.csv", help="Output CSV path for --export")
+    parser.add_argument("--output", type=str, default=None, help="Output CSV path (implies --export)")
     args = parser.parse_args()
 
     results_file = args.file or get_latest_results_file()
@@ -325,8 +325,8 @@ def main():
     run_metadata, results = load_results(results_file)
     stats = analyze_results(results)
     print_report(stats, results_file, run_metadata)
-    if args.export:
-        export_for_review(results, output_file=args.output)
+    if args.export or args.output:
+        export_for_review(results, output_file=args.output or "eval_review.csv")
     print("NEXT STEPS:")
     print("  1. Review flagged items above")
     print("  2. Use --export to create the richer manual-review sheet")

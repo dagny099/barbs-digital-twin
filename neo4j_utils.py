@@ -33,9 +33,12 @@ BONUS_PROJECT  = 0.08   # graph bonus: section linked to a Project node
 BONUS_ENTITY   = 0.05   # graph bonus: entity mentions (capped at 5)
 BONUS_LENGTH   = 0.02   # graph bonus: section > 2000 chars
 
-# Cypher: vector similarity + graph-signal composite ranking.
+# Cypher: vector similarity + graph-signal composite ranking + neighbor context expansion.
 # Weights defined above — edit there, not here.
 # Relationship direction: Project -[:DESCRIBED_IN]-> Section.
+# Neighbor expansion: each top-k section fetches its NEXT_SECTION (if any) so the
+# LLM receives the continuation of narrative sections rather than an isolated fragment.
+# Neighbor sensitivity is filtered to the same allowed_tiers as the anchor.
 _HYBRID_CYPHER = f"""
 CALL db.index.vector.queryNodes('section_embeddings', $fetch_k, $query_embedding)
 YIELD node AS section, score AS vector_score
@@ -62,13 +65,17 @@ LIMIT $k
 
 MATCH (doc:Document)-[:HAS_SECTION]->(section)
 OPTIONAL MATCH (section)<-[:DESCRIBED_IN]-(project:Project)
+OPTIONAL MATCH (section)-[:NEXT_SECTION]->(neighbor:Section)
+WHERE neighbor.sensitivity IN $allowed_tiers
 
 RETURN section.full_text AS text,
        section.name AS section_name,
        doc.title AS source,
        final_score,
        vector_score,
-       collect(DISTINCT project.title) AS related_projects
+       collect(DISTINCT project.title) AS related_projects,
+       neighbor.full_text AS neighbor_text,
+       neighbor.name AS neighbor_section_name
 """
 
 _TIER_HIERARCHY = {
@@ -115,11 +122,15 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
             "related_projects": [["Resume Graph Explorer"], ...],
         }
 
-    The context format mirrors the ChromaDB implementation:
+    The context format per result block:
         [source — section_name]
         <full section text>
         (Describes: Project A, Project B)   ← only when projects linked
+        [continued: source — neighbor_name] ← only when NEXT_SECTION exists and not in top-k
+        <neighbor full text>
         ---
+    sources/scores/chunks reflect the k anchor sections only; neighbor text is
+    injected inline into the context string but not counted separately.
     """
     allowed_tiers = _TIER_HIERARCHY.get(visitor_tier, ["public"])
 
@@ -147,6 +158,14 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
     scores = []
     related_projects_list = []
     chunks = []
+    neighbors = []  # parallel to chunks; None when anchor has no eligible neighbor
+
+    # Collect (source, section_name) pairs upfront so we can skip neighbors that
+    # are already in the top-k result set. Using the compound key prevents false
+    # dedup when two different documents contain sections with the same name.
+    # NEXT_SECTION only links sections within the same document, so the neighbor's
+    # source is always rec["source"] — used as the lookup key below.
+    anchor_keys = {(rec["source"], rec["section_name"]) for rec in records}
 
     for rec in records:
         source_label = f"{rec['source']} — {rec['section_name']}"
@@ -167,6 +186,15 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
             projects = ", ".join(rec["related_projects"])
             context_parts.append(f"(Describes: {projects})")
 
+        neighbor_text = rec.get("neighbor_text")
+        neighbor_name = rec.get("neighbor_section_name")
+        if neighbor_text and neighbor_name and (rec["source"], neighbor_name) not in anchor_keys:
+            context_parts.append(f"[continued: {rec['source']} — {neighbor_name}]")
+            context_parts.append(neighbor_text)
+            neighbors.append({"text": neighbor_text, "section": neighbor_name})
+        else:
+            neighbors.append(None)
+
         context_parts.append("---")
 
     return {
@@ -175,4 +203,5 @@ def query_neo4j_rag(user_query: str, visitor_tier: str = "public", k: int = 5) -
         "scores": scores,
         "related_projects": related_projects_list,
         "chunks": chunks,   # raw records for admin panel / debug tools
+        "neighbors": neighbors,  # parallel to chunks; None entries have no neighbor
     }

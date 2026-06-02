@@ -1,0 +1,1612 @@
+# Metadata
+extraction_date: 2026-01-16T14:04:45.807764
+source_document: "barbara-hidalgo-sotelo-biosketch.md"
+extraction_method: "llm-claude-sonnet-4-5"
+schema_version: "2.0"
+
+# Primary Person
+person:
+  id: barbara-001
+  name: Barbara Hidalgo-Sotelo
+  birth_date: 1981-05-25
+  birthplace: Austin, Texas, USA
+  nationalities:
+    - United States
+  email: null
+  linkedin_url: https://www.linkedin.com/in/barbara-hidalgo-sotelo
+  created_at: 2026-01-16T14:04:45.807764
+  updated_at: 2026-01-16T14:04:45.807764
+  source_documents:
+    - LinkedIn profile (public)
+    - LinkedIn PDF export
+    - Personal site (barbhs.com)
+    - Resume PDF
+    - MIT DSpace dissertation
+
+# Organizations
+organizations:
+  - id: org-ut-austin
+    name: The University of Texas at Austin
+    industry: Higher Education
+    type: university
+    founded_date: 1883-09-15
+    headquarters: Austin, Texas, USA
+    website: https://www.utexas.edu/
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-mit
+    name: Massachusetts Institute of Technology
+    industry: Higher Education
+    type: university
+    founded_date: 1861-04-10
+    headquarters: Cambridge, Massachusetts, USA
+    website: https://www.mit.edu/
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-mit-csail
+    name: MIT CSAIL
+    industry: Research
+    type: research_lab
+    headquarters: Cambridge, Massachusetts, USA
+    website: https://www.csail.mit.edu/
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-self-directed
+    name: Self-Directed Portfolio Work
+    industry: Technology/AI Engineering
+    type: independent
+    headquarters: Remote
+    website: null
+    created_at: 2026-06-02T00:00:00.000000
+
+  - id: org-inflective
+    name: Inflective, Inc.
+    industry: Technology/Consulting
+    type: company
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-metric5
+    name: Metric5
+    industry: Data Management
+    type: company
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-peregrine
+    name: Peregrine Advisors
+    industry: Consulting
+    type: company
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-data-incubator
+    name: The Data Incubator
+    industry: Education/Training
+    type: fellowship_program
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-mediascience
+    name: MediaScience®
+    industry: Market Research
+    type: company
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-balex
+    name: BALEX Healthcare Services
+    industry: Healthcare
+    type: company
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-ut-habla
+    name: UT Austin HABLA Lab
+    industry: Research
+    type: research_lab
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-motorola-biochip
+    name: Motorola Biochip Systems
+    industry: Biotechnology
+    type: company
+    headquarters: Tempe, Arizona, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-stanford-hgrc
+    name: Stanford Human Genome Research Center
+    industry: Research
+    type: research_center
+    headquarters: Stanford, California, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-earthwatch
+    name: Earthwatch
+    industry: Environmental Research/Education
+    type: non-profit
+    headquarters: null
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-comparative-rna-lab
+    name: Comparative RNA Lab
+    industry: Research
+    type: research_lab
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-harris-elementary
+    name: Harris Elementary School
+    industry: Education
+    type: school
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-pearce-middle
+    name: Pearce Middle School
+    industry: Education
+    type: school
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-kealing
+    name: Kealing Junior High (Magnet Program)
+    industry: Education
+    type: school
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: org-lbj-high
+    name: LBJ High School Science Academy
+    industry: Education
+    type: school
+    headquarters: Austin, Texas, USA
+    website: null
+    created_at: 2026-01-16T14:04:45.807764
+
+# Positions
+positions:
+  - id: pos-015
+    title: Independent AI Engineering Consultant
+    role_type: consulting
+    start_date: 2025-05-01
+    end_date: null
+    responsibilities:
+      - Architect GenAI applications using RAG, GraphRAG, and agentic patterns
+      - Design modular pipelines spanning ingestion, retrieval, evaluation, monitoring, and reproducible handoff
+      - Emphasize retrieval quality, evaluation, and prototype-to-handoff delivery
+    achievements: []
+    created_at: 2026-06-02T00:00:00.000000
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: Resume PDF
+      at_organization:
+        target: org-self-directed
+        properties: {}
+      used_technology:
+        - tech-019
+        - tech-020
+        - tech-021
+        - tech-001
+
+  - id: pos-001
+    title: Technical Consultant
+    role_type: consulting
+    start_date: 2024-01-01
+    end_date: 2025-05-01
+    responsibilities:
+      - Analytics instrumentation and reporting
+      - Stakeholder-aligned dashboard development
+      - Process documentation for ERP transition planning
+    achievements:
+      - Connected Google Analytics 4 to reporting tools (Looker Studio) to produce dashboards clarifying user engagement and campaign performance
+      - Analyzed website traffic and user behavior; delivered recommendations for UX and content strategy prioritization
+      - Documented processes in workflow diagrams; supported change-management planning with proprietary method/software
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-inflective
+        properties: {}
+
+  - id: pos-002
+    title: Data Scientist
+    role_type: full-time
+    start_date: 2021-04-01
+    end_date: 2023-01-01
+    responsibilities:
+      - Data governance and metadata workflows
+      - Compliance and reporting utilities development
+    achievements:
+      - Built Python tools to export metadata from a data catalog and publish glossary content; maintained update workflows
+      - Developed a ServiceNow + COTS + Power BI reporting utility supporting oversight of data access requests
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-metric5
+        properties: {}
+
+  - id: pos-003
+    title: Data Scientist
+    role_type: full-time
+    start_date: 2021-01-01
+    end_date: 2021-04-01
+    responsibilities: []
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-peregrine
+        properties: {}
+
+  - id: pos-004
+    title: Data Science Fellow
+    role_type: fellowship
+    start_date: 2020-09-01
+    end_date: 2020-11-01
+    responsibilities:
+      - Intensive 8-week data science program
+      - CNN development with TensorFlow
+      - Graph analysis with NetworkX
+      - Web scraping with BeautifulSoup and NLP
+      - Distributed computing with Spark
+    achievements:
+      - Selected for highly selective fellowship (<0.5% selection rate)
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-data-incubator
+        properties: {}
+
+  - id: pos-005
+    title: Project Manager
+    role_type: full-time
+    start_date: 2017-08-01
+    end_date: 2019-05-01
+    responsibilities:
+      - Digital transformation management
+      - Lean Six Sigma workshop co-leadership
+      - ML classification implementation
+    achievements:
+      - Managed digital transformation optimizing adjudication of ~4M medical bills/year, reporting ~30% processing efficiency improvement
+      - Co-led Lean Six Sigma workshops; operational improvement identification and implementation
+      - Introduced ML classification of medical bills using Python + scikit-learn; decision tree performance comparable to human coders
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-inflective
+        properties: {}
+
+  - id: pos-006
+    title: Research Project Manager
+    role_type: full-time
+    start_date: 2017-02-01
+    end_date: 2017-07-01
+    responsibilities:
+      - Supervised eye-tracking data collection
+      - Analyzed biometric data (GSR, facial expressions) for media/advertising studies
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-mediascience
+        properties: {}
+
+  - id: pos-007
+    title: Alternate Administrator
+    role_type: full-time
+    start_date: 2015-07-01
+    end_date: 2017-04-01
+    responsibilities:
+      - Operations and compliance management
+      - Staffing and policy adherence
+      - Nurse training materials for EMR usage
+      - Presence at Texas Association for Home Care meetings
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-balex
+        properties: {}
+
+  - id: pos-008
+    title: Technical Consultant
+    role_type: consulting
+    start_date: 2014-08-01
+    end_date: 2017-01-01
+    responsibilities:
+      - Requirements documentation
+      - QA/QC
+      - Non-technical web-architecture documentation
+      - End-user training materials (wiki + video)
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-inflective
+        properties: {}
+
+  - id: pos-009
+    title: Research Engineer/Scientist
+    role_type: full-time
+    start_date: 2013-01-01
+    end_date: 2016-06-01
+    responsibilities:
+      - Built MATLAB package for secure longitudinal data collection/transmission in bilingual language development research
+      - Created speech onset extraction algorithm with human validation
+      - Built analysis GUI
+      - Managed lab staff and mentored research assistants
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-ut-habla
+        properties: {}
+      in_location:
+        target: loc-austin-tx
+
+  - id: pos-010
+    title: Postdoctoral Associate
+    role_type: postdoc
+    start_date: 2011-01-01
+    end_date: 2012-12-31
+    responsibilities:
+      - Psychophysics experiments with stereoscopic scenes
+      - Eyelink 1000 eye tracker operation
+      - Instruction/supervision of undergraduate projects
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-mit-csail
+        properties: {}
+      in_location:
+        target: loc-cambridge-ma
+
+  - id: pos-011
+    title: Instructor
+    role_type: part-time
+    start_date: 2011-01-01
+    end_date: 2012-12-31
+    responsibilities:
+      - Teaching and instruction at MIT CSAIL
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      at_organization:
+        target: org-mit-csail
+        properties: {}
+      in_location:
+        target: loc-cambridge-ma
+
+  - id: pos-012
+    title: Research Assistant
+    role_type: part-time
+    start_date: 2004-01-01
+    end_date: 2005-05-01
+    responsibilities:
+      - Conducted daily NCBI searches for newly published rRNA sequences
+      - Integrated sequences into lab's comparative database
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export and personal recollection
+      at_organization:
+        target: org-comparative-rna-lab
+        properties: {}
+      in_location:
+        target: loc-austin-tx
+
+  - id: pos-013
+    title: Summer Intern
+    role_type: internship
+    start_date: 1999-06-01
+    end_date: 1999-08-31
+    responsibilities:
+      - Molecular biology and biochip systems work
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: Personal recollection
+      at_organization:
+        target: org-motorola-biochip
+        properties: {}
+      in_location:
+        target: loc-tempe-az
+
+  - id: pos-014
+    title: Earthwatch Scholar/Intern
+    role_type: internship
+    start_date: 1996-06-01
+    end_date: 1996-06-14
+    responsibilities:
+      - Two-week Earthwatch internship at Stanford Human Genome Research Center
+      - Exposure to robotics for molecular biology workflows
+    achievements: []
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      held_by:
+        target: barbara-001
+        properties:
+          confidence: 0.9
+          source: Personal recollection
+      at_organization:
+        target: org-stanford-hgrc
+        properties: {}
+      in_location:
+        target: loc-stanford-ca
+
+# Education
+education:
+  - id: edu-001
+    degree: BS
+    field_of_study: Electrical Engineering
+    major: Electrical Engineering
+    start_date: 1998-09-01
+    end_date: 2004-05-31
+    graduation_date: 2004-05-31
+    honors: Dean's Scholars Program
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      earned_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      from_institution:
+        target: org-ut-austin
+        properties: {}
+      in_location:
+        target: loc-austin-tx
+
+  - id: edu-002
+    degree: BS
+    field_of_study: Biology / Biological Sciences
+    major: Biology
+    start_date: 1998-09-01
+    end_date: 2004-05-31
+    graduation_date: 2004-05-31
+    honors: Dean's Scholars Program
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      earned_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: LinkedIn PDF export
+      from_institution:
+        target: org-ut-austin
+        properties: {}
+      in_location:
+        target: loc-austin-tx
+
+  - id: edu-003
+    degree: PhD
+    field_of_study: Cognitive Science
+    major: Cognitive Science
+    start_date: 2004-08-01
+    end_date: 2010-12-31
+    graduation_date: 2010-12-31
+    thesis_title: Eye Movement Guidance in Familiar Visual Scenes
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      earned_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: MIT DSpace dissertation
+      from_institution:
+        target: org-mit
+        properties: {}
+      in_location:
+        target: loc-cambridge-ma
+
+  - id: edu-004
+    degree: High School Diploma
+    field_of_study: Science Academy
+    start_date: 1994-09-01
+    end_date: 1998-05-31
+    graduation_date: 1998-05-31
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      earned_by:
+        target: barbara-001
+        properties:
+          confidence: 1.0
+          source: Personal recollection
+      from_institution:
+        target: org-lbj-high
+        properties: {}
+      in_location:
+        target: loc-austin-tx
+
+# Locations
+locations:
+  - id: loc-austin-tx
+    name: Austin, Texas, USA
+    type: city
+    country_code: US
+    timezone: America/Chicago
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-cambridge-ma
+    name: Cambridge, Massachusetts, USA
+    type: city
+    country_code: US
+    timezone: America/New_York
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-tempe-az
+    name: Tempe, Arizona, USA
+    type: city
+    country_code: US
+    timezone: America/Phoenix
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-stanford-ca
+    name: Stanford, California, USA
+    type: city
+    country_code: US
+    timezone: America/Los_Angeles
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-japan
+    name: Japan
+    type: country
+    country_code: JP
+    timezone: Asia/Tokyo
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-tokyo
+    name: Tokyo, Japan
+    type: city
+    country_code: JP
+    timezone: Asia/Tokyo
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: loc-mueller-austin
+    name: Mueller area (78723), Austin, Texas
+    type: neighborhood
+    country_code: US
+    timezone: America/Chicago
+    created_at: 2026-01-16T14:04:45.807764
+
+# Projects
+projects:
+  - id: proj-001
+    name: Fitness Dashboard
+    description: Self-hosted workout intelligence platform for tracking and analyzing fitness data
+    type: development
+    start_date: 2023-01-01
+    status: active
+    impact_description: Personal fitness tracking and analytics system with self-hosted architecture
+    current_status: Active and maintained as of 2025
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Lead Developer
+            confidence: 1.0
+            source: GitHub and personal site
+      used_technology:
+        - tech-001
+        - tech-002
+        - tech-003
+
+  - id: proj-002
+    name: Beehive Photo Metadata Tracker
+    description: Beekeeping analytics platform for tracking hive health through photo metadata analysis
+    type: development
+    start_date: 2022-01-01
+    status: active
+    impact_description: Enables beekeepers to track hive health and conditions through systematic photo documentation and metadata analysis
+    current_status: Active and maintained as of 2025
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Lead Developer
+            confidence: 1.0
+            source: Personal site and documentation
+      used_technology:
+        - tech-001
+        - tech-004
+        - tech-005
+
+  - id: proj-003
+    name: Medical Bills ML Classification
+    description: Machine learning system for classifying medical bills using Python and scikit-learn
+    type: development
+    start_date: 2017-08-01
+    end_date: 2019-05-01
+    status: completed
+    impact_description: Achieved decision tree performance comparable to human coders for medical bill classification
+    current_status: Completed
+    metrics:
+      bills_processed_annually: 4000000
+      efficiency_improvement_percent: 30
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Project Manager and Developer
+            confidence: 1.0
+            source: LinkedIn PDF export
+      for_organization:
+        target: org-inflective
+        properties:
+          contract_type: internal
+      used_technology:
+        - tech-001
+        - tech-006
+
+  - id: proj-004
+    name: Data Catalog Metadata Export Tools
+    description: Python tools for exporting metadata from data catalog and publishing glossary content
+    type: development
+    start_date: 2021-04-01
+    end_date: 2023-01-01
+    status: completed
+    impact_description: Enabled automated metadata management and glossary publishing workflows
+    current_status: Completed
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Data Scientist
+            confidence: 1.0
+            source: LinkedIn PDF export
+      for_organization:
+        target: org-metric5
+        properties:
+          contract_type: internal
+      used_technology:
+        - tech-001
+
+  - id: proj-005
+    name: ServiceNow Data Access Reporting Utility
+    description: ServiceNow + COTS + Power BI reporting utility for oversight of data access requests
+    type: development
+    start_date: 2021-04-01
+    end_date: 2023-01-01
+    status: completed
+    impact_description: Provided compliance and oversight capabilities for data access management
+    current_status: Completed
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Data Scientist
+            confidence: 1.0
+            source: LinkedIn PDF export
+      for_organization:
+        target: org-metric5
+        properties:
+          contract_type: internal
+      used_technology:
+        - tech-001
+        - tech-007
+        - tech-008
+
+  - id: proj-006
+    name: HABLA Lab MATLAB Data Collection Package
+    description: MATLAB package for secure longitudinal data collection and transmission in bilingual language development research
+    type: research
+    start_date: 2013-01-01
+    end_date: 2016-06-01
+    status: completed
+    impact_description: Enabled secure data collection for bilingual language development research
+    current_status: Completed
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Research Engineer
+            confidence: 1.0
+            source: LinkedIn PDF export
+      for_organization:
+        target: org-ut-habla
+        properties:
+          contract_type: internal
+      used_technology:
+        - tech-009
+
+  - id: proj-007
+    name: Speech Onset Extraction Algorithm
+    description: Algorithm for extracting speech onset with human validation and analysis GUI
+    type: research
+    start_date: 2013-01-01
+    end_date: 2016-06-01
+    status: completed
+    impact_description: Automated speech onset detection for language research
+    current_status: Completed
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: Research Engineer
+            confidence: 1.0
+            source: LinkedIn PDF export
+      for_organization:
+        target: org-ut-habla
+        properties:
+          contract_type: internal
+      used_technology:
+        - tech-009
+
+  - id: proj-008
+    name: Eye Movement Guidance Research
+    description: Research on visual attention, eye movements, and contextual guidance in real-world scene perception
+    type: research
+    start_date: 2004-08-01
+    end_date: 2010-12-31
+    status: completed
+    impact_description: Widely cited research on how saliency, target features, and scene context jointly predict eye movements during object/person search
+    current_status: Completed; widely cited in vision science
+    metrics: {}
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      led_by:
+        - target: barbara-001
+          properties:
+            role: PhD Researcher
+            confidence: 1.0
+            source: MIT DSpace dissertation
+      for_organization:
+        target: org-mit
+        properties:
+          contract_type: internal
+      resulted_in_publication:
+        - pub-001
+        - pub-002
+
+# Technologies
+technologies:
+  - id: tech-001
+    name: Python
+    category: language
+    description: High-level programming language
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-002
+    name: GitHub
+    category: tool
+    description: Version control and collaboration platform
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-003
+    name: Self-hosted infrastructure
+    category: tool
+    description: Self-managed hosting infrastructure
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-004
+    name: Photo metadata analysis
+    category: tool
+    description: Tools for extracting and analyzing photo metadata
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-005
+    name: Documentation systems
+    category: tool
+    description: Systems for creating and maintaining documentation
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-006
+    name: scikit-learn
+    category: framework
+    description: Machine learning library for Python
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-007
+    name: ServiceNow
+    category: tool
+    description: Cloud-based platform for IT service management
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-008
+    name: Power BI
+    category: tool
+    description: Business analytics service by Microsoft
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-009
+    name: MATLAB
+    category: language
+    description: Programming language and environment for numerical computing
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-010
+    name: TensorFlow
+    category: framework
+    description: Machine learning framework
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-011
+    name: NetworkX
+    category: framework
+    description: Python library for graph analysis
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-012
+    name: BeautifulSoup
+    category: framework
+    description: Python library for web scraping
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-013
+    name: Apache Spark
+    category: framework
+    description: Distributed computing framework
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-014
+    name: Google Analytics 4
+    category: tool
+    description: Web analytics platform
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-015
+    name: Looker Studio
+    category: tool
+    description: Data visualization and reporting tool
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-016
+    name: Eyelink 1000
+    category: tool
+    description: Eye tracking system
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-017
+    name: BASIC
+    category: language
+    description: Early programming language
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-018
+    name: LabVIEW
+    category: tool
+    description: System-design platform and development environment
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: tech-019
+    name: RAG (Retrieval-Augmented Generation)
+    category: framework
+    description: GenAI pattern combining retrieval systems with language model generation
+    created_at: 2026-06-02T00:00:00.000000
+
+  - id: tech-020
+    name: GraphRAG
+    category: framework
+    description: Graph-based retrieval-augmented generation for knowledge-graph-grounded AI
+    created_at: 2026-06-02T00:00:00.000000
+
+  - id: tech-021
+    name: Agentic AI
+    category: framework
+    description: Multi-step autonomous AI agent patterns for complex task orchestration
+    created_at: 2026-06-02T00:00:00.000000
+
+# Skills
+skills:
+  - id: skill-001
+    name: Data Science
+    category: technical
+    description: Statistical analysis, machine learning, and data visualization
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-002
+    name: Cognitive Science
+    category: domain-knowledge
+    description: Understanding of human cognition, perception, and behavior
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-003
+    name: Eye Tracking Research
+    category: technical
+    description: Design and analysis of eye movement studies
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-004
+    name: Data Governance
+    category: technical
+    description: Metadata management, compliance, and data quality
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-005
+    name: Project Management
+    category: leadership
+    description: Planning, execution, and delivery of complex projects
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-006
+    name: Machine Learning
+    category: technical
+    description: Development and deployment of ML models
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-007
+    name: Lean Six Sigma
+    category: leadership
+    description: Process improvement methodologies
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-008
+    name: Biometric Data Analysis
+    category: technical
+    description: Analysis of GSR, facial expressions, and other biometric signals
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-009
+    name: Healthcare Operations
+    category: domain-knowledge
+    description: Healthcare compliance, EMR systems, and operations management
+    created_at: 2026-01-16T14:04:45.807764
+
+  - id: skill-010
+    name: Research Engineering
+    category: technical
+    description: Building tools and systems for scientific research
+    created_at: 2026-01-16T14:04:45.807764
+
+# Publications
+publications:
+  - id: pub-001
+    title: "Modelling search for people in 900 scenes: A combined source model of eye guidance"
+    publication_type: journal
+    authors:
+      - Krista A. Ehinger
+      - Barbara Hidalgo-Sotelo
+      - Antonio Torralba
+      - Aude Oliva
+    publication_date: 2009-01-01
+    publisher: Taylor & Francis
+    venue: Visual Cognition
+    doi: 10.1080/13506280902834720
+    url: https://www.tandfonline.com/doi/abs/10.1080/13506280902834720
+    abstract: null
+    citations_count: null
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      authored_by:
+        - target: barbara-001
+          properties:
+            author_order: 2
+            confidence: 1.0
+            source: PubMed
+      about_project:
+        target: proj-008
+        properties: {}
+
+  - id: pub-002
+    title: Eye Movement Guidance in Familiar Visual Scenes
+    publication_type: dissertation
+    authors:
+      - Barbara Hidalgo-Sotelo
+    publication_date: 2010-12-31
+    publisher: Massachusetts Institute of Technology
+    venue: MIT
+    doi: null
+    url: https://dspace.mit.edu/bitstream/handle/1721.1/61876/706131018-MIT.pdf?isAllowed=y&sequence=2
+    abstract: null
+    citations_count: null
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      authored_by:
+        - target: barbara-001
+          properties:
+            author_order: 1
+            confidence: 1.0
+            source: MIT DSpace
+      about_project:
+        target: proj-008
+        properties: {}
+
+# Artifacts
+artifacts:
+  - id: artifact-001
+    name: LinkedIn Profile
+    description: Public LinkedIn profile for Barbara Hidalgo-Sotelo
+    artifact_type: document
+    url: https://www.linkedin.com/in/barbara-hidalgo-sotelo
+    date_created: null
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+
+  - id: artifact-002
+    name: Personal Website
+    description: Personal website at barbhs.com
+    artifact_type: document
+    url: https://www.barbhs.com/
+    date_created: null
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+
+  - id: artifact-003
+    name: GitHub Profile
+    description: GitHub profile with code repositories
+    artifact_type: code
+    url: https://github.com/dagny099
+    date_created: null
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+
+  - id: artifact-004
+    name: Resume PDF
+    description: Current resume as of 2025
+    artifact_type: document
+    url: https://www.barbhs.com/assets/docs/Barbara_Hidalgo-Sotelo_CURRENT_RESUME_2025.pdf
+    date_created: 2025-01-01
+    format: PDF
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+
+  - id: artifact-005
+    name: Google Scholar Profile
+    description: Academic publication index
+    artifact_type: document
+    url: https://scholar.google.com/citations?hl=en&user=nQG25vkAAAAJ
+    date_created: null
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: subject
+
+  - id: artifact-006
+    name: Fitness Dashboard Documentation
+    description: User guide and documentation for Fitness Dashboard project
+    artifact_type: document
+    url: https://docs.barbhs.com/fitness-dashboard/
+    date_created: 2023-01-01
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+      related_to_project:
+        target: proj-001
+        properties: {}
+
+  - id: artifact-007
+    name: Beehive Tracker Documentation
+    description: User guide and documentation for Beehive Photo Metadata Tracker
+    artifact_type: document
+    url: https://docs.barbhs.com/beehive-tracker/
+    date_created: 2022-01-01
+    format: web
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      created_by:
+        target: barbara-001
+        properties:
+          role: author
+      related_to_project:
+        target: proj-002
+        properties: {}
+
+# Events
+events:
+  - id: event-001
+    title: Birth
+    description: Born in Austin, Texas during the 1981 Memorial Day flood period
+    event_type: birth
+    start_date: 1981-05-25
+    is_ongoing: false
+    location: Austin, Texas, USA
+    impact: Birth year coincided with major Austin flood event
+    confidence: 1.0
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-austin-tx
+        properties: {}
+
+  - id: event-002
+    title: Family relocation to Japan
+    description: Family moved to Japan when Barbara was under one year old
+    event_type: personal
+    start_date: 1981-06-01
+    end_date: 1984-12-31
+    is_ongoing: false
+    location: Japan
+    impact: Early childhood experience in Japan; exposure to Japanese culture
+    confidence: 0.9
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-japan
+        properties: {}
+
+  - id: event-003
+    title: Return to Austin
+    description: Family returned to United States and settled in Mueller area
+    event_type: personal
+    start_date: 1984-01-01
+    is_ongoing: false
+    location: Austin, Texas, USA
+    impact: Returned to Austin for remainder of childhood and education
+    confidence: 0.9
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-mueller-austin
+        properties: {}
+
+  - id: event-004
+    title: Early programming introduction
+    description: Learned BASIC programming at age 4 on Casio PC with father's guidance
+    event_type: personal
+    start_date: 1985-01-01
+    is_ongoing: false
+    location: Austin, Texas, USA
+    impact: Early exposure to programming that shaped career trajectory
+    confidence: 1.0
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-austin-tx
+        properties: {}
+
+  - id: event-005
+    title: Earthwatch scholarship at Stanford
+    description: Received Earthwatch scholarship for two-week internship at Stanford Human Genome Research Center
+    event_type: achievement
+    start_date: 1996-06-01
+    end_date: 1996-06-14
+    is_ongoing: false
+    location: Stanford, California, USA
+    impact: Exposure to genomics and robotics; motivated double major in EE and Biology
+    confidence: 0.9
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-stanford-ca
+        properties: {}
+      involved_organization:
+        target: org-stanford-hgrc
+        properties: {}
+
+  - id: event-006
+    title: Motorola Biochip Systems internship
+    description: Summer internship at Motorola Biochip Systems in Tempe, Arizona
+    event_type: career
+    start_date: 1999-06-01
+    end_date: 1999-08-31
+    is_ongoing: false
+    location: Tempe, Arizona, USA
+    impact: Formative technical and identity-shaping experience
+    confidence: 0.9
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-tempe-az
+        properties: {}
+      involved_organization:
+        target: org-motorola-biochip
+        properties: {}
+
+  - id: event-007
+    title: Shift to neuroscience focus
+    description: Pivotal shift from genetics to neuroscience during Vertebrate Physiology course at UT Austin
+    event_type: career
+    start_date: 2001-01-01
+    is_ongoing: false
+    location: Austin, Texas, USA
+    impact: Redirected academic focus toward vision science and cognitive neuroscience
+    confidence: 1.0
+    source_document: Personal recollection
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-austin-tx
+        properties: {}
+
+  - id: event-008
+    title: PhD completion
+    description: Completed PhD in Cognitive Science at MIT
+    event_type: achievement
+    start_date: 2010-12-31
+    is_ongoing: false
+    location: Cambridge, Massachusetts, USA
+    impact: Established expertise in visual attention and eye movement research
+    confidence: 1.0
+    source_document: MIT DSpace
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      occurred_at:
+        target: loc-cambridge-ma
+        properties: {}
+      involved_organization:
+        target: org-mit
+        properties: {}
+
+  - id: event-009
+    title: Data Incubator Fellowship selection
+    description: Selected for highly competitive Data Incubator fellowship (<0.5% selection rate)
+    event_type: achievement
+    start_date: 2020-09-01
+    is_ongoing: false
+    location: null
+    impact: Intensive data science training and career transition
+    confidence: 1.0
+    source_document: LinkedIn PDF export
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      involved_organization:
+        target: org-data-incubator
+        properties: {}
+
+  - id: event-010
+    title: Microsoft Azure AI Engineer certification
+    description: Earned Microsoft Azure AI Engineer Associate certification
+    event_type: achievement
+    start_date: 2024-01-01
+    is_ongoing: false
+    location: null
+    impact: Demonstrated cloud AI engineering expertise
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+
+  - id: event-011
+    title: CDMP Associate certification
+    description: Earned Certified Data Management Professional (CDMP) Associate certification
+    event_type: achievement
+    start_date: 2024-01-01
+    is_ongoing: false
+    location: null
+    impact: Demonstrated data management expertise
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+
+  - id: event-012
+    title: AWS Cloud Practitioner certification
+    description: Earned AWS Certified Cloud Practitioner certification
+    event_type: achievement
+    start_date: 2023-01-01
+    is_ongoing: false
+    location: null
+    impact: Demonstrated cloud computing fundamentals
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+
+  - id: event-013
+    title: DCAM v2 Accreditation
+    description: Earned DCAM v2 Accreditation
+    event_type: achievement
+    start_date: 2022-01-01
+    is_ongoing: false
+    location: null
+    impact: Demonstrated data management capability assessment expertise
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+
+  - id: event-014
+    title: Open Knowledge Graph Certification
+    description: Earned Open Knowledge Graph Certification
+    event_type: achievement
+    start_date: 2022-01-01
+    is_ongoing: false
+    location: null
+    impact: Demonstrated knowledge graph expertise
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-01-16T14:04:45.807764
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+
+  - id: event-015
+    title: Transition to Independent AI Engineering Consultant
+    description: Pivoted to independent consulting focused on GenAI application architecture — RAG, GraphRAG, and agentic patterns — after leaving Inflective
+    event_type: career
+    start_date: 2025-05-01
+    is_ongoing: true
+    location: Remote
+    impact: Shift from data governance/analytics consulting to hands-on GenAI engineering; building prototype-to-handoff pipelines and agentic systems
+    confidence: 1.0
+    source_document: Resume PDF
+    extraction_method: manual
+    created_at: 2026-06-02T00:00:00.000000
+    relationships:
+      experienced_by:
+        target: barbara-001
+        properties: {}
+      involved_organization:
+        target: org-self-directed
+        properties: {}
+
+# People
+people:
+  - id: person-domingo
+    name: Domingo Hidalgo Lopez
+    death_date: null
+    nationalities: []
+    relationships:
+      family_of:
+        target: barbara-001
+        properties:
+          relationship_type: father
+          confidence: 1.0
+          source: Personal recollection
+
+  - id: person-robin-gutell
+    name: Dr. Robin Gutell
+    relationships:
+      mentored:
+        target: barbara-001
+        properties:
+          context: PI of Comparative RNA Lab at UT Austin
+          start_date: 2004-01-01
+          end_date: 2005-05-01
+          confidence: 1.0
+          source: LinkedIn PDF export
+
+  - id: person-alan-cline
+    name: Dr. Alan Cline
+    relationships:
+      mentored:
+        target: barbara-001
+        properties:
+          context: Dean's Scholars leadership at UT Austin
+          start_date: 1998-09-01
+          end_date: 2004-05-31
+          confidence: 0.9
+          source: Personal recollection
+
+  - id: person-michael-domjan
+    name: Dr. Michael Domjan
+    relationships:
+      mentored:
+        target: barbara-001
+        properties:
+          context: PI of learning/memory lab at UT Austin
+          start_date: 2001-01-01
+          end_date: 2002-12-31
+          confidence: 0.9
+          source: Personal recollection
+
+  - id: person-howard-zakon
+    name: Dr. Howard Zakon
+    relationships:
+      mentored:
+        target: barbara-001
+        properties:
+          context: PI of lab at UT Austin
+          start_date: 2003-01-01
+          end_date: 2004-12-31
+          confidence: 0.9
+          source: Personal recollection
+
+  - id: person-robert-marrero
+    name: Robert Marrero
+    relationships:
+      worked_with:
+        target: barbara-001
+        properties:
+          context: Motorola molecular biologist who recruited Barbara for internship
+          start_date: 1999-06-01
+          end_date: 1999-08-31
+          confidence: 0.9
+          source: Personal recollection
+
+  - id: person-krista-ehinger
+    name: Krista A. Ehinger
+    relationships:
+      worked_with:
+        target: barbara-001
+        properties:
+          context: Co-author on Visual Cognition paper
+          start_date: 2004-08-01
+          end_date: 2010-12-31
+          confidence: 1.0
+          source: Publication
+
+  - id: person-antonio-torralba
+    name: Antonio Torralba
+    relationships:
+      worked_with:
+        target: barbara-001
+        properties:
+          context: Co-author on Visual Cognition paper
+          start_date: 2004-08-01
+          end_date: 2010-12-31
+          confidence: 1.0
+          source: Publication
+
+  - id: person-aude-oliva
+    name: Aude Oliva
+    relationships:
+      mentored:
+        target: barbara-001
+        properties:
+          context: PhD advisor at MIT
+          start_date: 2004-08-01
+          end_date: 2010-12-31
+          confidence: 1.0
+          source: Publication and MIT affiliation

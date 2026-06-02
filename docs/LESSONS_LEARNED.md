@@ -167,6 +167,43 @@ what went wrong. After, it's a 30-second diagnosis: run the script, see the
 exact context the LLM received, understand immediately why the wrong answer
 was generated.
 
+---
+
+## Entry 003 — 2026-06-02 — NEXT_SECTION neighbor expansion added to Neo4j retrieval
+
+**Category:** Retrieval
+**Severity:** Enhancement (no failure; addresses structural gap in context coherence)
+
+### What happened
+
+Timeline-sensitive queries — "What was your role at UT Austin after MIT?", "What research did you do at MIT after your PhD?" — returned weaker answers from Neo4j than expected. Investigation showed the root cause was not scoring but context fragmentation: section boundaries often split a narrative mid-story, and the top-k retrieval returned isolated anchors without their continuations. The LLM was being asked to reconstruct a timeline from fragments.
+
+### Root cause
+
+The graph already contained `NEXT_SECTION` relationships (built by `populate_neo4j_graph.py`) but `_HYBRID_CYPHER` never used them. Scoring selected the right anchor sections, but the LLM lacked the continuation text needed to answer sequential or temporal questions coherently.
+
+### Fix applied
+
+`neo4j_utils.py` — added `OPTIONAL MATCH (section)-[:NEXT_SECTION]->(neighbor:Section)` after the `LIMIT $k` clause in `_HYBRID_CYPHER`, with `WHERE neighbor.sensitivity IN $allowed_tiers` to enforce tier filtering on neighbors. In `query_neo4j_rag()`, neighbor text is appended inline after the anchor in the context string under a `[continued: source — neighbor_name]` label. Neighbors already present in the top-k anchor set are deduplicated by section name. Logged metrics (`n_chunks_retrieved`, `sources`, `scores`) reflect only the k anchor sections — neighbor expansion is invisible to logging.
+
+`replay_retrieval.py` — mirrored the same Cypher change in `run_neo4j()` and updated `print_neo4j_results()` to display neighbor sections with a `↓ continued:` label so the full LLM context is visible during debugging.
+
+### Lesson / takeaway
+
+`NEXT_SECTION` relationships were already in the graph — the infrastructure was there from day one. The value was latent, not extracted. Adding it to the retrieval query was a one-Cypher-clause change that costs one extra OPTIONAL MATCH per query (negligible) and gives the LLM coherent narrative context instead of fragments.
+
+This is a general RAG principle: **don't only retrieve the best matching chunk — retrieve enough surrounding context that the answer can be constructed without inference**. Section-level chunking helps; neighbor expansion helps further.
+
+### Blog post angle
+
+*"The graph had the answer the whole time — we just weren't asking for it."*
+
+The NEXT_SECTION relationship existed silently in the graph for weeks before it was used. This is a clean example of latent graph value: the structure is there, the query just doesn't exploit it. For a portfolio chatbot where narrative coherence matters (career timelines, project stories), this is arguably more important than scoring weight tuning.
+
+### Supporting data
+
+Use `replay_retrieval.py` with `--query "What was your role at UT Austin after MIT?"` before and after this change. The `↓ continued:` block should appear in the output, showing the continuation text the LLM now receives.
+
 ### Supporting data
 
 | | Before fix | After fix |

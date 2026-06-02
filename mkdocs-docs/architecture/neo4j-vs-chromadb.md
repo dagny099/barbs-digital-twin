@@ -19,7 +19,7 @@ Both databases are active. They store the same chunks. They serve different purp
 | **Role** | Production retrieval | Fallback + A/B comparison baseline |
 | **Retrieval** | Hybrid: vector + graph signals | Pure vector only |
 | **Scoring** | Composite formula with bonuses | Cosine similarity only |
-| **Tier gating** | `WHERE s.sensitivity_tier IN $allowed_tiers` | Post-filter on metadata |
+| **Tier gating** | `WHERE section.sensitivity IN $allowed_tiers` | Post-filter on metadata |
 | **Entity links** | Yes — 167 canonical entity nodes via `MENTIONS` | No |
 | **Project links** | Yes — `Project -[:DESCRIBED_IN]-> Section` | No |
 | **Fallback if unavailable** | Set `RETRIEVAL_BACKEND=chromadb` to switch | — |
@@ -85,6 +85,6 @@ The ingestion pipeline writes to both databases:
 embed_sections.py (Neo4j) ←— text-embedding-3-small ——→ embed_kb_doc.py (ChromaDB)
 ```
 
-Both stores receive the same chunks with the same embeddings. The metadata schema is slightly different (Neo4j uses node properties; ChromaDB uses a metadata dict), but `source`, `section`, and `sensitivity_tier` are present in both.
+Both stores receive the same chunks with the same embeddings. The metadata schema is slightly different (Neo4j uses node properties; ChromaDB uses a metadata dict), but `source`, `section`, and `sensitivity` are present in both.
 
 See [KB Ingestion](../developer-docs/kb-ingestion.md) for the full ingestion command reference.
