@@ -117,6 +117,7 @@ nav:
     - Local Setup: developer-docs/local-setup.md
     - KB Ingestion: developer-docs/kb-ingestion.md
     - Debug Tools: developer-docs/debug-tools.md
+    - Diagnostic Playbook: developer-docs/diagnostic-playbook.md
     - Running Tests: developer-docs/running-tests.md
   - Deployment:
     - EC2 Primary: deployment/ec2-primary.md
@@ -130,4 +131,5 @@ nav:
     - Key Files & API: reference/key-files.md
     - Environment Variables: reference/environment-variables.md
     - Scoring Weights: reference/scoring-weights.md
+    - Query Log Schema: reference/query-log-schema.md
   - Tags: tags.md

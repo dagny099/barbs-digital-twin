@@ -20,6 +20,7 @@ These entries are written to feed future blog posts as well as to save debugging
 |---|---|---|---|---|
 | [001](entry-001.md) | 2026-05-17 | Graph-signal bonuses overrode vector similarity, causing hallucination | Retrieval, LLM | :octicons-alert-fill-24:{ .warning } Critical |
 | [002](entry-002.md) | 2026-05-17 | Curated sections outcompete narrative sections on shared topics | Retrieval | :octicons-info-16: Medium |
+| [003](entry-003.md) | 2026-06-02 | NEXT_SECTION neighbor expansion — latent graph value already in the schema | Retrieval | :octicons-info-16: Enhancement |
 
 ---
 

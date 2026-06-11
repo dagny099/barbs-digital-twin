@@ -29,21 +29,32 @@ All configuration is done via environment variables. Copy `.env.example` to `.en
 
 ### LLM_MODEL examples
 
+These mirror the `AVAILABLE_MODELS` list in `app.py` — the same options the admin dropdown shows when `SHOW_SETTINGS_PANEL=true`. Any LiteLLM-supported string works, but the values below are the ones currently exercised and priced in code.
+
 ```bash
 # OpenAI
-LLM_MODEL=openai/gpt-4.1
-LLM_MODEL=openai/gpt-4o
+LLM_MODEL=openai/gpt-4.1          # default
+LLM_MODEL=openai/gpt-5.1
+LLM_MODEL=openai/gpt-5.4-mini
+LLM_MODEL=openai/gpt-5-nano       # low-cost
 
-# Anthropic
-LLM_MODEL=anthropic/claude-sonnet-4-5
-LLM_MODEL=anthropic/claude-opus-4-5
+# Anthropic (Haiku tier — main cost-efficient family in the dropdown)
+LLM_MODEL=anthropic/claude-haiku-4.5
+LLM_MODEL=anthropic/claude-haiku-3.5
 
 # Google
-LLM_MODEL=gemini/gemini-pro
+LLM_MODEL=gemini/gemini-2.5-flash
+LLM_MODEL=gemini/gemini-2.5-flash-lite
 
-# Ollama (local)
-LLM_MODEL=ollama/llama3
+# Ollama (local server required)
+LLM_MODEL=ollama/llama3.2
+LLM_MODEL=ollama/mistral          # no tool-call support
 ```
+
+!!! note "Tool support varies by model"
+    `MODELS_WITHOUT_TOOL_SUPPORT` in `app.py` lists models that can't invoke `send_notification` or `dice_roll`. Picking one of these silently disables tool calls for the session.
+
+To add Sonnet/Opus or another Claude variant, append the LiteLLM string to `AVAILABLE_MODELS` in `app.py` (the pricing comments next to each entry are informational only — LiteLLM tracks actual cost via `litellm.completion_cost`).
 
 ---
 
@@ -122,3 +133,21 @@ Without these, the notification tool is silently disabled. The app runs normally
 | `CHROMA_DB_PATH` | `.chroma_db_DT/` | Local path to ChromaDB persistent storage |
 
 The collection name (`barb-twin`) is hardcoded in `app.py` and `scripts/healthcheck.py` and is not configurable via environment variable.
+
+---
+
+## Knowledge Base Paths
+
+| Variable | Default | Description |
+|---|---|---|
+| `INPUTS_PATH` | `inputs` | Root directory where source documents (`kb_*.md`, project summaries, etc.) live on disk. The ingest registry in `scripts/ingest.py` references files as `inputs/...`, but at runtime `_resolve_args()` rewrites those paths under `INPUTS_PATH`. This decouples *what to ingest* (in code) from *where it lives* (in deployment config). |
+
+Use this when KB source files live outside the repo (e.g. mounted on EC2 from a separate volume) or when you want to point the ingest scripts at an alternate KB tree for testing.
+
+---
+
+## Logging & Analytics
+
+| Variable | Default | Description |
+|---|---|---|
+| `MAX_HISTORY_MESSAGES` | `14` | Number of prior chat turns kept in the LLM context window (default = last 7 user + 7 assistant turns). Also bounds how far back `detect_audience_tier()` scans for passphrase signals. |

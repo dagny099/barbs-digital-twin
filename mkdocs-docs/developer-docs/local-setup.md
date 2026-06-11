@@ -122,7 +122,7 @@ Checks covered: environment variables, OpenAI LLM (live completion), OpenAI embe
 .venv/bin/pytest tests/ -v
 ```
 
-51 pure-logic unit tests, no API keys or network required. Completes in under a second. Run before any push to `main`.
+47 pure-logic unit tests, no API keys or network required. Completes in under a second. Run before any push to `main`.
 
 See [Running Tests](running-tests.md) for what's covered and how the test isolation works.
 
@@ -142,17 +142,17 @@ barbs-digital-twin/
 ├── db_sync.py                # ChromaDB push/pull to HF Hub
 ├── SYSTEM_PROMPT.md          # LLM system prompt (loaded at runtime)
 ├── requirements.txt
-├── inputs/
+├── inputs/                   # Path is INPUTS_PATH (default: ./inputs/)
 │   ├── kb_biosketch.md       # ⭐ Authoritative biographical content
-│   ├── kb_*.md               # Other KB documents
-│   └── project-summaries/    # One-page PDFs (20 projects)
+│   ├── kb_*.md               # Other KB documents (philosophy, dissertation, etc.)
+│   └── project-summaries/    # PDFs (~20 projects) + MD variants for featured projects
 ├── scripts/
 │   ├── ingest.py             # Master ingestion manager
 │   ├── healthcheck.py        # External service validator
 │   ├── analyze_logs.py       # Query log analytics
 │   └── ...
 ├── tests/
-│   └── test_pure_logic.py    # 51 unit tests
+│   └── test_pure_logic.py    # 47 unit tests
 ├── evals/
 │   ├── run_evals.py
 │   ├── analyze_evals.py

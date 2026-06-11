@@ -18,12 +18,12 @@ The knowledge base is the foundation of the digital twin's accuracy. The design 
 graph TB
     subgraph "Knowledge Base Sources"
         KB1["KB: Biosketch ⭐\nkb_biosketch.md"]
-        KB2["KB: Philosophy\nkb_philosophy-and-approach.md"]
-        KB3["KB: Positioning\nkb_professional_positioning.md"]
-        KB4["KB: Projects\nkb_projects.md"]
-        KB5["KB: Career Narrative\nkb_career_narrative.md"]
-        KB6["KB: Publications\nkb_publications.md"]
-        PDF["Project Summaries\n20 one-page PDFs"]
+        KB2["KB: Philosophy / Positioning /\nIntellectual Foundations"]
+        KB3["KB: Dissertation\noverview · relevance · philosophy"]
+        KB4["KB: Projects · Career · Publications"]
+        KB5["KB: Answer Bank\nretrieval-shaped answers"]
+        KB6["KB: Origins · Easter Eggs\npersonal / inner-circle tiers"]
+        PDF["Project Summaries\nPDFs + 3 featured MD"]
         WEB["Jekyll Website\nbarbhs.com"]
         WALK["Project Walkthroughs\nfeatured_projects.py"]
     end
@@ -42,7 +42,7 @@ graph TB
     KB1 & KB2 & KB3 & KB4 & KB5 & KB6 --> PARSE
     PDF --> PARSE
     WEB --> PARSE
-    WALK --> CHUNK
+    WALK --> EMBED
     PARSE --> CHUNK
     CHUNK --> EMBED
     EMBED --> CHROMA
@@ -104,22 +104,36 @@ The biosketch always wins. If it contradicts something in a project brief, the b
 
 ### KB Documents (Markdown)
 
-Six curated KB documents are parsed by `embed_kb_doc.py` using the same logic: `##` headers create named section boundaries, and `chunk_prose()` handles the rest.
+Curated KB documents are parsed by `embed_kb_doc.py` using the same logic: `##` headers create named section boundaries, and `chunk_prose()` handles the rest. New KB documents register in `scripts/ingest.py`.
 
 | Source Key | File | Content |
 |---|---|---|
-| `kb-biosketch` | `inputs/kb_biosketch.md` | Identity, background, values — the authoritative source |
-| `kb-philosophy` | `inputs/kb_philosophy-and-approach.md` | How Barbara thinks about data and meaning-making |
-| `kb-positioning` | `inputs/kb_professional_positioning.md` | Differentiators, cognitive science angle, problems she solves |
-| `kb-projects` | `inputs/kb_projects.md` | Project registry with tech stack and deployment status |
-| `kb-career` | `inputs/kb_career_narrative.md` | Five-chapter career arc from MIT through independent GenAI work |
-| `kb-publications` | `inputs/kb_publications.md` | Academic papers with PDF links |
+| `kb-biosketch` | `kb_biosketch.md` | Identity, background, values — the authoritative source |
+| `kb-philosophy` | `kb_philosophy-and-approach.md` | How Barbara thinks about data and meaning-making |
+| `kb-positioning` | `kb_professional_positioning.md` | Differentiators, cognitive science angle, problems she solves |
+| `kb-intellectual-foundations` | `kb_intellectual_foundations.md` | Frameworks and influences that shape Barbara's thinking |
+| `kb-dissertation-overview` | `kb_dissertation_overview.md` | The "what" of the MIT dissertation, written for non-academic readers |
+| `kb-dissertation-relevance` | `kb_dissertation_modern_relevance.md` | How that work maps onto modern ML/AI questions |
+| `kb-dissertation-philosophy` | `kb_dissertation_philosophy.md` | The deeper "why" — attention research as a lens on meaning |
+| `kb-projects` | `kb_projects.md` | Project registry with tech stack and deployment status |
+| `kb-career` | `kb_career_narrative.md` | Five-chapter career arc from MIT through independent GenAI work |
+| `kb-publications` | `kb_publications.md` | Academic papers with PDF links |
+| `kb-answers` | `kb_project_answer_bank.md` | Pre-curated answers for predictable questions — written for retrieval-shaped vocabulary |
+| `kb-origins` | `kb_personal_origin_stories.md` | `personal`-tier content: family context, career transitions, motivations |
+| `kb-easter-eggs` | `kb_easter_eggs.md` | `inner_circle`-tier content: shared memories, family phrases, insider signals |
 
-### Project Summaries (PDFs)
+File paths are relative to `INPUTS_PATH` (default `inputs/`). See [Environment Variables](../reference/environment-variables.md).
 
-20 one-page PDFs follow a consistent template: *What it is / Who it's for / What it does / How it works.* The parser uses fuzzy prefix matching to detect section headers from the template. Each PDF also gets a synthetic "overview" chunk combining title + *What it is* + *Who it's for* — optimized for portfolio-style queries.
+### Project Summaries
 
-Metadata extras for PDFs: `project_name`, `tech_stack` (comma-joined list of detected technologies).
+Two coexisting paths, both keyed by ingest registry entries in `scripts/ingest.py`:
+
+| Path | Source key | Script | Format |
+|---|---|---|---|
+| Bulk PDFs | `project-summaries` | `embed_project_summaries.py` | One-page PDFs (~20 projects) — extracted with `pdfplumber`, section headers detected via fuzzy prefix matching |
+| Featured MD | `project-digital-twin`, `project-local-rag`, `project-resume-explorer` | `embed_kb_doc.py` | Longer-form markdown variants for the three featured projects, parsed by `##` headers |
+
+Both follow the same template: *What it is / Who it's for / What it does / How it works*. PDF entries also get a synthetic "overview" chunk combining title + *What it is* + *Who it's for* — optimized for portfolio-style queries. Metadata extras on PDF chunks: `project_name`, `tech_stack` (comma-joined detected technologies).
 
 ### Jekyll Website
 

@@ -91,10 +91,10 @@ This digital twin uses **GraphRAG** — retrieval-augmented generation backed by
     - [x] Multi-provider LLM support (OpenAI, Anthropic, Google, Ollama via LiteLLM)
     - [x] Sensitivity tier system (`public` / `personal` / `inner_circle`)
     - [x] Production-grade query logging with <16μs overhead
-    - [x] 51-test unit suite gating EC2 deploys in CI
+    - [x] 47-test unit suite gating EC2 deploys in CI
     - [x] Integration healthcheck script (`scripts/healthcheck.py`)
     - [x] Admin debug interface with retrieval inspector
-    - [x] Offline eval harness across 8 question categories
+    - [x] Offline eval harness across 7 question categories (58 questions)
 
 === "In Progress / Planned"
 

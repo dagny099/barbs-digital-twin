@@ -75,6 +75,27 @@ python chunk_inspector.py --query "..." --n 12   # Retrieve N chunks
 
 ---
 
+## `evals/compare_runs.py` — A/B Eval Run Viewer
+
+A Gradio side-by-side viewer for any two eval runs saved under `evals/eval_results/`. Use it after running `evals/run_evals.py` more than once — for example, before/after a prompt edit, a scoring-weight change, or a model upgrade — to see exactly where the two runs diverge.
+
+```bash
+python evals/compare_runs.py                    # http://localhost:7863
+python evals/compare_runs.py --port 7864        # custom port
+```
+
+The viewer auto-discovers `eval_results_*.json` files, pre-selects the two most recent runs, and lets you swap either side from a dropdown. For each question it shows:
+
+- Both responses side-by-side
+- Per-run retrieval stats (count, avg/max similarity, latency)
+- The retrieved chunk cards with **"only in A" / "only in B"** badges, so you can spot ranking drift at a glance
+- The rubric category and any metadata for the question
+- A collapsible per-run metadata panel (model, temperature, top-k, backend)
+
+This is the fastest way to confirm a tuning change actually moved retrieval where you expected — and to catch unintended regressions on other questions before they ship.
+
+---
+
 ## `app_admin.py` — Admin Interface
 
 A developer-focused debug interface that runs alongside the main app:
@@ -103,25 +124,24 @@ python app_admin.py   # http://localhost:7862 (or $ADMIN_PORT)
 
 Set provider API keys in `.env` to unlock non-OpenAI models:
 
-| Provider | Key | LiteLLM Model Format |
+| Provider | Key | Example LiteLLM Model String |
 |---|---|---|
-| OpenAI | `OPENAI_API_KEY` | `openai/gpt-4.1` |
-| Anthropic | `ANTHROPIC_API_KEY` | `anthropic/claude-sonnet-4-5` |
-| Google | `GEMINI_API_KEY` | `gemini/gemini-pro` |
-| Ollama | (local server) | `ollama/llama3` |
+| OpenAI | `OPENAI_API_KEY` | `openai/gpt-4.1` (default), `openai/gpt-5.1`, `openai/gpt-5-nano` |
+| Anthropic | `ANTHROPIC_API_KEY` | `anthropic/claude-haiku-4.5`, `anthropic/claude-haiku-3.5` |
+| Google | `GEMINI_API_KEY` | `gemini/gemini-2.5-flash`, `gemini/gemini-2.5-flash-lite` |
+| Ollama | (local server) | `ollama/llama3.2`, `ollama/mistral` |
 
-Ollama requires a local server running at the default port.
+See `AVAILABLE_MODELS` in `app.py` for the live list. Ollama requires a local server running at the default port.
 
 ---
 
 ## Diagnostic Workflow
 
-When a response seems wrong, follow this sequence:
+When a response seems wrong, work through the **[Diagnostic Playbook](diagnostic-playbook.md)** — it's a single decision tree that branches across all five tools (this page, `chunk_inspector.py`, `app_admin.py`, `compare_runs.py`, and `analyze_logs.py`) and tells you which one to reach for at each step.
+
+Quick version:
 
 1. **`replay_retrieval.py --query "..." --compare`** — What did Neo4j retrieve? Did ChromaDB retrieve something different? Is the correct context in the top-5?
-
 2. If the correct context *wasn't* retrieved: **`chunk_inspector.py --query "..."`** — Is the relevant chunk in ChromaDB? Is it indexed?
-
 3. If the correct context *was* retrieved but the answer is still wrong: The issue is in the system prompt or the LLM, not retrieval. Review `SYSTEM_PROMPT.md`.
-
 4. If the issue is in graph signals (Neo4j demoting a high-similarity chunk): Review the composite scores in step 1 and consider whether bonuses are disproportionate relative to the vector leader.

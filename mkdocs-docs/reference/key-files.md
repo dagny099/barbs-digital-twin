@@ -31,6 +31,7 @@ Quick reference for the most important files in the codebase and the functions t
 |---|---|
 | [`replay_retrieval.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/replay_retrieval.py) | Neo4j retrieval debugger — composite score breakdown, Neo4j vs ChromaDB comparison |
 | [`chunk_inspector.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/chunk_inspector.py) | ChromaDB chunk quality auditor and retrieval simulator |
+| [`evals/compare_runs.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/evals/compare_runs.py) | A/B viewer for two eval runs — question-by-question diff with "only in A/B" chunk badges |
 | [`scripts/ingest.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/scripts/ingest.py) | Master ingestion manager — interactive and non-interactive modes |
 | [`scripts/healthcheck.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/scripts/healthcheck.py) | External service validator — env vars, OpenAI, ChromaDB, Pushover |
 | [`scripts/analyze_logs.py`](https://github.com/dagny099/barbs-digital-twin/blob/main/scripts/analyze_logs.py) | Query log analytics — satisfaction, cost, knowledge gaps, model comparison |

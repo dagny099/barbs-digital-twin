@@ -95,7 +95,16 @@ python scripts/analyze_logs.py --knowledge-gaps
 
 # Cost trends
 python scripts/analyze_logs.py --cost-analysis
+
+# Limit analysis to rows from a given date forward (local tz)
+python scripts/analyze_logs.py --cutoff-date 2026-05-01
+
+# Drop Barbara's own test traffic from the report
+python scripts/analyze_logs.py --exclude-owner
 ```
+
+!!! tip "`--exclude-owner` and the UI toggle"
+    The Gradio app shows an **"exclude my traffic"** checkbox below the chat. When Barbara ticks it, the session's log rows get `is_owner_traffic: true`. `--exclude-owner` drops those rows when generating reports — and by default also drops the rest of the session, so a mid-conversation toggle still keeps the analytics clean. Use `--owner-filter row` to drop only the explicitly-flagged rows. The toggle resets to off on every page load, so casual visitors don't accidentally pollute the flag.
 
 ### Disk space
 

@@ -13,19 +13,27 @@ The twin's responses are grounded entirely in Barbara's curated knowledge base. 
 
 ## Knowledge Base Sources
 
-The knowledge base is built from nine source types, each embedded separately so provenance is tracked at the chunk level:
+The knowledge base is built from multiple source types, each embedded separately so provenance is tracked at the chunk level. The full registry lives in `scripts/ingest.py`:
 
 | Source | Content | Priority |
 |---|---|---|
 | **KB: Biosketch** ⭐ | Identity, background, values, personality | Highest — wins all conflicts |
 | **KB: Philosophy & Approach** | How Barbara thinks about data, meaning-making, what good work looks like | High |
 | **KB: Professional Positioning** | What sets Barbara apart, the cognitive science angle, four problems she solves | High |
+| **KB: Intellectual Foundations** | Frameworks and influences that shape Barbara's thinking | High |
+| **KB: Dissertation — Overview** | The "what" of the MIT dissertation, written for a non-academic reader | Medium |
+| **KB: Dissertation — Modern Relevance** | How the dissertation work maps onto current ML/AI questions | Medium |
+| **KB: Dissertation — Philosophy** | The deeper "why" — what attention research taught Barbara about meaning | Medium |
 | **KB: Project Portfolio** | Registry of all major projects with tech stack, deployment status, cross-project connections | Medium-high |
 | **KB: Career Narrative** | Career arc told as a story — five chapters from MIT through independent GenAI work | Medium |
 | **KB: Publications** | Academic papers, conference posters, and dissertation with PDF links | Medium |
-| **Project Summaries** | One-page PDFs for 20+ projects: What it is / Who it's for / What it does / How it works | Medium |
+| **KB: Answer Bank** | Pre-curated answers to predictable questions (e.g. "How did you get into beekeeping?") — written for retrieval-shaped vocabulary | Medium |
+| **KB: Personal Origin Stories** | `personal`-tier content: family context, career transitions, what shaped the approach | Personal tier |
+| **KB: Easter Eggs / Recognition** | `inner_circle`-tier content: shared memories, family phrases, insider signals | Inner-circle tier |
+| **Project Summaries (PDFs)** | One-page PDFs for ~20 projects: What it is / Who it's for / What it does / How it works | Medium |
+| **Project Summaries (MD)** | Markdown variants for 3 featured projects (`digital-twin`, `local-rag`, `resume-explorer`) — same template, longer-form | Medium |
 | **Jekyll Website** | Pages from [barbhs.com](https://barbhs.com) — fetched via sitemap | Medium |
-| **Project Walkthroughs** | Deep-dive content for featured projects; linked to Project nodes in Neo4j | Medium |
+| **Project Walkthroughs** | Deep-dive content for featured projects; linked to Project nodes in Neo4j (earns the +0.08 graph bonus) | Medium |
 
 ---
 

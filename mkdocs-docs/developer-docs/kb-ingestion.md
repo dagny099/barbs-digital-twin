@@ -53,17 +53,31 @@ python scripts/ingest.py --source project-summaries --dry-run  # Preview without
 
 ### Available Source Keys
 
+Run `python scripts/ingest.py --status` for the live list — it always reflects the current registry. Snapshot:
+
 | Key | File/Location |
 |---|---|
-| `kb-biosketch` | `inputs/kb_biosketch.md` |
+| `kb-biosketch` ⭐ | `inputs/kb_biosketch.md` (authoritative) |
 | `kb-philosophy` | `inputs/kb_philosophy-and-approach.md` |
 | `kb-positioning` | `inputs/kb_professional_positioning.md` |
+| `kb-intellectual-foundations` | `inputs/kb_intellectual_foundations.md` |
+| `kb-dissertation-overview` | `inputs/kb_dissertation_overview.md` |
+| `kb-dissertation-relevance` | `inputs/kb_dissertation_modern_relevance.md` |
+| `kb-dissertation-philosophy` | `inputs/kb_dissertation_philosophy.md` |
 | `kb-projects` | `inputs/kb_projects.md` |
 | `kb-career` | `inputs/kb_career_narrative.md` |
 | `kb-publications` | `inputs/kb_publications.md` |
-| `project-summaries` | `inputs/project-summaries/` (PDFs) |
+| `kb-answers` | `inputs/kb_project_answer_bank.md` |
+| `kb-origins` | `inputs/kb_personal_origin_stories.md` (`personal` tier) |
+| `kb-easter-eggs` | `inputs/kb_easter_eggs.md` (`inner_circle` tier) |
+| `project-walkthroughs` | `featured_projects.py` — 1 chunk per project, no splitting |
+| `project-summaries` | `inputs/project-summaries/` — bulk PDFs via `embed_project_summaries.py` |
+| `project-digital-twin` | `inputs/project-summaries/digital-twin.md` (featured MD variant) |
+| `project-local-rag` | `inputs/project-summaries/local-rag.md` (featured MD variant) |
+| `project-resume-explorer` | `inputs/project-summaries/resume-explorer.md` (featured MD variant) |
 | `jekyll` | `https://barbhs.com` (via sitemap) |
-| `project-walkthroughs` | `featured_projects.py` |
+
+The `inputs/` prefix is relative to `INPUTS_PATH` (default `inputs/`). See [Environment Variables](../reference/environment-variables.md#knowledge-base-paths).
 
 ---
 

@@ -71,6 +71,14 @@ After each response, click 👍 if it was helpful or 👎 if it missed the mark.
 
 ---
 
+## The "exclude my traffic" Toggle
+
+At the bottom of the page you'll see a checkbox labeled **exclude my traffic**. It's there for Barbara — when she's testing the twin herself, she ticks it so her sessions get filtered out of the analytics that drive content decisions. Visitors can safely ignore it; leaving it on or off doesn't change the conversation at all.
+
+Under the hood the toggle simply tags the session's log rows with `is_owner_traffic: true`, and `scripts/analyze_logs.py --exclude-owner` drops those rows (and the rest of the session) when generating reports. It resets to off on every page load.
+
+---
+
 ## Common Patterns and What They Signal
 
 | What you say | What the twin does |

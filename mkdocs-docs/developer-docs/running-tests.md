@@ -18,7 +18,7 @@ The project uses a three-tier QA strategy designed for a solo project where engi
 .venv/bin/pytest tests/ -v
 ```
 
-51 pure-logic unit tests. No API keys or network required. Completes in under a second. Run before any push to `main`.
+47 pure-logic unit tests. No API keys or network required. Completes in under a second. Run before any push to `main`.
 
 ---
 
@@ -121,9 +121,19 @@ python run_evals.py
 python analyze_evals.py --export
 ```
 
-The eval harness runs 92 questions across 8 categories through the full RAG pipeline:
-- **Coverage categories** (bio, projects, technical, personality, tool, publication) — "Does the system know X?"
-- **Visitor categories** (recruiter, friendly) — "Would a real visitor get a satisfying response?"
+The eval harness runs 58 questions across 7 categories through the full RAG pipeline. Each row in `evals/eval_questions.csv` carries a category and an intent type so reports can segment by both axes:
+
+| Category | Count | What it probes |
+|---|---|---|
+| `bio` | 11 | Biographical and identity Q&A |
+| `personality` | 10 | Voice, values, "what drives you" |
+| `projects` | 15 | Project walkthroughs and tradeoffs |
+| `technical` | 10 | Architecture, retrieval, scoring |
+| `tool` | 5 | Function-call paths (`send_notification`, `dice_roll`) |
+| `front-example` | 4 | Curated landing-page example prompts |
+| `user-submitted` | 3 | Real visitor questions promoted into the suite |
+
+Intent distribution: 46 `bounded_open`, 11 `closed_fact`, 1 `open_persona`.
 
 Cost: ~$0.21 per full run.
 
@@ -139,3 +149,13 @@ Cost: ~$0.21 per full run.
 | Dependency version bump | No (unless it touches LiteLLM/ChromaDB) |
 
 See [`evals/EVALUATION_GUIDE.md`](https://github.com/dagny099/barbs-digital-twin/blob/main/evals/EVALUATION_GUIDE.md) for the full evaluation design rationale.
+
+### Comparing two runs
+
+After running evals more than once, launch the side-by-side viewer to diff any two runs question-by-question:
+
+```bash
+python evals/compare_runs.py     # http://localhost:7863
+```
+
+It pre-selects the two most recent `eval_results/eval_results_*.json` files and flags chunks that appear in only one of the runs. Use it whenever a prompt edit, scoring-weight change, or model upgrade is in flight — it makes regressions obvious before they ship. See [Debug Tools](debug-tools.md#evalscompare_runspy-ab-eval-run-viewer) for the full reference.
