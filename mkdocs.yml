@@ -1,3 +1,4 @@
+site_author: Barbara Hidalgo-Sotelo
 site_name: "Barb's Digital Twin"
 site_description: "An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo in her own voice — backed by a Neo4j knowledge graph and a GraphRAG retrieval pipeline."
 site_url: https://docs.barbhs.com/twin/
@@ -53,6 +54,10 @@ plugins:
   - search:
       lang: en
   - tags
+  - social:                   # requires: pip install "mkdocs-material[imaging]"
+      cards_layout_options:
+        background_color: "#124B42"
+        color: "#FBFAF6"
 
 markdown_extensions:
   - admonition

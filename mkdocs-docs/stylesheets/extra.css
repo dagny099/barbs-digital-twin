@@ -302,49 +302,29 @@ body, .md-typeset { font-family: var(--bt-font-body); }
   .md-typeset .dt-hero__logo { width: 120px; height: 120px; }
 }
 
-/* ── Mermaid: keep diagrams light & readable in dark mode ────────────
-   The diagram sources hardcode light node fills (fill:#e8f4f8 …) but no
-   text color, so Mermaid's dark theme makes labels light-on-light and
-   unreadable. Render the diagrams on a light card in dark mode and force
-   dark text. Inline custom fills win (no !important on shapes), so each
-   node keeps its colour coding; only unstyled defaults get a light fill. */
+/* ── Mermaid: keep diagrams readable in dark mode ────────────────────
+   The diagram sources hardcode light node fills (fill:#e8f4f8 …) but set
+   no text color, so under the slate scheme Material's default amber node
+   text (--md-mermaid-node-fg-color) sits unreadable on those light fills.
+   Render each diagram on a light card and retarget Material's own Mermaid
+   theme variables to dark ink + muted edges — the documented, !important-
+   free way to recolor diagrams. Nodes with inline custom fills keep their
+   colour coding; only the text and connectors get restyled. */
 [data-md-color-scheme="slate"] .mermaid {
   background: #f7f3ea;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   padding: 0.9rem 0.6rem;
+
+  --md-mermaid-node-bg-color: #eef1f4;   /* unstyled node fill */
+  --md-mermaid-node-fg-color: #243038;   /* node label text */
+  --md-mermaid-label-fg-color: #243038;  /* edge label text */
+  --md-mermaid-label-bg-color: #f7f3ea;  /* edge label backdrop */
+  --md-mermaid-edge-color: #5c6a6f;      /* connectors + arrowheads */
 }
-[data-md-color-scheme="slate"] .mermaid .node rect,
-[data-md-color-scheme="slate"] .mermaid .node polygon,
-[data-md-color-scheme="slate"] .mermaid .node circle,
-[data-md-color-scheme="slate"] .mermaid .node path,
-[data-md-color-scheme="slate"] .mermaid .label-container {
-  fill: #eef1f4;
-}
-[data-md-color-scheme="slate"] .mermaid .nodeLabel,
-[data-md-color-scheme="slate"] .mermaid .edgeLabel,
-[data-md-color-scheme="slate"] .mermaid .cluster-label,
-[data-md-color-scheme="slate"] .mermaid text,
-[data-md-color-scheme="slate"] .mermaid span,
-[data-md-color-scheme="slate"] .mermaid p {
-  fill: #243038 !important;
-  color: #243038 !important;
-}
-[data-md-color-scheme="slate"] .mermaid .edgeLabel,
-[data-md-color-scheme="slate"] .mermaid .edgeLabel rect,
-[data-md-color-scheme="slate"] .mermaid .edgeLabel foreignObject div {
-  background-color: #f7f3ea !important;
-}
-[data-md-color-scheme="slate"] .mermaid .edgePath .path,
-[data-md-color-scheme="slate"] .mermaid .flowchart-link {
-  stroke: #5c6a6f !important;
-}
-[data-md-color-scheme="slate"] .mermaid marker path,
-[data-md-color-scheme="slate"] .mermaid .arrowMarkerPath {
-  fill: #5c6a6f !important;
-  stroke: #5c6a6f !important;
-}
+/* Cluster (subgraph) panels have no Material variable — tint them to match
+   the light card. Plain CSS beats Mermaid's presentation attributes. */
 [data-md-color-scheme="slate"] .mermaid .cluster rect {
-  fill: #efeae0 !important;
-  stroke: #c9c2b4 !important;
+  fill: #efeae0;
+  stroke: #c9c2b4;
 }
