@@ -1,35 +1,39 @@
 site_name: "Barb's Digital Twin"
 site_description: "An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo in her own voice — backed by a Neo4j knowledge graph and a GraphRAG retrieval pipeline."
-site_url: https://docs.barbhs.com/barbs-digital-twin/
+site_url: https://docs.barbhs.com/twin/
 repo_url: https://github.com/dagny099/barbs-digital-twin
 repo_name: dagny099/barbs-digital-twin
 copyright: "&copy; 2026 Barbara Hidalgo-Sotelo &nbsp;|&nbsp; Built with Material for MkDocs"
 
 docs_dir: mkdocs-docs
 
+extra_css:
+  - stylesheets/extra.css
+
 theme:
   name: material
+  logo: assets/swirl-logo.png
+  favicon: assets/favicon.png
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: deep purple
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: deep purple
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   font:
-    text: Inter
-    code: JetBrains Mono
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   icon:
     repo: fontawesome/brands/github
-    logo: material/brain
   features:
     - navigation.tabs
     - navigation.tabs.sticky

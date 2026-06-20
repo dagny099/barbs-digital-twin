@@ -5,9 +5,19 @@ tags:
   - graphrag
 ---
 
+<div class="dt-hero" markdown>
+<div class="dt-hero__text" markdown>
+
 # Barb's Digital Twin
 
-**An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo — in her voice, grounded in her actual knowledge.**
+<p class="dt-hero__lead">An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo — in her voice, grounded in her actual knowledge.</p>
+
+[:material-chat: Chat with the Twin](https://twin.barbhs.com){ .md-button .md-button--primary }
+[:material-book-open: Quick Start](getting-started/quick-start.md){ .md-button .dt-hero__ghost }
+
+</div>
+<img class="dt-hero__logo" src="assets/swirl-logo.png" alt="Barbara Hidalgo-Sotelo logo" />
+</div>
 
 <div class="grid cards" markdown>
 
