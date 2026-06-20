@@ -1,0 +1,35 @@
+# requirements-docs.txt — builds the MkDocs site (mkdocs.yml)
+#
+# Install into a dedicated venv:
+#   python -m venv mkdocs-venv
+#   source mkdocs-venv/bin/activate   # Windows: mkdocs-venv\Scripts\activate
+#   pip install -r requirements-docs.txt
+#   mkdocs serve        # or: mkdocs build
+#
+# NOTE: the `social` plugin (mkdocs.yml) renders social cards via Cairo and
+# needs the system library libcairo installed OUTSIDE of pip:
+#   macOS:         brew install cairo freetype libffi pango
+#   Debian/Ubuntu: sudo apt-get install libcairo2 libfreetype6 libffi-dev
+#   Amazon Linux:  sudo dnf install cairo freetype libffi
+# Missing libcairo is the most common "works on EC2, fails locally" cause.
+#
+# GOTCHA (Apple Silicon + anaconda/conda Python): even with `brew install cairo`,
+# a non-Homebrew Python (e.g. anaconda) won't search /opt/homebrew/lib, so
+# cairosvg crashes with 'no library called "cairo-2" was found'. Point the
+# dynamic loader at the brew libdir when building:
+#   DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib mkdocs build
+# (or export it in ~/.zshrc to make it permanent).
+
+# --- Core ---
+mkdocs==1.6.1
+mkdocs-material==9.7.6
+mkdocs-material-extensions==1.3.1
+
+# --- Markdown extensions used in mkdocs.yml (pymdownx.*) ---
+pymdown-extensions==10.16.1
+
+# --- Imaging stack for the `social` plugin (cards) ---
+# Equivalent to installing mkdocs-material[imaging]
+pillow==11.3.0
+CairoSVG==2.8.2
+cairocffi==1.7.1

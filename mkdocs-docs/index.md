@@ -5,19 +5,35 @@ tags:
   - graphrag
 ---
 
-<div class="dt-hero" markdown>
-<div class="dt-hero__text" markdown>
+# User Documentation
 
-# Barb's Digital Twin
+I built an AI-powered portfolio chatbot that answers questions about me (Barbara Hidalgo-Sotelo), in my voice and grounded with information about my background, experiences, and approaches.
 
-<p class="dt-hero__lead">An AI-powered portfolio chatbot that answers questions about Barbara Hidalgo-Sotelo — in her voice, grounded in her actual knowledge.</p>
+## Start Exploring
 
-[:material-chat: Chat with the Twin](https://twin.barbhs.com){ .md-button .md-button--primary }
-[:material-book-open: Quick Start](getting-started/quick-start.md){ .md-button .dt-hero__ghost }
+<div class="grid" markdown>
+
+[:material-chat: **Chat with the Twin**](https://twin.barbhs.com){ .md-button .md-button--primary }
+[:material-book-open: **Quick Start**](getting-started/quick-start.md){ .md-button }
+[:material-github: **View Source**](https://github.com/dagny099/barbs-digital-twin){ .md-button }
 
 </div>
-<img class="dt-hero__logo" src="assets/swirl-logo.png" alt="Barbara Hidalgo-Sotelo logo" />
-</div>
+
+---
+
+## How It Works
+
+This digital twin uses **GraphRAG** — retrieval-augmented generation backed by a Neo4j knowledge graph. Here's the pipeline at a glance:
+
+1. **Curated Knowledge Base** — Biographical sketches, project summaries, publications, and website content are parsed into named sections using `##` header boundaries.
+2. **Graph Construction** — Sections become nodes in a Neo4j graph with 1536-dimension OpenAI embeddings. An entity extraction pipeline links 167 canonical entity nodes (Skills, Methods, Technologies, Concepts) to sections via `MENTIONS` relationships. Projects link to their sections via `DESCRIBED_IN`.
+3. **Hybrid Retrieval** — User queries are embedded and matched against Neo4j's vector index. A composite score — vector similarity (×0.85) plus graph bonuses for project links (+0.08), entity mentions (+0.05), and section length (+0.02) — reranks candidates.
+4. **Tier Gating** — Sensitivity tiers (`public` / `personal` / `inner_circle`) gate which sections are eligible. Deeper tiers unlock via passphrase.
+5. **Response Generation** — Top-K sections are injected as context into the system prompt. A multi-provider LLM generates responses in Barbara's voice via LiteLLM.
+
+---
+
+## Features I'm Proud of
 
 <div class="grid cards" markdown>
 
@@ -72,19 +88,6 @@ tags:
 </div>
 
 ---
-
-## How It Works
-
-This digital twin uses **GraphRAG** — retrieval-augmented generation backed by a Neo4j knowledge graph. Here's the pipeline at a glance:
-
-1. **Curated Knowledge Base** — Biographical sketches, project summaries, publications, and website content are parsed into named sections using `##` header boundaries.
-2. **Graph Construction** — Sections become nodes in a Neo4j graph with 1536-dimension OpenAI embeddings. An entity extraction pipeline links 167 canonical entity nodes (Skills, Methods, Technologies, Concepts) to sections via `MENTIONS` relationships. Projects link to their sections via `DESCRIBED_IN`.
-3. **Hybrid Retrieval** — User queries are embedded and matched against Neo4j's vector index. A composite score — vector similarity (×0.85) plus graph bonuses for project links (+0.08), entity mentions (+0.05), and section length (+0.02) — reranks candidates.
-4. **Tier Gating** — Sensitivity tiers (`public` / `personal` / `inner_circle`) gate which sections are eligible. Deeper tiers unlock via passphrase.
-5. **Response Generation** — Top-K sections are injected as context into the system prompt. A multi-provider LLM generates responses in Barbara's voice via LiteLLM.
-
----
-
 ## Status & Roadmap
 
 !!! success "Live on AWS EC2"
@@ -129,18 +132,6 @@ This digital twin uses **GraphRAG** — retrieval-augmented generation backed by
 | **Language** | Python 3.11 |
 | **Deployment** | AWS EC2 (primary), Hugging Face Spaces (secondary) |
 | **CI/CD** | GitHub Actions |
-
----
-
-## Start Exploring
-
-<div class="grid" markdown>
-
-[:material-chat: **Chat with the Twin**](https://twin.barbhs.com){ .md-button .md-button--primary }
-[:material-book-open: **Quick Start**](getting-started/quick-start.md){ .md-button }
-[:material-github: **View Source**](https://github.com/dagny099/barbs-digital-twin){ .md-button }
-
-</div>
 
 ---
 
