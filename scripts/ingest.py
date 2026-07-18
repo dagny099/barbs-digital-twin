@@ -270,6 +270,17 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "project-resume-explorer:",
     },
+    {
+        "key":           "project-chronoscope",
+        "label":         "Project: ChronoScope",
+        "description":   "inputs/project-summaries/chronoscope.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/chronoscope.md",
+                        "--source-type", "project-chronoscope"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-chronoscope:",
+    },
     # ... same pattern for concept-cartographer, fitness-dashboard, etc.
     {
         "key":           "project-summaries",
