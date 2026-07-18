@@ -281,6 +281,28 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "project-chronoscope:",
     },
+    {
+        "key":           "project-poolula",
+        "label":         "Project: Poolula Platform",
+        "description":   "inputs/project-summaries/poolula.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/poolula.md",
+                        "--source-type", "project-poolula"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-poolula:",
+    },
+    {
+        "key":           "project-beehive",
+        "label":         "Project: Beehive Tracker",
+        "description":   "inputs/project-summaries/beehive-tracker.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/beehive-tracker.md",
+                        "--source-type", "project-beehive"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-beehive:",
+    },
     # ... same pattern for concept-cartographer, fitness-dashboard, etc.
     {
         "key":           "project-summaries",
