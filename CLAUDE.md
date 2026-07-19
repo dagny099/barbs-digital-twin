@@ -93,6 +93,6 @@ debugging sessions.
   `where` filter both use the same tier logic.
 - `fetch_k = k × 4` (wider candidate pool before graph reranking). Currently set inline
   in `query_neo4j_rag()` — not exposed as an env var.
-- Temperature default: 0.6 (set via `LLM_TEMPERATURE` env var or settings panel).
+- Temperature default: 0.7 in `app.py`, 0.4 in `app_admin.py` (set via `LLM_TEMPERATURE` env var or settings panel).
 - The `assistant_response` field in `query_log.jsonl` is the plain-text response before
   any diagram HTML is appended — use this for content analysis, not `response_chars`.

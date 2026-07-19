@@ -21,7 +21,7 @@ flowchart TD
     C --> D["OpenAI Embedding\ntext-embedding-3-small\n1536 dimensions"]
 
     D --> E["Neo4j Hybrid Search\nvector index · graph signals\nallowed_tiers filter"]
-    D -.->|"fallback / A/B eval"| L[("ChromaDB\npure vector")]
+    D -.->|"alt backend · serves prod today"| L[("ChromaDB\npure vector")]
 
     E --> F["Composite Scoring\nWt_SEMANTIC × 0.85\n+ project link × 0.08\n+ entity mentions × 0.05\n+ section length × 0.02"]
     F --> G["Top-K Sections\n(fetch_k = k × 4 → rerank → top k)"]
@@ -52,7 +52,7 @@ flowchart LR
     B --> C["Paragraph-Aware Chunking\n≈500 chars · 50 overlap"]
     C --> D["Generate Embeddings\ntext-embedding-3-small"]
 
-    D --> E[("ChromaDB\nfallback + A/B eval")]
+    D --> E[("ChromaDB\npure vector · serves prod")]
     D --> F["Load Section Nodes\nNeo4j vector index"]
     F --> G[("Neo4j Graph\nDocument → Section → Entity")]
 
@@ -72,7 +72,7 @@ flowchart LR
 1. **Parse** — `##` headers create named Section boundaries. Every chunk knows its parent section, source document, and sensitivity tier.
 2. **Chunk** — Paragraph-aware splitting with configurable size (~500 chars) and overlap (50 chars). `chunk_index` resets per section, not globally.
 3. **Embed** — Each section is embedded via `text-embedding-3-small` (1536 dimensions).
-4. **Load** — Section nodes and embeddings are loaded into Neo4j's vector index. The same chunks are also stored in ChromaDB for fallback and A/B comparison. Sequential sections are linked via `NEXT_SECTION` relationships during graph population.
+4. **Load** — Section nodes and embeddings are loaded into Neo4j's vector index. The same chunks are also stored in ChromaDB, which currently serves production and doubles as the A/B comparison baseline. Sequential sections are linked via `NEXT_SECTION` relationships during graph population.
 5. **Entity Extraction** — An LLM extracts Skills, Methods, Technologies, and Concepts from project walkthroughs. These become 167 canonical entity nodes, connected to sections via `MENTIONS` edges. Projects link to their descriptive sections via `DESCRIBED_IN`.
 6. **Neighbor Expansion** (Neo4j only, at query time) — After top-k scoring, each anchor section fetches its `NEXT_SECTION` neighbor. If the neighbor passes the sensitivity filter and is not already in the top-k, its text is appended inline in the LLM context. Logged metrics (`n_chunks_retrieved`) reflect anchor sections only.
 

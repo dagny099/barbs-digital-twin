@@ -103,7 +103,7 @@ This digital twin uses **GraphRAG** — retrieval-augmented generation backed by
     - [x] GraphRAG pipeline with Neo4j hybrid retrieval
     - [x] Multi-provider LLM support (OpenAI, Anthropic, Google, Ollama via LiteLLM)
     - [x] Sensitivity tier system (`public` / `personal` / `inner_circle`)
-    - [x] Production-grade query logging with <16μs overhead
+    - [x] Production-grade per-query logging (latency, cost, tier, retrieval scores)
     - [x] 47-test unit suite gating EC2 deploys in CI
     - [x] Integration healthcheck script (`scripts/healthcheck.py`)
     - [x] Admin debug interface with retrieval inspector
@@ -126,8 +126,8 @@ This digital twin uses **GraphRAG** — retrieval-augmented generation backed by
 |---|---|
 | **LLM** | Multi-provider via LiteLLM (OpenAI, Anthropic, Google, Ollama) |
 | **Embeddings** | OpenAI `text-embedding-3-small` (1536 dimensions) |
-| **Knowledge Graph** | Neo4j — hybrid vector + graph retrieval (production) |
-| **Vector Fallback** | ChromaDB — pure vector baseline and A/B comparison |
+| **Vector Database** | ChromaDB — pure vector retrieval; **currently serves production** at twin.barbhs.com |
+| **Knowledge Graph** | Neo4j — hybrid vector + graph retrieval; `graphy.` preview backend, in validation |
 | **UI Framework** | Gradio |
 | **Language** | Python 3.11 |
 | **Deployment** | AWS EC2 (primary), Hugging Face Spaces (secondary) |

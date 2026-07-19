@@ -41,9 +41,9 @@ The goal is not to test everything — it's to catch the right failure at the ri
 
 ### Status
 
-- [x] Create `tests/test_pure_logic.py` — 51 tests, all passing, runs in 0.16s
+- [x] Create `tests/test_pure_logic.py` — 47 tests, all passing, runs in ~0.03s
 - [x] Add pytest to `requirements.txt` (dev deps)
-- [ ] Wire into CI (add step before deploy in `deploy-ec2.yml`)
+- [x] Wire into CI — `deploy-ec2.yml` has a `test` job (`pytest tests/ -v`) that gates deploy
 
 ---
 
@@ -148,7 +148,7 @@ push to main
 The `test` job runs on `ubuntu-latest`, checks out code, installs the full `requirements.txt`, sets a dummy `OPENAI_API_KEY` (no real API calls — the client is patched in `conftest.py`), then runs `pytest tests/ -v`. The `deploy` job carries `needs: test`, so GitHub Actions will not proceed to deployment if any test fails.
 
 Key design notes:
-- **No secrets needed for tests** — `conftest.py` patches the OpenAI constructor at import time; all 51 tests run with zero external calls.
+- **No secrets needed for tests** — `conftest.py` patches the OpenAI constructor at import time; all 47 tests run with zero external calls.
 - **pip cache** — the `setup-python@v5` step caches pip downloads to keep CI fast after the first run.
 - **HF Spaces workflow** (`deploy-hf.yml`) does not have a test gate — that deployment is a secondary mirror, not the production path.
 
@@ -164,7 +164,7 @@ Key design notes:
 
 What to do first, and why:
 
-1. ~~**`tests/test_pure_logic.py`**~~ — **done.** 51 tests, 0.16s, gating deploys in CI.
+1. ~~**`tests/test_pure_logic.py`**~~ — **done.** 47 tests, ~0.03s, gating deploys in CI.
 
 2. ~~**CI integration of unit tests**~~ — **done.** `deploy-ec2.yml` now has a `test` job that blocks deploy on failure.
 

@@ -1,4 +1,4 @@
-question_id,question,question_type,question_type,intent,difficulty,priority,must_cover,nice_to_have,should_not_do
+question_id,question,legacy_category,question_type,intent,difficulty,priority,must_cover,nice_to_have,should_not_do
 V3-001,What undergraduate degrees did you earn?,bio,closed_fact,education_fact,easy,core,BS in Electrical Engineering and BS in Biology from UT Austin.,Mention dual degree and UT Austin clearly.,Omit one degree or mention the wrong institution.
 V3-002,What honors program were you part of at UT Austin?,bio,closed_fact,education_fact,easy,core,Dean’s Scholars Program at UT Austin.,Can briefly note it was research-oriented or honors-based.,Confuse it with a generic honors label.
 V3-003,Did you play any sports in college?,bio,closed_fact,education_fact,easy,core,Should mention NCAA rowing at UT Austin.,Can mention coach Carrie Graves or first two undergraduate years.,Say no or answer vaguely.

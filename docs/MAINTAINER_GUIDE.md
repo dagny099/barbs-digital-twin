@@ -346,7 +346,7 @@ python scripts/analyze_logs.py --config-experiments
 - Tool calls executed
 - Visitor votes (👍/👎)
 
-**Performance:** ~16μs logging overhead per query (negligible)
+**Performance:** logging overhead is negligible (a local JSONL append after the response is already streamed).
 
 ### Quick Check Commands
 
@@ -568,11 +568,11 @@ Future enhancements and features under consideration:
 - [ ] **Session-aware project diversity**: Track shown projects per session to avoid repetition in walkthrough mode (weighted random fallback that biases toward unseen projects)
 - [ ] **Voice interface**: Add speech-to-text/text-to-speech capabilities
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
-- [ ] **Knowledge graph integration**: Neo4j backend for relationship-rich queries
-- [ ] **Automated updates**: GitHub Actions to re-embed on repo changes
-- [x] **Evaluation suite**: Offline eval harness across 8 categories (see [`EVAL_QUICKSTART.md`](../evals/EVAL_QUICKSTART.md))
+- [x] **Knowledge graph integration**: Neo4j hybrid vector + graph backend, selectable via `RETRIEVAL_BACKEND`. Live on the `graphy.twin.barbhs.com` preview; ChromaDB currently serves production while the graph backend is validated further.
+- [x] **Automated updates**: GitHub Actions re-embed the knowledge base on deploy (`deploy-hf.yml`, `deploy-ec2.yml`)
+- [x] **Evaluation suite**: Offline eval harness across 7 categories (see [`EVAL_QUICKSTART.md`](../evals/EVAL_QUICKSTART.md))
 - [x] **Multi-provider LLM support**: OpenAI, Anthropic, Google, Ollama via LiteLLM with cost tracking
-- [x] **Production-grade logging**: Query analytics with <16μs overhead for continuous improvement (see [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md), [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md))
+- [x] **Production-grade logging**: Per-query analytics (latency, cost, tier, scores) for continuous improvement (see [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md), [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md))
 - [x] **Tiered QA strategy**: Unit tests gate EC2 deploys; integration healthcheck script for pre-deploy credential/service validation (see [`QA_STRATEGY.md`](QA_STRATEGY.md))
 
 ---

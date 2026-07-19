@@ -8,7 +8,13 @@ tags:
 
 # Neo4j vs ChromaDB
 
-Both databases are active. They store the same chunks. They serve different purposes. This page explains the architecture, the tradeoffs, and why neither has been removed.
+Both databases are active. They store the same chunks. They serve different purposes. This page explains the architecture, the tradeoffs, and which one currently serves production.
+
+!!! info "Current status"
+    **ChromaDB currently serves production** at [twin.barbhs.com](https://twin.barbhs.com). The
+    Neo4j hybrid backend is deployed on the `graphy.` preview and is being validated before it
+    takes over as the primary. Both run from one codebase; each deployment's `.env` selects the
+    backend via `RETRIEVAL_BACKEND`.
 
 ---
 
@@ -16,20 +22,20 @@ Both databases are active. They store the same chunks. They serve different purp
 
 | | Neo4j | ChromaDB |
 |---|---|---|
-| **Role** | Production retrieval | Fallback + A/B comparison baseline |
+| **Current role** | Hybrid backend on the `graphy.` preview, in validation | **Serves production** at twin.barbhs.com |
 | **Retrieval** | Hybrid: vector + graph signals | Pure vector only |
 | **Scoring** | Composite formula with bonuses | Cosine similarity only |
 | **Tier gating** | `WHERE section.sensitivity IN $allowed_tiers` | Post-filter on metadata |
 | **Entity links** | Yes — 167 canonical entity nodes via `MENTIONS` | No |
 | **Project links** | Yes — `Project -[:DESCRIBED_IN]-> Section` | No |
-| **Fallback if unavailable** | Set `RETRIEVAL_BACKEND=chromadb` to switch | — |
+| **How to select** | `RETRIEVAL_BACKEND=neo4j` (code default) | `RETRIEVAL_BACKEND=chromadb` |
 | **Debugging** | `replay_retrieval.py --compare` shows ranking drift | `chunk_inspector.py` |
 
 ---
 
-## Why Neo4j Is Production
+## Why the Neo4j Hybrid Backend Exists
 
-Pure vector similarity is a strong baseline, but it has one structural blind spot: it ranks chunks by how well they *sound like* the query, not by how *factually connected* they are to the topics the query raises.
+The Neo4j backend is the intended future production path — the goal it's being validated toward. Pure vector similarity (what ChromaDB serves today) is a strong baseline, but it has one structural blind spot: it ranks chunks by how well they *sound like* the query, not by how *factually connected* they are to the topics the query raises.
 
 For project-specific questions ("What projects use Neo4j?"), this is a real problem — a generic career overview chunk can outscore a specific project description if it uses more matching vocabulary.
 
@@ -46,16 +52,16 @@ Neo4j's hybrid retrieval closes this gap:
 
 ## Why ChromaDB Stays
 
-**Three reasons ChromaDB has not been removed:**
+**Three reasons ChromaDB remains in place:**
 
-1. **A/B comparison baseline** — The same chunks stored in both systems means `replay_retrieval.py --compare` can produce a ranking-drift table for any query. This is the fastest diagnostic for determining whether a graph signal is helping or hurting. Without ChromaDB, this comparison is impossible.
+1. **Currently serves production** — ChromaDB is the live backend at twin.barbhs.com while the Neo4j hybrid backend is validated. Selecting it is just `RETRIEVAL_BACKEND=chromadb` in that server's `.env`. (There is no automatic runtime fallback — the backend is chosen at startup.)
 
-2. **Fallback** — To switch to ChromaDB (e.g., Neo4j unavailable or credentials not configured), set `RETRIEVAL_BACKEND=chromadb` in `.env` and restart. There is no automatic runtime fallback — the backend is selected at startup.
+2. **A/B comparison baseline** — The same chunks stored in both systems means `replay_retrieval.py --compare` can produce a ranking-drift table for any query. This is the fastest diagnostic for determining whether a graph signal is helping or hurting. Without ChromaDB, this comparison is impossible.
 
 3. **Data integrity** — Both stores are kept in sync during ingestion. If you need to audit Neo4j content, ChromaDB provides an independent reference.
 
 !!! warning "Do not remove ChromaDB until..."
-    ChromaDB should not be removed until Neo4j has run in production for at least 72 hours without incident AND `evals/run_evals.py` passes at 90%+. As of the initial Neo4j migration, the comparison baseline is still actively used for debugging.
+    ChromaDB is the current production backend, so it stays until Neo4j has taken over primary and run there without incident (target: 72+ hours clean AND `evals/run_evals.py` passing at a bar you trust). Until then the comparison baseline is also actively used for debugging.
 
 ---
 

@@ -73,10 +73,10 @@ This digital twin needed to avoid all three while maintaining Barbara's authenti
 
 ## Validation Strategy
 
-The prompt is tested against a 92-question evaluation suite (`evals/`) organized into 8 categories:
+The prompt is tested against a 58-question evaluation suite (`evals/eval_questions.csv`) organized into 7 categories (`legacy_category`):
 
-- **Coverage categories** (bio, projects, technical, personality, tool, publication): "Does the system know X?"
-- **Visitor categories** (recruiter, friendly): "Would a real visitor get a satisfying response?"
+- **Coverage categories** (bio, projects, technical, personality, tool): "Does the system know X?"
+- **Visitor categories** (front-example, user-submitted): "Would a real visitor get a satisfying response?"
 
 Questions are asked in isolation (no conversation history) with:
 - Same retrieval pipeline as production (embed → ChromaDB → top-10 chunks)
@@ -125,5 +125,5 @@ If you're building your own portfolio chatbot, consider:
 
 **Version**: 2.0
 **Last Updated**: 2026-04-02
-**Eval Suite**: 92 questions across 8 categories
+**Eval Suite**: 58 questions across 7 categories
 **Primary Model**: OpenAI GPT-4.1

@@ -35,7 +35,7 @@ graph TB
     end
 
     subgraph "Storage"
-        CHROMA[("ChromaDB\nfallback + A/B eval")]
+        CHROMA[("ChromaDB\npure vector · serves prod")]
         NEO4J[("Neo4j Graph\nDocument → Section → Entity")]
     end
 

@@ -24,7 +24,7 @@ All configuration is done via environment variables. Copy `.env.example` to `.en
 | Variable | Default | Description |
 |---|---|---|
 | `LLM_MODEL` | `openai/gpt-4.1` | LiteLLM model string. Format: `provider/model-name`. See examples below. |
-| `LLM_TEMPERATURE` | `0.6` | Generation temperature. Lower = more deterministic. Configurable via settings panel in dev mode. |
+| `LLM_TEMPERATURE` | `0.7` (`app.py`) / `0.4` (`app_admin.py`) | Generation temperature. Lower = more deterministic. Configurable via settings panel in dev mode. |
 | `N_CHUNKS_RETRIEVE` | `10` | Number of chunks to retrieve (top-k). `fetch_k = N_CHUNKS_RETRIEVE × 4` for Neo4j pre-filtering. |
 
 ### LLM_MODEL examples

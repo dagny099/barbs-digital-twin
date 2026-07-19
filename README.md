@@ -24,20 +24,22 @@ This digital twin is an intelligent interface for exploring Barbara's profession
 
 ## Quick Start
 
-Want to run it locally in 5 minutes?
-
 1. Clone the repo: `git clone https://github.com/dagny099/barbs-digital-twin.git`
 2. Install dependencies: `pip install -r requirements.txt`
-3. Set `OPENAI_API_KEY` in `.env` (copy from `.env.example`)
-4. Run: `python app.py`
-5. Open http://localhost:7860
+3. Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. For a local run, also set
+   `RETRIEVAL_BACKEND=chromadb` — the code default is `neo4j`, which requires a running
+   Neo4j instance (`NEO4J_URI` etc.) and will error on the first query if none is configured.
+4. Populate a knowledge base. Barbara's KB content is **not committed** (it lives in a private
+   store); a fresh clone has no chunks to retrieve. Point the app at your own content via the
+   ingestion pipeline — see [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) (`scripts/ingest.py`).
+5. Run: `python app.py` and open http://localhost:7860
 
 **Need more details?** See [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for full installation and setup instructions.
 
 ## Features
 
 - **Multi-Source Knowledge Base**: Structured KB docs, project PDFs, publications, and website content — parsed into named sections with provenance metadata
-- **GraphRAG Retrieval**: Hybrid Neo4j retrieval combines vector similarity (dominant signal) with graph bonuses for project-linked and entity-rich sections. ChromaDB retained as fallback and A/B comparison baseline.
+- **Dual retrieval backends**: One codebase, two live backends selected per deployment via `RETRIEVAL_BACKEND`. ChromaDB (pure vector) currently serves production at [twin.barbhs.com](https://twin.barbhs.com); Neo4j GraphRAG (hybrid vector + graph bonuses for project-linked and entity-rich sections) runs on the `graphy.` preview and is being validated before it takes over production.
 - **Neo4j Knowledge Graph**: Documents, Sections, Projects, and 167 canonical entity nodes (Skills, Methods, Technologies, Concepts) connected via typed relationships
 - **Section-Aware Ingestion**: Provenance tracked at the section level — every retrieved chunk knows its parent section, source document, and sensitivity tier
 - **Conversational Interface**: Natural conversations via Gradio ChatInterface
@@ -53,8 +55,8 @@ Want to run it locally in 5 minutes?
 |-----------|------------|
 | **LLM** | Multi-provider support via LiteLLM (OpenAI, Anthropic, Google, Ollama)<br>Model configurable via `LLM_MODEL` env var (see `.env.example`) |
 | **Embeddings** | OpenAI text-embedding-3-small (1536 dimensions) |
-| **Knowledge Graph** | Neo4j — hybrid vector + graph retrieval (production) |
-| **Vector Database** | ChromaDB — pure vector fallback and A/B comparison baseline |
+| **Vector Database** | ChromaDB — pure vector retrieval; **currently the production backend** at twin.barbhs.com |
+| **Knowledge Graph** | Neo4j — hybrid vector + graph retrieval; live on the `graphy.` preview, in validation |
 | **UI Framework** | Gradio |
 | **Language** | Python 3.11 |
 | **Deployment** | AWS EC2 (primary), Hugging Face Spaces (secondary) |
@@ -116,17 +118,23 @@ digital-twin/
 ├── app.py                              # Main Gradio application (public-facing)
 ├── app_admin.py                        # Admin/debug interface (local only, default port 7862, configurable via ADMIN_PORT)
 ├── featured_projects.py                # Project walkthrough logic and diagram serving
-├── ingest.py                           # Master ingestion manager (start here)
-├── embed_kb_doc.py                     # Generic: embed any inputs/kb_*.md document
-├── embed_project_summaries.py          # Embed one-page project summary PDFs
-├── embed_jekyll.py                     # Embed Jekyll website via sitemap
-├── db_sync.py                          # Push/pull ChromaDB to/from HF Hub
+├── featured_projects.yaml              # Generated walkthrough data (consumed by featured_projects.py)
+├── neo4j_utils.py                      # Neo4j driver + query_neo4j_rag() + scoring weights
+├── chroma_utils.py                     # ChromaDB vector retrieval, query_chroma_rag()
+├── db_sync.py                          # Push/pull ChromaDB to/from a private HF Hub dataset
 ├── utils.py                            # Shared text processing utilities
-├── chunk_inspector.py                  # Audit chunk quality and simulate retrieval (run `python chunk_inspector.py --query "..."` to test RAG)
-├── verify_collection.py                # Inspect ChromaDB contents
-├── clear_collection.py                 # Wipe ChromaDB collection
+├── chunk_inspector.py                  # Audit chunk quality and simulate retrieval (`python chunk_inspector.py --query "..."`)
+├── replay_retrieval.py                 # Neo4j retrieval debugger (`--compare` for Neo4j vs ChromaDB)
 ├── requirements.txt                    # Python dependencies
 ├── SYSTEM_PROMPT.md                    # LLM system prompt (loaded by app.py)
+├── scripts/                            # Ingestion, embedding, and DB maintenance CLIs
+│   ├── ingest.py                       # Master ingestion manager (start here)
+│   ├── embed_kb_doc.py                 # Generic: embed any inputs/kb_*.md document
+│   ├── embed_project_summaries.py      # Embed one-page project summary PDFs
+│   ├── embed_jekyll.py                 # Embed Jekyll website via sitemap
+│   ├── verify_collection.py            # Inspect ChromaDB contents
+│   ├── clear_collection.py             # Wipe ChromaDB collection
+│   └── healthcheck.py                  # Validate all external service connections
 ├── docs/                               # Documentation organized by role
 │   ├── VISITOR_GUIDE.md                # Usage guide for visitors
 │   ├── DEVELOPER_GUIDE.md              # Technical guide for developers
@@ -135,20 +143,16 @@ digital-twin/
 │   ├── LOGGING_GUIDE.md                # Production logging setup and query analytics
 │   ├── ADMIN_LOGGING_GUIDE.md          # Admin-mode logging for model comparison
 │   └── USAGE.md                        # Usage patterns and best practices
-├── inputs/
-│   ├── kb_biosketch.md                 # Biographical sketch  ⭐ authoritative
-│   ├── kb_philosophy-and-approach.md   # Working philosophy and meaning-making
-│   ├── kb_professional_positioning.md  # Positioning, differentiators, value prop
-│   ├── kb_projects.md                  # Project portfolio registry
-│   ├── kb_career_narrative.md          # Career story and trajectory
-│   ├── kb_publications.md              # Research papers and academic work
-│   └── project-summaries/              # One-page PDF summaries (20 projects)
+├── inputs/                             # KB source content — NOT committed (private); provide your own
+│   ├── kb_*.md                         # Biographical / philosophy / positioning / projects / career / publications
+│   └── project-summaries/              # One-page project summary PDFs
 ├── evals/                              # Offline evaluation harness and review artifacts
 │   ├── run_evals.py                    # Execute evaluation suite
 │   ├── analyze_evals.py                # Analyze results and export for review
 │   ├── eval_questions.csv              # Question bank
 │   ├── EVALUATION_GUIDE.md             # Canonical evaluation design reference
-│   └── EVAL_QUICKSTART.md              # Quick run commands├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
+│   └── EVAL_QUICKSTART.md              # Quick run commands
+├── .chroma_db_DT/                      # ChromaDB vector store (gitignored)
 ├── .venv/                              # Virtual environment (gitignored)
 └── README.md                           # This file
 ```

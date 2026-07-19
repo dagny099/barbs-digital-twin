@@ -107,10 +107,10 @@ The `↓ continued:` label appears in `replay_retrieval.py` output so you can ve
 
 ## ChromaDB Comparison
 
-ChromaDB stores the same chunks as Neo4j but uses pure vector similarity only — no graph bonuses. This makes it useful for:
+ChromaDB stores the same chunks as Neo4j but uses pure vector similarity only — no graph bonuses. It currently serves production at twin.barbhs.com, and it's also useful for:
 
 1. **A/B evaluation**: `replay_retrieval.py --compare` shows ranking drift between Neo4j and ChromaDB for any query — the fastest way to diagnose whether a graph signal is helping or hurting
-2. **Fallback**: If Neo4j is unavailable, ChromaDB provides pure-vector retrieval with no code changes to `app.py`
+2. **Backend switch**: Selecting a backend is a one-line `.env` change (`RETRIEVAL_BACKEND`) with no code changes to `app.py` — the backend is chosen at startup (no automatic runtime fallback)
 
 For relationship-style queries (*"What projects use Neo4j?"*), Neo4j scores +34.3% better than ChromaDB baseline (from `evals/results/`). For biographical Q&A queries with rich, curated answer chunks, the difference is smaller — and graph bonuses can sometimes hurt.
 

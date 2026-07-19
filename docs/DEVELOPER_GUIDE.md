@@ -71,7 +71,7 @@ The project uses a lightweight, tiered QA strategy. See [QA_STRATEGY.md](QA_STRA
 .venv/bin/pytest tests/ -v
 ```
 
-51 tests, all pure logic, no API keys or network required. Completes in under a second. Run these before pushing any change to `app.py`.
+47 tests, all pure logic, no API keys or network required. Completes in under a second. Run these before pushing any change to `app.py`.
 
 ### What's covered
 
@@ -121,7 +121,7 @@ graph TD
     I -->|Yes| J[Execute Tool<br/>notifications, dice roll]
     J --> H
     I -->|No| K[Final Response<br/>as Barbara]
-    D -.->|fallback / A-B eval| L[(ChromaDB<br/>pure vector)]
+    D -.->|alt backend · serves prod today| L[(ChromaDB<br/>pure vector)]
 
     style C fill:#e1f5ff
     style D fill:#f3e8ff
@@ -140,7 +140,7 @@ graph LR
     B --> C[Paragraph-Aware Chunking<br/>≈500 chars · 50 overlap]
     C --> D[Generate Embeddings<br/>text-embedding-3-small]
 
-    D --> E[(ChromaDB<br/>fallback + A/B eval)]
+    D --> E[(ChromaDB<br/>pure vector · serves prod)]
     D --> F[Load Section Nodes<br/>Neo4j vector index]
     F --> G[(Neo4j Graph<br/>Document → Section → Entity)]
 
@@ -174,7 +174,7 @@ The system prompt is a core architectural component, not an afterthought. `SYSTE
 
 **Design Philosophy**: The prompt balances authenticity (Barbara's actual voice), accuracy (source-based only), and utility (helpful without overpromising). Each section addresses a specific failure mode observed during development and eval testing.
 
-**Validation**: The evaluation suite (see `evals/`) tests adherence to these guidelines across 8 categories.
+**Validation**: The evaluation suite (see `evals/`) tests adherence to these guidelines across 7 categories.
 
 **Learn more:** [SYSTEM_PROMPT.md](../SYSTEM_PROMPT.md) | [PROMPT_DESIGN.md](PROMPT_DESIGN.md)
 
@@ -453,8 +453,10 @@ Set your provider API keys in `.env` (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) to 
 
 ## Key Design Decisions
 
-### Why Neo4j + hybrid retrieval? (production system)
-Pure vector similarity is the dominant signal (weight 0.85) but has one structural
+### Why Neo4j + hybrid retrieval? (the intended future production backend)
+Neo4j is deployed on the `graphy.` preview and is being validated toward taking over as
+production; ChromaDB serves production today. Pure vector similarity is the dominant signal
+(weight 0.85) but has one structural
 blind spot: it ranks chunks by how well they *sound like* the query, not by how
 *factually connected* they are to the topics the query raises. Graph signals close
 this gap for project- and entity-related questions.
@@ -471,15 +473,16 @@ this gap for project- and entity-related questions.
   See `CLAUDE.md` and `docs/LESSONS_LEARNED.md` Entry 001 before changing
   `Wt_SEMANTIC` / `BONUS_*` constants in `neo4j_utils.py`.
 
-### Why ChromaDB? (fallback + A/B baseline)
+### Why ChromaDB? (current production backend + A/B baseline)
+- **Currently serves production**: ChromaDB is the live backend at twin.barbhs.com while
+  Neo4j is validated. Selecting a backend is a one-line `.env` change (`RETRIEVAL_BACKEND`);
+  it's chosen at startup, with no automatic runtime fallback.
 - **Preserved for comparison**: The same chunks are stored in both systems.
   `replay_retrieval.py --compare` shows ranking drift between Neo4j and ChromaDB
   for any query — the fastest way to diagnose whether a graph signal is helping
   or hurting.
-- **Fallback**: If Neo4j is unavailable, ChromaDB provides pure-vector retrieval
-  with no code changes to `app.py`.
-- **Do not remove** until Neo4j has run in production for 72h without incident
-  and the `evals/run_evals.py` full suite passes at 90%+.
+- **Do not remove** until Neo4j has taken over as production and run there without
+  incident (target: 72h clean and the `evals/run_evals.py` suite passing at a bar you trust).
 
 ### Why multi-provider support?
 - **Flexibility**: Test OpenAI, Anthropic, Google, and Ollama models without code changes
