@@ -17,3 +17,4 @@ pytest
 pandas
 numpy
 streamlit
+pyyaml
