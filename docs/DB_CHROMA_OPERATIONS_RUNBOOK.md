@@ -4,6 +4,8 @@ One-stop reference for maintaining the `barb-twin` ChromaDB collection used by t
 
 > **What changed (May 2026 revision).** The workflow now distinguishes two canonical stores: the **private `digital-twin-inputs` repo** (source docs) and the **HuggingFace Hub dataset** (embedded state). `ingest.py` performs `pull → embed → push` automatically, so manual `pull_db()` is rare. Chunk metadata now carries a `content_hash` field, surfaced by the new `ingest.py --check-drift` command.
 
+> **What changed (July 2026 revision).** (1) `deploy-ec2.yml` now runs `pull_db()` on every deploy, so pushing to main refreshes prod knowledge automatically — the §3C manual pull is only for out-of-band refreshes. (2) Project knowledge is being **consolidated** by the `twin-freshness` pipeline (sibling repo): one authoritative markdown summary per project, ingested via dedicated `project-<slug>` keys; superseded PDF-one-pager / walkthrough / jekyll-page chunks are retired via `scripts/retract_sources.py`. Do **not** re-run `--source project-summaries` or `--source project-walkthroughs` for consolidated projects — see `twin-freshness/MIGRATION.md` for the routine and the scoreboard. (3) `featured_projects.py` now loads its data from the generated `featured_projects.yaml`.
+
 ---
 
 ## 1. Mental model: where things live
