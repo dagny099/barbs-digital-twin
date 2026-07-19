@@ -56,6 +56,13 @@ jobs:
             source /home/ec2-user/venvs/gradio-ui-py312/bin/activate
             pip install -q -r requirements.txt
 
+            echo "── Refreshing knowledge base from HF Hub ──"
+            # Code deploys via git, but the ChromaDB travels via the HF Hub
+            # dataset (see docs/DB_CHROMA_OPERATIONS_RUNBOOK.md). The app only
+            # auto-pulls when .chroma_db_DT/ is missing, so an explicit pull
+            # here keeps prod knowledge in sync with every deploy.
+            python -c "from db_sync import pull_db; pull_db()"
+
             echo "── Restarting service ──"
             sudo systemctl restart ${{ secrets.EC2_SERVICE_NAME }}
             sudo systemctl is-active --quiet ${{ secrets.EC2_SERVICE_NAME }} \
