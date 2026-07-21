@@ -282,6 +282,17 @@ SOURCES = [
         "source_prefix": "project-chronoscope:",
     },
     {
+        "key":           "project-fitness-dashboard",
+        "label":         "Project: Fitness Dashboard",
+        "description":   "inputs/project-summaries/fitness-dashboard.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/fitness-dashboard.md",
+                        "--source-type", "project-fitness-dashboard"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-fitness-dashboard:",
+    },
+    {
         "key":           "project-poolula",
         "label":         "Project: Poolula Platform",
         "description":   "inputs/project-summaries/poolula.md",
