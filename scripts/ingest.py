@@ -293,6 +293,17 @@ SOURCES = [
         "source_prefix": "project-fitness-dashboard:",
     },
     {
+        "key":           "project-convoscope",
+        "label":         "Project: Convoscope",
+        "description":   "inputs/project-summaries/convoscope.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/convoscope.md",
+                        "--source-type", "project-convoscope"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-convoscope:",
+    },
+    {
         "key":           "project-poolula",
         "label":         "Project: Poolula Platform",
         "description":   "inputs/project-summaries/poolula.md",
