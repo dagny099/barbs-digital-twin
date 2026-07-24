@@ -315,6 +315,17 @@ SOURCES = [
         "source_prefix": "project-concept-cartographer:",
     },
     {
+        "key":           "project-citation-compass",
+        "label":         "Project: Citation Compass",
+        "description":   "inputs/project-summaries/citation-compass.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/citation-compass.md",
+                        "--source-type", "project-citation-compass"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-citation-compass:",
+    },
+    {
         "key":           "project-poolula",
         "label":         "Project: Poolula Platform",
         "description":   "inputs/project-summaries/poolula.md",
