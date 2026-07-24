@@ -504,32 +504,70 @@ projects:
   derived_from: project-summaries/fitness-dashboard.md@ef9ab77b
 - id: concept-cartographer
   title: Concept Cartographer
-  summary: 'A Gradio app that makes implicit knowledge structure explicit: as you chat, it
-    extracts concepts and relationships from each turn and builds a persistent, growing knowledge
-    graph you can explore and export. A compact demonstration of stateful LLM tooling that
-    externalizes reasoning structure rather than just generating text.'
-  design_insight: The architectural decision worth noting is the single-call design — one
-    LLM call per turn returns both a conversational response and structured JSON simultaneously,
-    rather than a separate extraction step. This is ~50% faster and cheaper than a two-call
-    approach. Above 30 nodes, a connectivity filter keeps the graph coherent by only admitting
-    concepts that connect to existing ones.
-  walkthrough_context: 'Concept Cartographer is a Gradio app that turns a conversation into
-    a growing knowledge graph. As you chat, it extracts concepts and relationships and renders
-    them as a color-coded, persistent map you can export. The key architectural decision is
-    the single-call design: (1) Ask — Pick a domain lens (AI/ML, Cognitive Science, Philosophy,
-    Biology, or more) and ask a question through the Gradio interface. Domain selection nudges
-    extraction toward domain-relevant concepts and relation types. (2) Extract — A single
-    LLM call (GPT-4o-mini) returns both a conversational narrative and a structured JSON ontology
-    (concepts with categories like Entity, Process, Theory, Method, Property, plus relationship
-    triples with typed edges like causes, requires, enables). This is ~50% faster and cheaper
-    than a two-call approach that separates chat from extraction. (3) Build — The graph accumulates
-    across conversation turns with a color-coded legend by concept category. Above 30 nodes,
-    a connectivity filter ensures only concepts that connect to existing nodes are admitted
-    — preventing disconnected islands and keeping the map coherent. A ''Latest Connections''
-    panel below the chat shows a plain-language summary of what was just extracted. (4) Export
-    — The current graph state exports as JSON (for downstream tools like Neo4j, Obsidian,
-    or presentations) or PNG (for sharing). Stack: Python, Gradio, OpenAI API (GPT-4o-mini),
-    NetworkX, Matplotlib.'
+  summary: 'Concept Cartographer is a Gradio app that turns a conversation into a growing
+    **concept map**: as you chat, it extracts the key concepts and the relationships between
+    them and renders a live knowledge graph you can export. Pick a domain (AI/ML, Cognitive
+    Science) to bias what counts as a concept, ask questions or click a starter prompt, and
+    watch nodes and edges accumulate across turns — then export the whole graph as JSON or
+    PNG to pipe into Neo4j, notes, or an outline. It''s deliberately a "small, sharp demo"
+    about **stateful** LLM tooling: the point isn''t another chatbot, it''s that the model''s
+    output persists and compounds into a structure you can see and reuse. Built with Gradio,
+    OpenAI, NetworkX, and matplotlib; self-hosted on EC2.'
+  design_insight: 'Two ideas carry the project. First, **one generation, one truth**: a single
+    structured-JSON call returns the narrative and the extracted ontology together, so the
+    prose in the chat and the nodes in the graph are guaranteed to describe the same extraction
+    rather than two separately-generated outputs that might drift apart — a coherence and
+    simplicity win, not a speed brag. Second, **legibility is a feature you have to defend**:
+    an ever-growing graph becomes hairball noise, so once the map passes 30 nodes the app
+    stops admitting *orphan* concepts — new concepts that only connect to other brand-new
+    concepts — on any turn that also brings something anchored to the existing graph, while
+    still letting a genuine topic pivot (a turn where nothing connects) through wholesale.
+    It''s a targeted pruning heuristic, not a hard filter: the point is to keep the map coherent
+    as it grows. Together they reflect a cognitive-science instinct: the value isn''t the
+    volume of extracted concepts, it''s the structure a person can actually see and carry
+    away.'
+  walkthrough_context: "An argument that a chat can leave something behind. A normal chatbot\
+    \ is stateless — each answer evaporates — whereas Concept Cartographer treats every turn\
+    \ as an act of **ontology-building**: it pulls structured concepts (categorized as Entity,\
+    \ Process, Theory, Method, or Property) and typed relationships (causes, requires, enables,\
+    \ …) out of the exchange and accretes them into one persistent graph. The design is unmistakably\
+    \ cognitive-science-flavored — concept maps, domain lenses, relationship types — which\
+    \ is the point: it's a demonstration of how AI tooling can externalize the *structure*\
+    \ of understanding, not just answer questions. Because the graph is exportable, the conversation\
+    \ becomes reusable raw material for downstream tools.\n\n```\nUser turn          you pick\
+    \ a Domain and ask a question (or click a starter);\n   │               domain selection\
+    \ nudges extraction toward domain-relevant\n   │               concepts and relation types\n\
+    \   ▼\nSingle LLM call    one OpenAI call returns structured JSON carrying BOTH a\n  \
+    \ │               conversational narrative AND the extracted ontology\n   │          \
+    \     (concepts + relationships) at once — so the prose you read\n   │               and\
+    \ the graph you see come from the same generation and\n   │               always describe\
+    \ the same thing\n   ▼\nUpdate graph       new concepts are merged into a persistent NetworkX\
+    \ graph\n   │               held in app state; once the graph is large (>30 nodes), a\n\
+    \   │               turn that mixes connected and new-but-orphan concepts keeps\n   │\
+    \               the ones that attach to the existing map and drops the\n   │         \
+    \      orphans — but a wholesale topic pivot (nothing attaches) is\n   │             \
+    \  admitted in full\n   ▼\nRender + explain   the graph is re-drawn each turn with a color-coded\
+    \ legend,\n   │               and a \"Latest Connections\" panel narrates in plain language\n\
+    \   │               what was just added\n   ▼\nExport             download the current\
+    \ graph as JSON (nodes + relationship\n                   triples + metadata) or PNG for\
+    \ Neo4j, notes, or slides\n```\n\n| Layer | Technology | Notes |\n|---|---|---|\n| UI\
+    \ | Gradio 6.5.1 | Chat + live graph view, color-coded legend, Latest Connections panel,\
+    \ starter prompts |\n| Extraction | OpenAI (single call/turn) | Returns `{narrative, concepts,\
+    \ relationships}` as structured JSON — one call does chat + ontology extraction together\
+    \ |\n| Graph | NetworkX + matplotlib | Persistent in-session graph; concept-admission\
+    \ filter above a 30-node free-growth threshold to stay coherent |\n| Caching | In-memory\
+    \ dict, SHA-256 key | First-turn prompts only (model \\| system prompt \\| user msg \\\
+    | domain); stable within a domain session |\n| Export | JSON + PNG | Nodes, relationship\
+    \ triples, and metadata for downstream enrichment |\n| Deployment | EC2 + systemd (see\
+    \ `DEPLOYMENT.md`) | Lightweight single-service host; OpenAI API key via `.env` |\n\n\
+    Actively iterated (architecture notes at v8, February 2026); pinned to Gradio 6.5.1, since\
+    \ Gradio's message handling shifts across major versions. Self-hosted demo at concept-cartographer.com\
+    \ (availability varies). Honest limits: the persistent graph lives in app/session state\
+    \ rather than a database, so it isn't multi-user shared storage; response caching covers\
+    \ first-turn prompts only (once there's history, the key space explodes and hit rates\
+    \ fall to near zero); extraction quality depends on the OpenAI model and the chosen domain\
+    \ lens; and the coherence threshold is a deliberate simplification, not a general graph-layout\
+    \ engine."
   diagram_filename: architecture-diagram_concept_cartography.png
   diagram_caption: Concept Cartographer — question → single LLM call → growing knowledge graph
     → export
@@ -551,6 +589,7 @@ projects:
   links:
     live demo: https://concept-cartographer.com/
     github: https://github.com/dagny099/concept-cartography-gradio
+  derived_from: project-summaries/concept-cartographer.md@b13e5604
 - id: chronoscope
   title: ChronoScope
   summary: 'ChronoScope transforms documents into interactive timelines using AI event extraction:

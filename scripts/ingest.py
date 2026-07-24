@@ -304,6 +304,17 @@ SOURCES = [
         "source_prefix": "project-convoscope:",
     },
     {
+        "key":           "project-concept-cartographer",
+        "label":         "Project: Concept Cartographer",
+        "description":   "inputs/project-summaries/concept-cartographer.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/concept-cartographer.md",
+                        "--source-type", "project-concept-cartographer"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-concept-cartographer:",
+    },
+    {
         "key":           "project-poolula",
         "label":         "Project: Poolula Platform",
         "description":   "inputs/project-summaries/poolula.md",
