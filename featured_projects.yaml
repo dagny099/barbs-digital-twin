@@ -158,16 +158,15 @@ projects:
     with confidence scores, and export the results as LaTeX tables and figures. It ships with
     a **demo mode** — a curated 13-paper offline dataset — so the whole thing runs with no
     database at all.
-  design_insight: 'The defining move is **honesty as an engineering practice**. It would have
-    been easy to keep the impressive-sounding speed and scale numbers, or a headline prediction-accuracy
-    figure — but the accuracy audit deliberately deleted every metric that the trained model''s
-    metadata couldn''t substantiate, and relabeled the notebook evaluations as illustrative.
-    That''s the same discipline that shows up across Barbara''s work: a tool that affects
-    research decisions owes its users claims it can actually defend. The second idea is **consolidation
-    as clarity** — three overlapping predecessor codebases collapsed into one platform with
-    a shared graph model (papers/authors/venues/fields) and a single service layer, so exploration,
-    analytics, and prediction all read from the same source of truth instead of three drifting
-    ones.'
+  design_insight: 'The core idea is to **treat the literature as a knowledge graph and citation
+    prediction as a link-prediction problem**. Rather than matching papers by text similarity,
+    it represents papers, authors, venues, and fields as nodes and citations as edges, then
+    learns TransE embeddings over that graph — so "will paper A cite paper B?" becomes "is
+    there a likely missing edge?", and the same vector space you query for predictions is
+    one you can explore directly. The second idea is **consolidation onto one graph model**:
+    three overlapping predecessor tools (knowledge cartography, citation mapping, citation
+    prediction) collapse into a single platform where exploration, analytics, and prediction
+    all read from the same representation instead of three drifting ones.'
   walkthrough_context: "A consolidation, and honest about being one. Citation Compass merges\
     \ three predecessor codebases — a knowledge-cartography tool, a citation-mapping tool,\
     \ and a citation-prediction system — into a single coherent platform, which is why it\
@@ -175,42 +174,37 @@ projects:
     \ treats a citation corpus as a knowledge graph: papers, authors, venues, and research\
     \ fields are nodes, citations are edges, and a **TransE embedding model** (128-dimensional,\
     \ ~1.6M parameters) learns vector representations that let it score how likely one paper\
-    \ is to cite another. The project is also notable for what it *removed*: a documentation\
-    \ accuracy audit stripped out unverified performance numbers, keeping only claims the\
-    \ trained model's metadata actually supports.\n\n```\nImport             pull paper metadata\
-    \ from Semantic Scholar by keyword search,\n   │               paper-ID list, or file\
-    \ upload — with batching, streaming\n   │               pagination, and progress tracking;\
-    \ or skip it entirely and\n   │               load the curated 13-paper demo dataset (no\
-    \ database)\n   ▼\nGraph              papers / authors / venues / fields become nodes\
-    \ and citations\n   │               become edges, held in an optional Neo4j backend (the\
-    \ demo\n   │               path keeps a small graph in memory instead)\n   ▼\nLearn +\
-    \ analyze    a TransE model (128-dim embeddings, ~1.6M params) scores\n   │          \
-    \     likely citations for top-K prediction and embedding\n   │               exploration;\
-    \ an analytics service computes community\n   │               detection (e.g. Louvain),\
-    \ centrality, and temporal trends\n   ▼\nExplore + export   an interactive Streamlit app\
-    \ (network views, ML predictions,\n                   embedding explorer, visualizations)\
-    \ plus LaTeX-table, figure,\n                   and summary export; a 4-notebook pipeline\
-    \ covers exploration\n                   → training → evaluation → presentation\n```\n\
-    \n| Layer | Technology | Notes |\n|---|---|---|\n| UI | Streamlit (multi-page) | Home,\
-    \ Data Import, Demo Datasets, ML Predictions, Embedding Explorer, Visualizations, Results,\
-    \ Analysis Pipeline |\n| ML | PyTorch — TransE embeddings | 128-dim, ~1.6M-parameter trained\
-    \ checkpoint; top-K citation prediction + embedding exploration |\n| Analytics | NetworkX\
-    \ + scikit-learn | Community detection, centrality, temporal trend analysis |\n| Graph\
-    \ store | Neo4j (optional) | Papers/authors/venues/fields as nodes, citations as edges;\
-    \ demo mode runs without it |\n| Data import | Semantic Scholar API | Search / ID / file-upload\
-    \ import; batching, streaming pagination, basic rate-limiting + caching |\n| Interfaces\
-    \ | `acp` CLI + Python API + notebooks | CLI (health, db, ml, config); service getters;\
-    \ 4-notebook exploration→training→evaluation→presentation |\n| Packaging | `pip install\
-    \ -e \".[all]\"`; Docker / Cloud Run | Optional extras: ml / analytics / viz / web; MkDocs\
-    \ Material docs site |\n\nConsolidated release (v0.1.0) drawn from three predecessor tools;\
-    \ actively maintained, with recent work on deployment tooling (Docker / Cloud Run) and\
-    \ a documentation accuracy audit. Self-hosted; a demo is published at cartography.barbhs.com\
-    \ (availability varies). Honest limits, stated the way the repo now states them: full\
-    \ functionality needs your own Neo4j instance (demo mode is deliberately small at 13 papers);\
-    \ citation-prediction quality depends on the trained TransE checkpoint and the imported\
-    \ corpus; and the evaluation metrics shown in the notebooks (MRR, Hits@K, AUC) are labeled\
-    \ **illustrative/simulated**, not validated benchmark results — the audit removed the\
-    \ performance claims that weren't backed by the model's own training metadata."
+    \ is to cite another.\n\n```\nImport             pull paper metadata from Semantic Scholar\
+    \ by keyword search,\n   │               paper-ID list, or file upload — with batching,\
+    \ streaming\n   │               pagination, and progress tracking; or skip it entirely\
+    \ and\n   │               load the curated 13-paper demo dataset (no database)\n   ▼\n\
+    Graph              papers / authors / venues / fields become nodes and citations\n   │\
+    \               become edges, held in an optional Neo4j backend (the demo\n   │      \
+    \         path keeps a small graph in memory instead)\n   ▼\nLearn + analyze    a TransE\
+    \ model (128-dim embeddings, ~1.6M params) scores\n   │               likely citations\
+    \ for top-K prediction and embedding\n   │               exploration; an analytics service\
+    \ computes community\n   │               detection (e.g. Louvain), centrality, and temporal\
+    \ trends\n   ▼\nExplore + export   an interactive Streamlit app (network views, ML predictions,\n\
+    \                   embedding explorer, visualizations) plus LaTeX-table, figure,\n  \
+    \                 and summary export; a 4-notebook pipeline covers exploration\n     \
+    \              → training → evaluation → presentation\n```\n\n| Layer | Technology | Notes\
+    \ |\n|---|---|---|\n| UI | Streamlit (multi-page) | Home, Data Import, Demo Datasets,\
+    \ ML Predictions, Embedding Explorer, Visualizations, Results, Analysis Pipeline |\n|\
+    \ ML | PyTorch — TransE embeddings | 128-dim, ~1.6M-parameter trained checkpoint; top-K\
+    \ citation prediction + embedding exploration |\n| Analytics | NetworkX + scikit-learn\
+    \ | Community detection, centrality, temporal trend analysis |\n| Graph store | Neo4j\
+    \ (optional) | Papers/authors/venues/fields as nodes, citations as edges; demo mode runs\
+    \ without it |\n| Data import | Semantic Scholar API | Search / ID / file-upload import;\
+    \ batching, streaming pagination, basic rate-limiting + caching |\n| Interfaces | `acp`\
+    \ CLI + Python API + notebooks | CLI (health, db, ml, config); service getters; 4-notebook\
+    \ exploration→training→evaluation→presentation |\n| Packaging | `pip install -e \".[all]\"\
+    `; Docker / Cloud Run | Optional extras: ml / analytics / viz / web; MkDocs Material docs\
+    \ site |\n\nConsolidated release (v0.1.0) drawn from three predecessor tools, with recent\
+    \ work on deployment tooling (Docker / Cloud Run). Self-hosted; a demo is published at\
+    \ cartography.barbhs.com (availability varies). Honest limits: full functionality needs\
+    \ your own Neo4j instance (demo mode is deliberately small at 13 papers); citation-prediction\
+    \ quality depends on the trained TransE checkpoint and the imported corpus; and the evaluation\
+    \ figures in the notebooks are illustrative, not validated benchmarks."
   diagram_filename: academic_citation_platform_diagram.png
   diagram_caption: Academic Citation Platform — papers → TransE training → citation prediction
     → interactive analysis
@@ -245,12 +239,11 @@ projects:
     one validated against CSV ground truth with 1% numerical tolerance — score every capability
     with a ≥90% target, runnable offline via recorded fixtures. Current work integrates DSPy
     pipeline optimization with MLflow experiment tracking.'
-  design_insight: 'Poolula inverts the usual demo-first RAG story: the evaluation harness
-    isn''t an afterthought, it''s load-bearing — provider comparisons, regression checks after
-    refactors, and numerical ground-truth validation all hang off it. Two other choices worth
-    noting: mutations flow through an immutable audit log (business data you can trust later),
-    and the provider factory keeps the platform honest about model-agnosticism rather than
-    coupling to one vendor.'
+  design_insight: 'The evaluation harness is central rather than incidental: provider comparisons,
+    regression checks after refactors, and numerical ground-truth validation all hang off
+    it. Two other choices worth noting: mutations flow through an immutable audit log (business
+    data you can trust later), and the provider factory keeps the platform model-agnostic
+    rather than coupling to one vendor.'
   walkthrough_context: "A unified management platform for Poolula LLC — a turnkey, always-ready\
     \ structure for small property-holding businesses. Instead of a spreadsheet, a folder\
     \ of PDFs, and memory, the LLC's state lives in one system: structured records with an\
@@ -388,58 +381,56 @@ projects:
   derived_from: project-summaries/beehive-tracker.md@36bf4dca
 - id: convoscope
   title: ConvoScope
-  summary: 'Convoscope is a resilient, multi-provider AI chat application: it routes conversations
-    across OpenAI, Anthropic Claude, and Google Gemini (through `litellm`) and **automatically
-    falls back to the next available provider when one has a bad day** — a rate limit, a timeout,
-    an outage — so the conversation keeps going instead of dying on an error. It began as
-    a single Streamlit script and was refactored into a modular, service-oriented platform
-    with a documented architecture, 80 automated tests, and a full MkDocs site. Beyond reliable
-    chat, its v2 release added a model-comparison and evaluation workbench for judging provider/model
-    pairs side by side. Built with Streamlit over a Python service layer; containerized for
-    Docker and Google Cloud Run.'
-  design_insight: 'The unifying idea is **designing for the failure case as the normal case**.
-    A chat app that assumes the model always answers is a demo; treating provider outages,
-    rate limits, and timeouts as expected events — and building routing, backoff, and fallback
-    around them — is what makes it a system. The same instinct shows up in the evaluation
-    workbench: rather than trusting a single model''s output or a gut impression, it forces
-    a blind, multi-criteria comparison and records the cost/latency tradeoffs, so "which model
-    is better here" becomes an answerable question instead of a vibe. And by keeping the monolith→modular
-    refactor legible in the repo, the project argues that reliability and maintainability
-    are themselves features worth documenting.'
-  walkthrough_context: "Two projects living in one, honestly. The first is a **reliability\
-    \ story**: most \"LLM chat app\" demos assume the API always answers, and Convoscope is\
-    \ built around the opposite assumption — providers fail, so treat fallback, retry-with-backoff,\
-    \ and graceful degradation as first-class features rather than afterthoughts. The second\
-    \ is a **refactoring story told in public**: the repo deliberately preserves the arc from\
-    \ a monolithic `run_chat.py` prototype to a modular architecture (service, utility, and\
-    \ experiments layers), documented with technical decision records, diagrams, before/after\
-    \ metrics, and a visual gallery — so a reader can see *how* the system got to production-shaped,\
-    \ not just the finished state.\n\n```\nChat request       Streamlit UI collects the prompt\
-    \ + session state\n   │               (provider choice, temperature, token limits, system\
-    \ prompt)\n   ▼\nRoute + fallback   LLM service tries the selected provider via litellm;\
-    \ on\n   │               failure it retries with exponential backoff, then falls\n   │\
-    \               back to the next provider whose API key is configured —\n   │        \
-    \       so a single provider outage doesn't end the conversation\n   ▼\nPersist      \
-    \      Conversation Manager saves/loads/exports history with\n   │               atomic\
-    \ file writes and automatic backups; topic\n   │               summaries and styled HTML\
-    \ export round out the record\n   ▼\nCompare (v2)       an evaluation workbench runs the\
-    \ same prompt across 2–4\n                   provider/model pairs, presents blind A/B/C\
-    \ responses for\n                   5-point scoring (correctness, usefulness, clarity,\
-    \ safety,\n                   overall), and logs latency, token counts, and estimated\n\
-    \                   cost to an append-only JSONL results store\n```\n\n| Layer | Technology\
-    \ | Notes |\n|---|---|---|\n| UI | Streamlit (three tabs: Chat, Compare, Results) | Session-state\
-    \ driven; CSS-variable theming, responsive design |\n| Service layer | `src/services/`\
-    \ — LLM service + Conversation Manager | Provider routing/fallback and persistence extracted\
-    \ out of the original single-file script into testable modules |\n| Provider routing |\
-    \ `litellm` over OpenAI, Anthropic, Google Gemini | Key-based availability detection;\
-    \ retry with exponential backoff |\n| Evaluation | `src/experiments/` — compare, metrics,\
-    \ io | Blind side-by-side scoring; latency/token/cost metrics; JSONL logging; pricing\
-    \ + prompt config in `experiments/*.yaml` |\n| Persistence | Local file storage + auto-backups\
-    \ | Atomic writes, data-integrity checks, HTML/topic-summary export |\n| Testing & docs\
-    \ | pytest + Playwright (80 tests: 56 unit, 24 integration); MkDocs Material | End-to-end\
-    \ UI coverage; TDRs, diagrams, visual asset index |\n\nActively developed; the changelog\
-    \ runs from a November 2024 prototype (v0.1.0) through the October 2025 v2.0.0 comparison\
-    \ release. Deployment is self-hosted — Docker and Google Cloud Run configs ship with the\
+  summary: 'Convoscope is a multi-provider AI chat application: it routes conversations across
+    OpenAI, Anthropic Claude, and Google Gemini (through `litellm`) and **automatically falls
+    back to the next available provider** when one hits a rate limit, times out, or goes down
+    — so a provider outage doesn''t end the conversation. It began as a single Streamlit script
+    and was refactored into a modular, service-oriented platform with a documented architecture,
+    80 automated tests, and a full MkDocs site. Beyond reliable chat, its v2 release added
+    a model-comparison and evaluation workbench for judging provider/model pairs side by side.
+    Built with Streamlit over a Python service layer; containerized for Docker and Google
+    Cloud Run.'
+  design_insight: 'The unifying idea is **designing for the failure case as the normal case**:
+    assume providers will rate-limit, time out, or go down, and build routing, backoff, and
+    fallback around that assumption rather than treating it as an edge case. The same instinct
+    shows up in the comparison workbench — a blind, multi-criteria scoring of provider/model
+    pairs that records cost and latency, so "which model is better here" is something you
+    can check rather than guess. Keeping the monolith→modular refactor legible in the repo
+    is part of the same posture: reliability and maintainability treated as features, not
+    leftovers.'
+  walkthrough_context: "It's really two things at once. First, a reliability-minded chat app:\
+    \ most \"LLM chat app\" demos assume the API always answers, and Convoscope assumes the\
+    \ opposite — providers fail, so fallback, retry-with-backoff, and graceful degradation\
+    \ are built in from the start. Second, a refactor kept legible: the repo preserves the\
+    \ arc from a monolithic `run_chat.py` prototype to a modular architecture (service, utility,\
+    \ and experiments layers), documented with decision records, diagrams, and before/after\
+    \ notes, so a reader can follow how it got there — not just the finished state.\n\n```\n\
+    Chat request       Streamlit UI collects the prompt + session state\n   │            \
+    \   (provider choice, temperature, token limits, system prompt)\n   ▼\nRoute + fallback\
+    \   LLM service tries the selected provider via litellm; on\n   │               failure\
+    \ it retries with exponential backoff, then falls\n   │               back to the next\
+    \ provider whose API key is configured —\n   │               so a single provider outage\
+    \ doesn't end the conversation\n   ▼\nPersist            Conversation Manager saves/loads/exports\
+    \ history with\n   │               atomic file writes and automatic backups; topic\n \
+    \  │               summaries and styled HTML export round out the record\n   ▼\nCompare\
+    \ (v2)       an evaluation workbench runs the same prompt across 2–4\n               \
+    \    provider/model pairs, presents blind A/B/C responses for\n                   5-point\
+    \ scoring (correctness, usefulness, clarity, safety,\n                   overall), and\
+    \ logs latency, token counts, and estimated\n                   cost to an append-only\
+    \ JSONL results store\n```\n\n| Layer | Technology | Notes |\n|---|---|---|\n| UI | Streamlit\
+    \ (three tabs: Chat, Compare, Results) | Session-state driven; CSS-variable theming, responsive\
+    \ design |\n| Service layer | `src/services/` — LLM service + Conversation Manager | Provider\
+    \ routing/fallback and persistence extracted out of the original single-file script into\
+    \ testable modules |\n| Provider routing | `litellm` over OpenAI, Anthropic, Google Gemini\
+    \ | Key-based availability detection; retry with exponential backoff |\n| Evaluation |\
+    \ `src/experiments/` — compare, metrics, io | Blind side-by-side scoring; latency/token/cost\
+    \ metrics; JSONL logging; pricing + prompt config in `experiments/*.yaml` |\n| Persistence\
+    \ | Local file storage + auto-backups | Atomic writes, data-integrity checks, HTML/topic-summary\
+    \ export |\n| Testing & docs | pytest + Playwright (80 tests: 56 unit, 24 integration);\
+    \ MkDocs Material | End-to-end UI coverage; TDRs, diagrams, visual asset index |\n\nA\
+    \ complete, documented project rather than one under active development: the changelog\
+    \ runs from a November 2024 prototype (v0.1.0) to the v2.0.0 comparison release (October\
+    \ 2025). Deployment is self-hosted — Docker and Google Cloud Run configs ship with the\
     \ repo, but availability of any given instance varies. Honest limits: it's a single-user\
     \ application with file-based (not multi-tenant database) persistence; provider fallback\
     \ depends on which API keys you've configured, so reliability degrades to whatever providers\
@@ -556,10 +547,10 @@ projects:
     them and renders a live knowledge graph you can export. Pick a domain (AI/ML, Cognitive
     Science) to bias what counts as a concept, ask questions or click a starter prompt, and
     watch nodes and edges accumulate across turns — then export the whole graph as JSON or
-    PNG to pipe into Neo4j, notes, or an outline. It''s deliberately a "small, sharp demo"
-    about **stateful** LLM tooling: the point isn''t another chatbot, it''s that the model''s
-    output persists and compounds into a structure you can see and reuse. Built with Gradio,
-    OpenAI, NetworkX, and matplotlib; self-hosted on EC2.'
+    PNG to pipe into Neo4j, notes, or an outline. It''s deliberately a small, sharp demo:
+    the value isn''t the chat itself, it''s that what the model extracts persists and compounds
+    into a structure you can see, question, and reuse. Built with Gradio, OpenAI, NetworkX,
+    and matplotlib; self-hosted on EC2.'
   design_insight: 'Two ideas carry the project. First, **one generation, one truth**: a single
     structured-JSON call returns the narrative and the extracted ontology together, so the
     prose in the chat and the nodes in the graph are guaranteed to describe the same extraction
@@ -573,48 +564,47 @@ projects:
     as it grows. Together they reflect a cognitive-science instinct: the value isn''t the
     volume of extracted concepts, it''s the structure a person can actually see and carry
     away.'
-  walkthrough_context: "An argument that a chat can leave something behind. A normal chatbot\
-    \ is stateless — each answer evaporates — whereas Concept Cartographer treats every turn\
-    \ as an act of **ontology-building**: it pulls structured concepts (categorized as Entity,\
-    \ Process, Theory, Method, or Property) and typed relationships (causes, requires, enables,\
-    \ …) out of the exchange and accretes them into one persistent graph. The design is unmistakably\
-    \ cognitive-science-flavored — concept maps, domain lenses, relationship types — which\
-    \ is the point: it's a demonstration of how AI tooling can externalize the *structure*\
-    \ of understanding, not just answer questions. Because the graph is exportable, the conversation\
-    \ becomes reusable raw material for downstream tools.\n\n```\nUser turn          you pick\
-    \ a Domain and ask a question (or click a starter);\n   │               domain selection\
-    \ nudges extraction toward domain-relevant\n   │               concepts and relation types\n\
-    \   ▼\nSingle LLM call    one OpenAI call returns structured JSON carrying BOTH a\n  \
-    \ │               conversational narrative AND the extracted ontology\n   │          \
-    \     (concepts + relationships) at once — so the prose you read\n   │               and\
-    \ the graph you see come from the same generation and\n   │               always describe\
-    \ the same thing\n   ▼\nUpdate graph       new concepts are merged into a persistent NetworkX\
-    \ graph\n   │               held in app state; once the graph is large (>30 nodes), a\n\
-    \   │               turn that mixes connected and new-but-orphan concepts keeps\n   │\
-    \               the ones that attach to the existing map and drops the\n   │         \
-    \      orphans — but a wholesale topic pivot (nothing attaches) is\n   │             \
-    \  admitted in full\n   ▼\nRender + explain   the graph is re-drawn each turn with a color-coded\
-    \ legend,\n   │               and a \"Latest Connections\" panel narrates in plain language\n\
-    \   │               what was just added\n   ▼\nExport             download the current\
-    \ graph as JSON (nodes + relationship\n                   triples + metadata) or PNG for\
-    \ Neo4j, notes, or slides\n```\n\n| Layer | Technology | Notes |\n|---|---|---|\n| UI\
-    \ | Gradio 6.5.1 | Chat + live graph view, color-coded legend, Latest Connections panel,\
-    \ starter prompts |\n| Extraction | OpenAI (single call/turn) | Returns `{narrative, concepts,\
-    \ relationships}` as structured JSON — one call does chat + ontology extraction together\
-    \ |\n| Graph | NetworkX + matplotlib | Persistent in-session graph; concept-admission\
-    \ filter above a 30-node free-growth threshold to stay coherent |\n| Caching | In-memory\
-    \ dict, SHA-256 key | First-turn prompts only (model \\| system prompt \\| user msg \\\
-    | domain); stable within a domain session |\n| Export | JSON + PNG | Nodes, relationship\
-    \ triples, and metadata for downstream enrichment |\n| Deployment | EC2 + systemd (see\
-    \ `DEPLOYMENT.md`) | Lightweight single-service host; OpenAI API key via `.env` |\n\n\
-    Actively iterated (architecture notes at v8, February 2026); pinned to Gradio 6.5.1, since\
-    \ Gradio's message handling shifts across major versions. Self-hosted demo at concept-cartographer.com\
-    \ (availability varies). Honest limits: the persistent graph lives in app/session state\
-    \ rather than a database, so it isn't multi-user shared storage; response caching covers\
-    \ first-turn prompts only (once there's history, the key space explodes and hit rates\
-    \ fall to near zero); extraction quality depends on the OpenAI model and the chosen domain\
-    \ lens; and the coherence threshold is a deliberate simplification, not a general graph-layout\
-    \ engine."
+  walkthrough_context: "The pull is curiosity about how ideas connect. As you ask about a\
+    \ topic, Concept Cartographer pulls the concepts and their relationships out of the conversation\
+    \ and draws them as a graph you watch grow — so you can see how things relate, check whether\
+    \ the links you'd expect actually show up, and notice the ones you didn't. Concepts are\
+    \ categorized (Entity, Process, Theory, Method, Property) and relationships are typed\
+    \ (causes, requires, enables, …), and the whole design is cognitive-science-flavored —\
+    \ concept maps, domain lenses, relationship types. Because the graph exports (JSON or\
+    \ PNG), a conversation becomes a reusable map you can carry into Neo4j, notes, or an outline.\n\
+    \n```\nUser turn          you pick a Domain and ask a question (or click a starter);\n\
+    \   │               domain selection nudges extraction toward domain-relevant\n   │  \
+    \             concepts and relation types\n   ▼\nSingle LLM call    one OpenAI call returns\
+    \ structured JSON carrying BOTH a\n   │               conversational narrative AND the\
+    \ extracted ontology\n   │               (concepts + relationships) at once — so the prose\
+    \ you read\n   │               and the graph you see come from the same generation and\n\
+    \   │               always describe the same thing\n   ▼\nUpdate graph       new concepts\
+    \ are merged into a persistent NetworkX graph\n   │               held in app state; once\
+    \ the graph is large (>30 nodes), a\n   │               turn that mixes connected and\
+    \ new-but-orphan concepts keeps\n   │               the ones that attach to the existing\
+    \ map and drops the\n   │               orphans — but a wholesale topic pivot (nothing\
+    \ attaches) is\n   │               admitted in full\n   ▼\nRender + explain   the graph\
+    \ is re-drawn each turn with a color-coded legend,\n   │               and a \"Latest\
+    \ Connections\" panel narrates in plain language\n   │               what was just added\n\
+    \   ▼\nExport             download the current graph as JSON (nodes + relationship\n \
+    \                  triples + metadata) or PNG for Neo4j, notes, or slides\n```\n\n| Layer\
+    \ | Technology | Notes |\n|---|---|---|\n| UI | Gradio 6.5.1 | Chat + live graph view,\
+    \ color-coded legend, Latest Connections panel, starter prompts |\n| Extraction | OpenAI\
+    \ (single call/turn) | Returns `{narrative, concepts, relationships}` as structured JSON\
+    \ — one call does chat + ontology extraction together |\n| Graph | NetworkX + matplotlib\
+    \ | Persistent in-session graph; concept-admission filter above a 30-node free-growth\
+    \ threshold to stay coherent |\n| Caching | In-memory dict, SHA-256 key | First-turn prompts\
+    \ only (model \\| system prompt \\| user msg \\| domain); stable within a domain session\
+    \ |\n| Export | JSON + PNG | Nodes, relationship triples, and metadata for downstream\
+    \ enrichment |\n| Deployment | EC2 + systemd (see `DEPLOYMENT.md`) | Lightweight single-service\
+    \ host; OpenAI API key via `.env` |\n\nActively iterated (architecture notes at v8, February\
+    \ 2026); pinned to Gradio 6.5.1, since Gradio's message handling shifts across major versions.\
+    \ A live demo runs at concept-cartographer.com. Honest limits: the persistent graph lives\
+    \ in app/session state rather than a database, so it isn't multi-user shared storage;\
+    \ response caching covers first-turn prompts only (once there's history, the key space\
+    \ explodes and hit rates fall to near zero); extraction quality depends on the OpenAI\
+    \ model and the chosen domain lens; and the coherence threshold is a deliberate simplification,\
+    \ not a general graph-layout engine."
   diagram_filename: architecture-diagram_concept_cartography.png
   diagram_caption: Concept Cartographer — question → single LLM call → growing knowledge graph
     → export
@@ -654,10 +644,9 @@ projects:
     architecture weight. Time as the organizing principle surfaces patterns a graph can't
     (gaps, overlaps, momentum); a Python-only Streamlit stack — deliberately lighter than
     Resume Explorer's Flask/React — keeps iteration fast while the modular package refactor
-    keeps growth manageable. The commitment to a gold-standard comparison framework — reinforced
-    by a recent documentation audit that stripped unverifiable accuracy percentages out of
-    the UI — reflects a conviction that AI extraction owes users honest quality measurement,
-    not just output (the full validation UI is mid-migration into the modular app).
+    keeps growth manageable. The commitment to a gold-standard comparison framework reflects
+    a conviction that AI extraction owes users honest quality measurement, not just output
+    — though the full validation UI is still mid-migration into the modular app.
   walkthrough_context: "An AI-powered document-to-timeline tool. Where a resume is a flat\
     \ list, ChronoScope unfolds the same material along a temporal axis — when things happened,\
     \ how they overlap, and what patterns emerge over time. It treats time as the primary\
