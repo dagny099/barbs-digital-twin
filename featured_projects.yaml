@@ -10,26 +10,95 @@
 projects:
 - id: resume-graph-explorer
   title: Resume Graph Explorer
-  summary: Transforms a flat resume into an interactive, navigable knowledge graph built on
-    established semantic standards (SKOS, ESCO, schema.org). Skills form hierarchies using
-    SKOS broader/narrower relations, so the graph captures not just what someone knows but
-    how those skills relate.
-  design_insight: The distinctive choice here is grounding applied AI work in existing standards
-    rather than inventing a bespoke schema. The graph uses six entity types validated with
-    SHACL constraints and mapped to the ESCO European skills taxonomy — making the output
-    interoperable, not just pretty.
-  walkthrough_context: 'Resume Graph Explorer turns a flat resume into a living knowledge
-    graph. The pipeline works in three stages: (1) Extract — An LLM (Claude, OpenAI, or Ollama)
-    reads the resume and pulls out structured entities: skills, roles, organizations, industries.
-    Six entity types total: Person, Job, Skill, Education, Certification, Organization, connected
-    by typed relationships. (2) Normalize — A three-phase pipeline maps those entities to
-    the ESCO European skills taxonomy, resolving synonyms and aligning to a hybrid SKOS vocabulary
-    (SKOS Core + ESCO + schema.org + a custom resume namespace). SHACL constraints validate
-    every triple before it enters the graph. (3) Visualize — The result is an interactive
-    graph (Vis.js) you can explore in the browser, query with SPARQL, or export as Turtle/RDF/JSON-LD.
-    It also generates two narrative career stories from the graph structure — one conservative
-    (what the evidence clearly supports) and one exploratory (what the patterns suggest).
-    Stack: Python, Flask, React 18, rdflib, NetworkX, Vis.js.'
+  summary: 'Resume Graph Explorer turns a résumé into a knowledge graph you can inspect, validate,
+    query, and build on. It extracts entities from a résumé document with an LLM — Claude,
+    OpenAI, or a local Ollama model, provider-agnostic with fallback — and assembles them
+    into an RDF graph aligned to open standards: **SKOS** for concepts, **schema.org** for
+    entity types, and the European **ESCO** taxonomy for skills. You explore the result as
+    an interactive Vis.js network graph, export it as Turtle / RDF-XML / JSON-LD, run a semantic-integrity
+    check before you trust it, and feed it through an offline analysis pipeline that turns
+    graph structure into natural-language career insights. It''s a full-stack app (Flask +
+    React), and the insight documents it produces are deliberately written to be embeddable
+    as grounded memory for a RAG system.'
+  design_insight: 'The signature choice is **grounding applied-AI output in existing standards
+    instead of inventing a schema**. It would have been faster to emit a bespoke JSON shape,
+    but the graph commits to SKOS + ESCO + schema.org, so the result is interoperable — it
+    means something outside this one app — and skills carry real hierarchy (broader/narrower)
+    rather than being a flat tag cloud.
+
+
+    The second thread is **letting the human overrule the model, permanently**. Any node label
+    can be corrected right in the graph, and once an edit is marked `user_verified` it is
+    protected from later normalizer rewrites and becomes a canonical anchor that future uploads
+    resolve against. The correction isn''t a one-off patch on a throwaway output — it''s durable
+    ground truth that constrains the automation going forward, which is the right relationship
+    between a person and an extraction pipeline they don''t yet fully trust.
+
+
+    The third is **one graph, many faces**. The interactive visualization, the statistics,
+    all three RDF export formats, and the offline analysis pipeline read from a single graph-building
+    code path — so what you see on screen is provably what you export and what gets analyzed,
+    with no second, drifting representation to keep in sync. Extraction is the easy part;
+    making one honest, standards-aligned graph *mean the same thing* to humans and machines
+    alike is the point.'
+  walkthrough_context: "The premise is that a résumé is a flat story but a career has structure\
+    \ — skills that bridge chapters, capabilities evidenced but never listed, toolkits that\
+    \ drift over time. A résumé says what you did; the graph shows how it connects, and says\
+    \ so in open standards rather than a bespoke schema. Six entity types (Person, Job, Skill,\
+    \ Education, Certification, Organization) become SKOS-compliant nodes linked by typed\
+    \ relationships, with skills placed in SKOS broader/narrower hierarchies and mapped against\
+    \ ESCO. Because the export, the graph view, the stats, and the analysis pipeline all share\
+    \ one graph-building code path, the Turtle / RDF-XML / JSON-LD you download carries the\
+    \ same complete semantics as the picture on screen — it drops into any triplestore or\
+    \ SPARQL tooling. What it deliberately is *not* yet: a full SHACL validator (the integrity\
+    \ checker is a pragmatic, hand-tuned set of checks), or a benchmarked extractor (the evaluation\
+    \ harness is an honest scaffold, not a leaderboard).\n\n```\nUpload           drop a résumé\
+    \ (PDF / DOCX / TXT / MD) into a session; multiple\n   │             documents per session\
+    \ dedupe into one graph, cached so nothing\n   │             re-extracts, with live WebSocket\
+    \ progress\n   ▼\nExtract          a provider-agnostic LLM (Claude / OpenAI / Ollama,\
+    \ with fallback)\n   │             reads the text into six SKOS entity types; an optional,\
+    \ off-by-\n   │             default DSPy route exists for structured-extraction research\n\
+    \   ▼\nNormalize        an entity normalizer resolves aliases (\"ML\" ⇒ \"machine learning\"\
+    ),\n   │             strips org suffixes (\"Acme Corp, Inc.\" = \"Acme Corp\"), keeps\
+    \ user-\n   │             verified labels canonical, and records variants as skos:altLabel;\n\
+    \   │             skills are matched to the ESCO taxonomy via its live REST API\n   ▼\n\
+    Graph + check    rdflib builds the RDF graph; a NetworkX adapter renders it to Vis.js;\n\
+    \   │             a lightweight validator flags dangling refs, missing labels, and\n \
+    \  │             near-duplicate skills (pragmatic checks, not full SHACL)\n   ▼\nExplore/export\
+    \   interactive graph in the browser; export Turtle / RDF-XML / JSON-LD\n   │        \
+    \     (identical semantics via the shared code path)\n   ▼\nAnalyze          an offline\
+    \ pipeline runs 6 structural analyses and synthesizes two\n                 career narratives\
+    \ (conservative + exploratory) — markdown written\n                 for embedding as grounded\
+    \ RAG memory (e.g. a vector store like ChromaDB)\n```\n\n| Layer | Technology | Notes\
+    \ |\n|---|---|---|\n| Frontend | React 18 · Vite · Vis.js · Socket.IO | 11 components;\
+    \ physics-layout network graph, entity panel with inline editable labels, insights + narratives\
+    \ tabs |\n| Backend | Python 3.10+ · Flask · Flask-SocketIO | REST API + WebSocket streaming;\
+    \ disk-backed session store surviving restarts |\n| LLM layer | `llm_client` abstraction\
+    \ | Claude / OpenAI / Ollama, provider-agnostic with fallback; model registry (`models.yaml`)\
+    \ validated at startup so a bad model id fails fast, not mid-extraction |\n| Extraction\
+    \ | `resume_extractor` (+ optional `extraction_dspy`) | Résumé text → six SKOS entity\
+    \ types; DSPy route experimental, off by default (threading issues) |\n| Normalization\
+    \ | `entity_normalizer` (in-session + offline tool) | Alias resolution, org-suffix dedup,\
+    \ similarity job-dedup, `user_verified` anchoring, `skos:altLabel` provenance |\n| Semantic\
+    \ layer | rdflib · SKOS · ESCO (REST) · schema.org | Skills mapped to ESCO v1.2.1 at analysis\
+    \ time (cached; ~50–60% match, rest \"uncategorized\"); broader/narrower hierarchies |\n\
+    | Graph/export | `rdf_graph_builder` · `networkx_adapter` | Turtle / RDF-XML / JSON-LD\
+    \ + Vis.js JSON from one shared graph-building path; lightweight integrity validator |\n\
+    | Analysis pipeline | `graph_analyzer` · `narrative_synthesizer` (offline) | 6 structural\
+    \ analyses → markdown, then LLM-synthesized conservative/exploratory narratives for RAG\
+    \ |\n| Deploy | Vercel (frontend) · Koyeb (backend) · MIT | ~12K lines of Python, ~30\
+    \ package modules; pytest suite runs with no API keys or network |\n\nDeployed and functional\
+    \ at v0.3.0 (April 2026). Production-ready for both single- and multi-résumé sessions\
+    \ — the 0.3.0 release fixed the multi-résumé \"unknown nodes\" class of bugs (four root\
+    \ causes, now covered by a 12-test regression suite), so two versions of the same résumé\
+    \ collapse to one Person node with merged skills and jobs. Honest about its edges: DSPy\
+    \ extraction is experimental and off by default; the semantic-integrity validator is a\
+    \ pragmatic checklist, not full SHACL; the evaluation harness measures whatever output\
+    \ you point it at rather than benchmarking the extractors themselves, and its ground-truth\
+    \ tests skip until fixtures are authored; ESCO skill matching lands around 50–60%, with\
+    \ vendor-specific tools expected to fall through as \"uncategorized.\" The pytest suite\
+    \ is deliberately offline — no test needs an API key or network access. A live demo is\
+    \ published at resume-graph-explorer.vercel.app."
   diagram_filename: resume_graph_explorer_diagram.png
   diagram_caption: Resume Graph Explorer — extraction → normalization → interactive graph
   tags:
@@ -48,6 +117,7 @@ projects:
   links:
     live demo: https://resume-graph-explorer.vercel.app/
     github: https://github.com/dagny099/resume-graph-explorer
+  derived_from: project-summaries/resume-explorer.md@a0a1d987
 - id: digital-twin
   title: Digital Twin
   summary: 'Barbara''s Digital Twin is a conversational AI that answers questions about Barbara
@@ -162,45 +232,6 @@ projects:
     live demo: https://twin.barbhs.com
     github: https://github.com/dagny099/barbs-digital-twin
   derived_from: project-summaries/digital-twin.md@7a1cd83d
-- id: weaving-memories
-  title: Weaving Memories Into Graphs
-  summary: A memorial knowledge graph preserving the professional legacy of Barbara's late
-    father, Domingo Hidalgo Lopez — a software developer and naval architect whose systems
-    still run in semiconductor fabs worldwide. It proves you can apply rigorous knowledge
-    engineering to something deeply personal.
-  design_insight: This project bridges rigorous knowledge engineering methodology with deeply
-    personal subject matter. Every fact has provenance tracking (source + confidence), and
-    a semi-automated Wikidata enrichment pipeline adds external context — showing that KG
-    best practices aren't just for enterprise data.
-  walkthrough_context: 'Weaving Memories Into Graphs is a memorial project for Barbara''s
-    late father, Domingo Hidalgo Lopez — a software developer and naval architect whose systems
-    still run in semiconductor fabs worldwide. The system works like this: (1) Schema Design
-    — A 14-entity Neo4j schema (Person, Organization, Position, Education, Location, Project,
-    Technology, Skill, Patent, Product, Event, Artifact, Publication, Industry) with temporal
-    relationship patterns. (2) Extraction — Claude extracts structured YAML from biographical
-    text, validated against Pydantic dataclasses. (3) Enrichment — A semi-automated tool queries
-    Wikidata for external context, with provenance tracking so every fact has a source. (4)
-    Frontend — A React + Vite app with timeline, legacy, and network views served by a Flask
-    REST API. Stack: Python, Neo4j Aura, Claude, Flask, React + Vite, Wikidata API.'
-  diagram_filename: weaving_memories_diagram.png
-  diagram_caption: Weaving Memories — biographical text → LLM extraction → Neo4j graph → interactive
-    views
-  tags:
-  - knowledge-graph
-  - neo4j
-  - memorial
-  - family
-  - wikidata
-  - llm-extraction
-  mention_keywords:
-  - weaving memories
-  - memorial
-  - father
-  - domingo
-  - family graph
-  links:
-    live demo: https://domingo-hidalgo.com
-    github: https://github.com/dagny099/weaving-memories-into-graphs
 - id: academic-citation-platform
   title: Academic Citation Platform
   summary: Citation Compass (the project the twin also tracks as the Academic Citation Platform)

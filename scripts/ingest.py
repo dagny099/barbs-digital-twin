@@ -271,6 +271,17 @@ SOURCES = [
         "source_prefix": "project-resume-explorer:",
     },
     {
+        "key":           "project-weaving-memories",
+        "label":         "Project: Weaving Memories Into Graphs (background)",
+        "description":   "inputs/project-summaries/weaving-memories.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/weaving-memories.md",
+                        "--source-type", "project-weaving-memories"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-weaving-memories:",
+    },
+    {
         "key":           "project-chronoscope",
         "label":         "Project: ChronoScope",
         "description":   "inputs/project-summaries/chronoscope.md",
