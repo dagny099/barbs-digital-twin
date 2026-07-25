@@ -50,39 +50,92 @@ projects:
     github: https://github.com/dagny099/resume-graph-explorer
 - id: digital-twin
   title: Digital Twin
-  summary: A GraphRAG-powered chatbot that represents Barbara conversationally, grounded in
-    her actual writing and work history. The twin itself is a portfolio piece — not just a
-    wrapper around an LLM — demonstrating how knowledge base design and graph structure together
-    shape retrieval quality.
-  design_insight: 'Two compounding insights drove the architecture. First: retrieval quality
-    depends more on how you write your knowledge base than on the embedding model. Three documents
-    were written specifically for retrieval — a philosophy doc, a positioning doc, and a career
-    narrative — each designed around how chunks will be queried, not just how they read as
-    prose. Second: graph signals should act as tiebreakers, not determiners. After migrating
-    to Neo4j, an initial weight configuration (graph bonuses up to +0.40) overrode a higher-similarity
-    chunk and caused a factual hallucination. Rebalancing to vector×0.85 with graph bonuses
-    capped at +0.15 fixed retrieval without discarding the graph''s value.'
-  walkthrough_context: 'Digital Twin is the chatbot you may be talking to right now. It''s
-    a GraphRAG system — retrieval-augmented generation backed by a Neo4j knowledge graph —
-    grounded in Barbara''s actual writing and work history. (1) Knowledge Base — Multiple
-    document types (biosketch, project briefs, website pages, publications, project walkthroughs)
-    are parsed into named sections using Markdown header boundaries, then chunked with paragraph-aware
-    splitting and embedded using OpenAI''s text-embedding-3-small. The KB was designed for
-    retrieval quality, not just storage: source priority ordering, synthetic overview chunks,
-    and a multi-document architecture ensure the right context surfaces for different question
-    types. (2) Knowledge Graph — Sections become nodes in a Neo4j graph. Projects connect
-    to their descriptive sections via DESCRIBED_IN relationships. An entity extraction pipeline
-    populates canonical nodes for Skills, Methods, Technologies, and Concepts, connected to
-    sections via MENTIONS edges. (3) Hybrid Retrieval — When you ask a question, the system
-    embeds your query and runs a vector search on Neo4j''s section_embeddings index. A composite
-    scoring formula — vector similarity (weight 0.85, dominant signal) plus graph bonuses
-    for project links (0.08), entity mentions (0.05, capped at 5), and section length (0.02)
-    — reranks the candidate pool. Graph signals act as tiebreakers, not overrides. A sensitivity
-    tier system (public / personal / inner_circle) gates which sections are eligible before
-    ranking. (4) Generation — A carefully designed system prompt controls voice, framing,
-    and source priority so the chatbot sounds like Barbara, not a generic assistant. The prompt
-    encodes narrative priorities and explicit failure modes observed during testing. Stack:
-    Python, Gradio, Neo4j, OpenAI API, LiteLLM, AWS EC2.'
+  summary: 'Barbara''s Digital Twin is a conversational AI that answers questions about Barbara
+    Hidalgo-Sotelo in her own first-person voice, grounded in her actual writing and work
+    history through retrieval-augmented generation (RAG). It is itself a portfolio piece —
+    an engineered retrieval system, not a wrapper around an LLM. The retrieval layer is dual-backend
+    from a single codebase, selected per deployment via `RETRIEVAL_BACKEND`: a **ChromaDB**
+    pure-vector store is the live production backend at twin.barbhs.com, while a **Neo4j GraphRAG**
+    backend (hybrid vector-plus-graph reranking) runs on the `graphy.` preview and is being
+    validated before it can take over production. Built with Gradio, OpenAI embeddings, and
+    LiteLLM multi-provider completions, it adds passphrase-based sensitivity tiers, project
+    walkthroughs with served diagrams, Pushover tool-calling, per-query cost logging, and
+    a zero-config cold-start that restores the vector DB from a private Hugging Face Hub dataset.
+    Self-hosted on AWS EC2.'
+  design_insight: 'Two lessons shaped how the twin actually sounds and stays grounded. First:
+    retrieval quality depends more on *how the knowledge base is written* than on the embedding
+    model — several documents were authored specifically for how their chunks would be queried
+    (a philosophy doc, a positioning doc, a career narrative), designed around retrieval rather
+    than as prose to read top to bottom. Second: the model and the system prompt, not the
+    retrieval stack alone, are what make the twin sound like Barbara. The same content answered
+    through a fast model like Gemini Flash versus a frontier model like GPT-4.1 diverges noticeably
+    in register, so the production model is chosen deliberately for a consistent persona —
+    LiteLLM keeps that a one-line change. And the system prompt is the primary steering instrument:
+    it sets voice, framing, source priority, and explicit failure modes, and doubles as the
+    guardrail that keeps answers in-scope and on-persona. Enough of the design lives there
+    that it''s treated as part of the app''s safety surface, not published in detail.'
+  walkthrough_context: "A conversational front door to Barbara's work: visitors ask questions\
+    \ and get answers in her voice, grounded in a curated knowledge base rather than the model's\
+    \ parametric memory. It is the flagship of the portfolio and a working demonstration of\
+    \ production-RAG craft — the knowledge base is authored *for retrieval*, the retrieval\
+    \ is measured, and the same codebase runs two retrieval backends side by side so their\
+    \ behavior can be compared honestly rather than asserted. The twin's own featured-project\
+    \ answers (walkthroughs, diagrams, design insights) are derived from the same consolidated\
+    \ project summaries this file belongs to, so the twin describes each project from one\
+    \ authoritative source.\n\n```\nVisitor question\n   │              audience-tier detection\
+    \ scans the full conversation history\n   ▼              for passphrases (public / personal\
+    \ / inner_circle)\nEmbed             OpenAI text-embedding-3-small (1536-dim), shared\
+    \ by both backends\n   │\nRetrieve          RETRIEVAL_BACKEND selects the store:\n   │\
+    \                • ChromaDB — pure vector search (LIVE production backend)\n   │     \
+    \           • Neo4j GraphRAG — vector similarity reranked by graph bonuses\n   │     \
+    \             (in validation on the graphy. preview)\n   │              tier gating restricts\
+    \ which sections are eligible before ranking\n   ▼\nAssemble          system prompt +\
+    \ retrieved context; when a visitor names a featured\n   │              project, a separate\
+    \ walkthrough block is injected (RAG stays grounded\n   │              in the actual question)\n\
+    \   ▼\nGenerate          LiteLLM streamed completion (default gpt-4.1; OpenAI / Anthropic\
+    \ /\n   │              Google / local Ollama), with optional tool calls (Pushover, dice)\n\
+    \   ▼\nRespond           first-person reply, plus the project diagram when a project is\n\
+    \   │              prominent in the answer\n   ▼\nLog               JSONL query log (model,\
+    \ cost, retrieval scores, tier, owner flag)\n                  and thumbs-up/down vote\
+    \ capture\n```\n\nOne codebase, two retrieval backends, chosen at runtime by the `RETRIEVAL_BACKEND`\
+    \ env var so each deployment can run either without a code change. The **ChromaDB** backend\
+    \ (a persistent local store, collection `barb-twin`) performs pure vector search and is\
+    \ the current production backend serving twin.barbhs.com. The **Neo4j GraphRAG** backend\
+    \ embeds sections as graph nodes and reranks vector results with small graph-signal bonuses\
+    \ — for project-linked sections, entity mentions, and section length — that act as tiebreakers\
+    \ rather than determiners; it runs on the `graphy.` preview and is being validated toward\
+    \ taking over production, with the exact reranking scheme still being tuned as part of\
+    \ that evaluation. Both backends share the same OpenAI `text-embedding-3-small` embeddings\
+    \ and the same sensitivity-tier gating. The knowledge base is a curated multi-document\
+    \ corpus (biosketch, positioning and philosophy docs, career narrative, publications,\
+    \ and the consolidated project summaries and walkthroughs) chunked by `##` header boundaries,\
+    \ with source, section, and sensitivity metadata on every chunk. A private Hugging Face\
+    \ Hub dataset holds the embedded ChromaDB state and doubles as the cold-start transport:\
+    \ on startup, if the local store is missing, the app pulls and extracts it automatically.\n\
+    \n| Layer | Technology | Notes |\n|---|---|---|\n| UI | Gradio `ChatInterface` | Custom\
+    \ CSS (IBM Plex Sans, warm/teal palette, dark mode); streamed replies; project diagrams\
+    \ served by URL |\n| Embeddings | OpenAI `text-embedding-3-small` | 1536-dim; used at\
+    \ ingest and query time by both backends |\n| Vector backend | ChromaDB (persistent) |\
+    \ Collection `barb-twin`; pure vector search; **live production backend** at twin.barbhs.com\
+    \ |\n| Graph backend | Neo4j (Aura) GraphRAG | `section_embeddings` vector index + graph-signal\
+    \ reranking (still being tuned); **in validation** on the `graphy.` preview |\n| LLM completions\
+    \ | LiteLLM (multi-provider) | Default `gpt-4.1`; OpenAI / Anthropic / Google / Ollama;\
+    \ tool calling where supported |\n| Tools | Function calling | `send_notification` (Pushover\
+    \ to Barbara), `dice_roll` (pipeline demo) |\n| DB store & sync | Hugging Face Hub dataset\
+    \ | Canonical embedded-state store + zero-config cold-start pull |\n| Deployment | Self-hosted\
+    \ (AWS EC2) | Runs on a persistent EC2 instance; a Hugging Face Spaces mirror also exists\
+    \ |\n| Logging | JSONL query log | Per-query model, cost, retrieval scores, tier, tool\
+    \ calls, thumbs vote, owner flag |\n\nLive and production-solid: the ChromaDB vector backend\
+    \ serving twin.barbhs.com, the three-tier sensitivity gating, project walkthroughs with\
+    \ served diagrams, Pushover tool-calling, per-query cost and retrieval logging, and the\
+    \ zero-config Hugging Face Hub cold-start. In validation, not yet promoted: the Neo4j\
+    \ GraphRAG backend, which runs on the `graphy.` preview — its refresh is a full graph\
+    \ wipe-and-rebuild, and it is being compared against the vector backend before any switchover.\
+    \ Honest limits: the sensitivity tiers are a content-appropriateness gate, not security\
+    \ — detection is a case-insensitive substring match over the conversation, and the failure\
+    \ mode (a determined guesser sees more personal content) is deliberately low-stakes. The\
+    \ knowledge base content is private and not committed, so a fresh clone of the repo has\
+    \ no chunks to retrieve until pointed at its own content."
   diagram_filename: architecture-overview_barb_twin.png
   diagram_caption: Digital Twin — knowledge graph construction → hybrid retrieval → response
     generation
@@ -108,6 +161,7 @@ projects:
   links:
     live demo: https://twin.barbhs.com
     github: https://github.com/dagny099/barbs-digital-twin
+  derived_from: project-summaries/digital-twin.md@7a1cd83d
 - id: weaving-memories
   title: Weaving Memories Into Graphs
   summary: A memorial knowledge graph preserving the professional legacy of Barbara's late
@@ -633,20 +687,22 @@ projects:
     upload a resume, cover letter, or personal document, and OpenAI GPT (or a local Ollama
     model) identifies events, dates, locations, and people, which become an explorable Plotly
     Gantt chart and exportable TimelineJS web timeline. Built as a Streamlit app (Python 3.12)
-    with a modular `chrono_scope` package — now the canonical app — whose six UI tabs cover
-    timeline, data table, export, and knowledge graph (fully implemented), plus analytics
-    and validation (currently placeholders, their full versions still in the original monolith
-    being retired) — it performs strongest on standard chronological resumes, with experimental
-    support for cover letters and personal statements, and keeps all documents and timeline
-    data local. Self-hosted demo at chronoscope.barbhs.app (availability varies); full MkDocs
-    documentation at docs.barbhs.com/chronoscope; currently v1.0 beta.'
-  design_insight: ChronoScope is a study in choosing the right structural lens and the right
-    architecture weight. Time as the organizing principle surfaces patterns a graph can't
+    with a modular `chrono_scope` package — now the canonical app — whose six UI tabs are
+    Timeline View, Event Editor, Export Studio, and Connections (working), plus Insights and
+    Quality Check (still placeholders — the two unfinished tabs) — it performs strongest on
+    standard chronological resumes, with experimental support for cover letters and personal
+    statements, and keeps all documents and timeline data local. Self-hosted demo at chronoscope.barbhs.app
+    (availability varies); full MkDocs documentation at docs.barbhs.com/chronoscope; currently
+    v1.0 beta.'
+  design_insight: 'ChronoScope is a study in choosing the right structural lens and the right
+    architecture weight. Time as the organizing principle surfaces patterns a graph can''t
     (gaps, overlaps, momentum); a Python-only Streamlit stack — deliberately lighter than
-    Resume Explorer's Flask/React — keeps iteration fast while the modular package refactor
-    keeps growth manageable. The commitment to a gold-standard comparison framework reflects
-    a conviction that AI extraction owes users honest quality measurement, not just output
-    — though the full validation UI is still mid-migration into the modular app.
+    Resume Explorer''s Flask/React — keeps iteration fast while the modular package refactor
+    keeps growth manageable. And the recent retirement of the original monolith — deleting
+    the single-file app once the modular package could stand on its own, and recording exactly
+    which features to harvest from git history rather than carrying dead code — is the same
+    discipline at the maintenance level: keep the app honest about what''s actually built,
+    with the unfinished Insights and Quality Check tabs marked as such instead of faked.'
   walkthrough_context: "An AI-powered document-to-timeline tool. Where a resume is a flat\
     \ list, ChronoScope unfolds the same material along a temporal axis — when things happened,\
     \ how they overlap, and what patterns emerge over time. It treats time as the primary\
@@ -671,31 +727,33 @@ projects:
     \ into a proper Python package: `chrono_scope/` holds models (`TimelineEvent`), services\
     \ (document processing, timeline store), a provider-abstraction config (OpenAI + Ollama),\
     \ and six modular UI tab components with centralized session-state and widget-key management.\
-    \ As of mid-2026 this modular app (`chrono_scope/ui/streamlit_app.py`) is the canonical\
-    \ entry point and the deployment target; the original single-file monolith is deprecated\
-    \ and slated for deletion once its remaining features — the full Analytics and Validation\
-    \ tabs — are harvested. The refactor preserved the deliberate contrast with Resume Graph\
-    \ Explorer's decoupled Flask/React stack: ChronoScope stays Python-only for fast iteration,\
-    \ but is no longer a single file.\n\n| Layer | Technology | Notes |\n|---|---|---|\n|\
-    \ UI | Streamlit (6 modular tabs) | Timeline, Data Table, Export, Knowledge Graph implemented;\
-    \ Analytics + Validation are placeholders (full versions in the deprecated monolith) |\n\
-    | AI extraction | OpenAI GPT; Ollama (local) | Provider abstraction in `chrono_scope/config/llm_providers.py`\
-    \ |\n| Document processing | PyMuPDF + pdfplumber | Dual-library fallback for robust PDF\
-    \ text extraction |\n| Visualization | Plotly (Gantt), NetworkX | Knowledge-graph view\
-    \ is JSON-based; Neo4j optional |\n| Storage | Local JSON | Documents and timeline data\
-    \ never leave the machine (extraction text goes to the chosen LLM provider) |\n| Export\
-    \ | TimelineJS, openpyxl | Professional web timelines; Excel/JSON data export |\n| Docs\
-    \ & deploy | MkDocs Material; Docker → Cloud Run | Live demo at chronoscope.barbhs.app\
-    \ |\n\nProduction-solid: resume processing (the primary, best-tested document class),\
-    \ interactive timelines, TimelineJS export, local-first storage, editable data table with\
-    \ tags/priority/feedback fields. Beta / in-migration: the knowledge-graph view, plus the\
-    \ Analytics and Validation tabs (placeholders in the modular app — their full versions\
-    \ remain in the monolith being retired). Known limits: cover letters and personal statements\
-    \ extract noticeably less reliably than resumes (experimental); scanned PDFs need external\
-    \ OCR; extremely vague dates (\"recently\") may not extract; single-user, desktop-first.\
-    \ Cloud deployment (EC2 + Docker) is now documented, but it is single-user with no authentication,\
-    \ so an instance should be locked to your own IP. The demo is self-hosted, so availability\
-    \ depends on the server being up."
+    \ As of mid-2026 this modular app (`chrono_scope/ui/streamlit_app.py`) is the sole entry\
+    \ point and the deployment target; the original single-file monolith was deleted (July\
+    \ 2026), with the features still worth keeping — the full Insights and Quality Check tabs\
+    \ — recorded for harvest from git history. The refactor preserved the deliberate contrast\
+    \ with Resume Graph Explorer's decoupled Flask/React stack: ChronoScope stays Python-only\
+    \ for fast iteration, but is no longer a single file.\n\n| Layer | Technology | Notes\
+    \ |\n|---|---|---|\n| UI | Streamlit (6 modular tabs) | Timeline View, Event Editor, Export\
+    \ Studio, Connections implemented; Insights + Quality Check are placeholders (full versions\
+    \ in git history since the monolith was deleted) |\n| AI extraction | OpenAI GPT; Ollama\
+    \ (local) | Provider abstraction in `chrono_scope/config/llm_providers.py` |\n| Document\
+    \ processing | PyMuPDF + pdfplumber | Dual-library fallback for robust PDF text extraction\
+    \ |\n| Visualization | Plotly (Gantt), NetworkX | Knowledge-graph view is JSON-based;\
+    \ Neo4j optional |\n| Storage | Local JSON | Documents and timeline data never leave the\
+    \ machine (extraction text goes to the chosen LLM provider) |\n| Export | TimelineJS,\
+    \ openpyxl | Professional web timelines; Excel/JSON data export |\n| Docs & deploy | MkDocs\
+    \ Material; Docker → Cloud Run | Live demo at chronoscope.barbhs.app |\n\nProduction-solid:\
+    \ resume processing (the primary, best-tested document class), interactive timelines,\
+    \ TimelineJS export, local-first storage, editable data table with tags/priority/feedback\
+    \ fields. Beta / not yet built: the knowledge-graph (Connections) view is beta, and the\
+    \ Insights and Quality Check tabs are still placeholders — the modular app's two unfinished\
+    \ tabs, with prior versions preserved in git history after the monolith was deleted (July\
+    \ 2026). Known limits: cover letters and personal statements extract noticeably less reliably\
+    \ than resumes (experimental); scanned PDFs need external OCR; extremely vague dates (\"\
+    recently\") may not extract; single-user, desktop-first. Cloud deployment (EC2 + Docker)\
+    \ is now documented, but it is single-user with no authentication, so an instance should\
+    \ be locked to your own IP. The demo is self-hosted, so availability depends on the server\
+    \ being up."
   diagram_filename: chronoscope_diagram.png
   diagram_caption: ChronoScope — document upload → AI event extraction → validation → interactive
     timeline → export
@@ -722,4 +780,4 @@ projects:
   blog_posts:
   - title: 'Comparing architectures: ChronoScope vs Resume Graph Explorer'
     url: https://www.barbhs.com/blog/comparing-architectures-chronoscope-resume-explorer/
-  derived_from: project-summaries/chronoscope.md@164c1cc1
+  derived_from: project-summaries/chronoscope.md@d1eb6e69
