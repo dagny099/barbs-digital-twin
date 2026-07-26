@@ -812,3 +812,133 @@ projects:
   - title: 'Comparing architectures: ChronoScope vs Resume Graph Explorer'
     url: https://www.barbhs.com/blog/comparing-architectures-chronoscope-resume-explorer/
   derived_from: project-summaries/chronoscope.md@d1eb6e69
+- id: transcript-workbench
+  title: TranscriptWorkbench
+  diagram_filename: transcript_workbench_diagram.png
+  diagram_caption: TranscriptWorkbench — upload or record → feature negotiation → provider
+    adapter → canonical transcript → export & share
+  tags:
+  - transcription
+  - speech-to-text
+  - streamlit
+  - openai
+  - provider-agnostic
+  - local-first
+  mention_keywords:
+  - transcriptworkbench
+  - transcript workbench
+  - transcription
+  - speech to text
+  - audio transcription
+  - transcribe audio
+  links:
+    live demo: https://a2t.barbhs.com
+    github: https://github.com/dagny099/baba-transcription-service
+  summary: 'TranscriptWorkbench is a local-first, provider-agnostic workbench for turning
+    audio and video
+
+    into readable, structured transcripts. You upload a recording (or record straight from
+    the mic),
+
+    pick a provider and model, and get back a clean transcript you can read in the browser,
+    download
+
+    as TXT / Markdown / JSON, or email to an allowlisted recipient — all from a single Streamlit
+    app
+
+    that keeps your files on your own machine and sends audio only to the provider you choose,
+    using
+
+    your own API key. It is built for anyone who regularly transcribes podcasts, interviews,
+    lectures,
+
+    meetings, or voice memos and wants one consistent tool instead of juggling provider APIs
+    by hand.
+
+    OpenAI works end-to-end today; AWS Transcribe and a local faster-whisper path are wired
+    into the
+
+    UI as registered stubs, with their adapters reserved for the next milestones.'
+  design_insight: 'The unifying idea is **honesty about capability instead of the illusion
+    of provider parity**.
+
+    Most transcription front-ends hide the differences between backends; this one surfaces
+    them —
+
+    it negotiates requested against effective features, labels an OpenAI "confidence" score
+    as the
+
+    `avg_logprob` proxy it really is, and marks a provider "coming soon" in the dropdown rather
+    than
+
+    quietly omitting it. That posture is enforced structurally: a canonical result schema
+    every
+
+    adapter must satisfy, a registry that declares per-model feature support, and a thin entrypoint
+
+    that keeps provider quirks contained in adapters. The same instinct drives the privacy
+    stance
+
+    (local-first, keys optional until used) and the preservation of every raw provider response,
+    so a
+
+    result can always be re-parsed or audited. It''s a small app whose real subject is trustworthy,
+
+    comparable output across an intentionally pluggable set of providers.'
+  walkthrough_context: "It's a transcription front-end designed around one honest premise:\
+    \ providers are *not*\ninterchangeable, so the tool should tell you what each one actually\
+    \ delivers rather than pretend\nthey're equivalent. Every backend is an adapter that maps\
+    \ its native response into a single\ncanonical transcript shape, so results stay comparable\
+    \ across providers, and the app records the\nfeatures you *requested* against the *effective*\
+    \ support the chosen model really offers. The\narchitecture keeps `app.py` deliberately\
+    \ thin — it composes UI sections and calls services, while\nprovider calls, parsing, SQLite\
+    \ persistence, feature negotiation, cost estimation, and export\nformatting each live\
+    \ in their own module. That separation is what makes \"add a provider\" a matter\nof writing\
+    \ one adapter plus a registry entry, with no UI rewrite.\n\n```\nUpload / record    Streamlit\
+    \ UI takes an audio or video file (MP3, M4A, MP4, WAV,\n   │               WEBM, OGG,\
+    \ FLAC, and more) or a live mic recording\n   ▼\nConfigure          user picks provider\
+    \ + model and requests features (timestamps,\n   │               confidence, speaker labels);\
+    \ feature negotiation reports what the\n   │               selected model can actually\
+    \ deliver (supported / partial / proxy /\n   │               diagnostic / unsupported)\
+    \ instead of assuming parity\n   ▼\nCompress (if big)  oversize files (over a provider's\
+    \ cap, e.g. OpenAI's limit) get a\n   │               one-click re-encode to a speech-optimized\
+    \ MP3 (mono, 16 kHz, 64 kbps)\n   │               so they fit under the cap — this fixed\
+    \ the 413 payload errors\n   ▼\nEstimate + run     a pre-flight cost estimate (duration\
+    \ × the provider's published rate)\n   │               is shown before you commit; the\
+    \ selected adapter transcribes and maps\n   │               the raw response into the\
+    \ canonical TranscriptionResult\n   ▼\nPersist + review   job, segments, raw response,\
+    \ and artifacts are written to SQLite; the\n   │               result opens in progressive-disclosure\
+    \ tabs\n   ▼\nExport / share     download TXT · Markdown · JSON (plus the raw provider\
+    \ response), or\n                   email the transcript and files to an allowlisted address\
+    \ via Gmail\n                   SMTP or AWS SES; every run is kept in one-click job history\n\
+    ```\n\n| Layer | Technology | Notes |\n|---|---|---|\n| UI | Streamlit 1.57 (`app.py`\
+    \ kept thin) | Composes upload / configuration / compression / results / history sections;\
+    \ sends audio only to the chosen provider |\n| Provider adapters | `providers/` — base\
+    \ ABC, factory, registry | Each provider returns the same canonical shape; OpenAI implemented,\
+    \ AWS + faster-whisper are registered stubs raising a clear `ProviderNotImplementedError`\
+    \ |\n| OpenAI backend | `gpt-4o-mini-transcribe` (default), `gpt-4o-transcribe`, `whisper-1`\
+    \ | Only `whisper-1` returns segment timestamps (via `verbose_json`); the gpt-4o models\
+    \ fall back to a single-segment `json` response |\n| Canonical model | Pydantic `TranscriptionResult`\
+    \ (job · segments · words) | One shape for every provider; `speaker` fields already in\
+    \ the schema so diarization can be added with no migration |\n| Feature negotiation |\
+    \ `services/feature_negotiation.py` | Records requested vs effective support; confidence\
+    \ is an `exp(avg_logprob)` proxy, explicitly labeled, not calibrated word-level confidence\
+    \ |\n| Persistence | SQLite (`db/` connection · schema · repository) | Jobs, segments,\
+    \ words, artifacts; the raw provider response is saved unchanged for debugging and re-parsing\
+    \ |\n| Services | audio · compression · exports · email · confidence · cost | ffmpeg-based\
+    \ compression; TXT/MD/JSON exports; email via Gmail SMTP or AWS SES with allowlist, size\
+    \ cap, and per-day limit |\n| Testing | pytest — 46 tests | Cover feature negotiation,\
+    \ the SQLite repository, export formatting, OpenAI response parsing, and pricing; fixture\
+    \ JSON lets parsing be tested without live API calls |\n\nThe MVP is implemented and running\
+    \ end-to-end on the OpenAI path, and a live instance is hosted\nat **https://a2t.barbhs.com**.\
+    \ Honest limits, stated plainly: only one of the three registered\nproviders (OpenAI)\
+    \ is actually implemented — AWS Transcribe and local faster-whisper appear in\nthe UI\
+    \ with full capability metadata and cost estimates, but selecting them returns a clear\n\
+    \"not yet implemented\" message, and AWS is gated on account access. Word-level output\
+    \ is modeled\nin the schema but not yet populated; \"confidence\" from OpenAI is a logprob-derived\
+    \ proxy, not\ncalibrated word-level confidence, and only `whisper-1` returns real segment\
+    \ timestamps today.\nPricing is a hand-maintained rate table (verify against current provider\
+    \ docs), cost is always an\nestimate rather than a billed figure, and email formatting\
+    \ is the one service not yet covered by\ntests. The project is not yet licensed — a permissive\
+    \ license (likely MIT) is planned before any\npublic release."
+  derived_from: project-summaries/baba-transcription-service.md@ca0abc55
