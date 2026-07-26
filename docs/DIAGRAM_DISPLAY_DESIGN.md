@@ -233,45 +233,151 @@ Independent of the rule itself:
 
 ---
 
-## Open questions
+## Decisions
 
-These need answers before an implementation plan is worth writing.
+Settled 2026-07-26.
 
-1. **What is a diagram *for*?** Illustration of an answer already given, or an invitation to
-   explore? The beekeeping case resolves differently depending on which.
-2. **Should the model decide?** Exposing diagram availability in the system prompt (or as a
-   tool call) would replace string matching with intent the model actually has. Cost: latency,
-   tokens, and a new failure mode where the model asks for diagrams that don't exist.
-3. **Is nondeterminism a feature?** If yes, keep `random.choice()` and close the
-   session-diversity roadmap item as intentional. If no, it needs a seed or a rotation.
-4. **What's the acceptable error direction?** `_is_walkthrough_request` documents its bias —
-   "false positives are cheap." Case 1 above suggests that's no longer true for diagrams
-   specifically: an irrelevant architecture diagram on a career-advice answer reads as a bug,
-   not as generosity.
-5. **Should suppression be visible?** Today a suppressed diagram leaves no trace for the
-   visitor. An explicit "I have an architecture diagram for this — want to see it?" would turn
-   a silent judgment call into an offer.
+### D1 — A diagram illustrates; it does not invite
+
+**A diagram is an illustration of an answer already given**, not an invitation to explore.
+
+This is the load-bearing decision. Consequences:
+
+- The beekeeping case (failure 4) is a **bug**, not a judgment call. A biographical answer
+  should not carry an architecture diagram, however strong the keyword overlap.
+- The correct chat asset is a **self-contained card** that restates the answer visually.
+  A tall, detailed flowchart is a reference document — it was never a chat asset. See
+  [VISUAL_SYSTEM_ROADMAP.md](VISUAL_SYSTEM_ROADMAP.md).
+- The gate must distinguish *asking about the subject* ("how did you get into beekeeping")
+  from *asking about the software* ("how does the beehive monitor work"). Keyword presence
+  cannot make that distinction; this is the strongest argument for D5.
+
+### D2 — Bias toward suppression, buy transparency back with text
+
+The two error directions are not symmetric. A missing diagram is a small loss. A wrong
+diagram reads as "the system didn't understand my question" — an accuracy failure in the
+visual channel, on a portfolio whose thesis is grounded-not-hallucinating.
+
+The `_is_walkthrough_request` docstring's "false positives are cheap" remains true for
+*context injection* and is now explicitly **not** true for *diagrams*. When the two
+disagree, diagrams lose.
+
+Suppression should be **visible but weightless**: one line of prose offering the diagram,
+no image, no scroll cost. This replaces the silent judgment call without reopening the
+false-positive problem.
+
+### D3 — Nondeterminism is a feature
+
+Generic walkthrough requests should keep returning a random project.
+`random.choice()` in `select_project_for_walkthrough()` stays.
+
+Testing implication: the golden set asserts on the **gate** (diagram / no diagram) and on
+**which project when one is named** — never on the random fallback, which is asserted by
+set membership or under a fixed seed. The session-diversity roadmap item is now about
+avoiding *repeats within a session*, not about determinism.
+
+### D4 — Attach the card, offer the deep dive
+
+Not "offer instead of attach" — both, split by asset role. The hero card attaches inline
+with no friction (it illustrates, per D1). Deeper assets are offered as text and opened on
+request. Depends on the multi-asset model in
+[VISUAL_SYSTEM_ROADMAP.md](VISUAL_SYSTEM_ROADMAP.md) Phase 2.
+
+### D5 — Model suggests, rules dispose *(direction agreed, not yet scheduled)*
+
+Exposing diagram availability to the model is worth doing, as a **suggestion layer over the
+deterministic gate** rather than a replacement. Benefits, strongest first:
+
+1. Fixes D1's hard case at the root — the model knows whether it wrote a story or a system
+   explanation. String matching structurally cannot know this.
+2. Retires alias maintenance (failure 2) permanently.
+3. Resolves multi-project responses by relevance instead of YAML order.
+4. Lets the model **introduce** the diagram in prose. Today the image is appended with no
+   textual bridge, which is what makes it read as an advertisement rather than an illustration.
+
+Costs and mitigations: hallucinated diagram names are validated against the manifest and
+dropped; token cost is ~9 names plus one instruction; if the model declines to suggest, the
+existing rules still run as the floor.
+
+**Sequencing:** do not build this until the golden set exists, or there is no way to measure
+whether it helped.
 
 ---
 
-## Candidate directions
+## Still open
 
-Not commitments — the option space, roughly ordered by cost.
+- **Threshold calibration.** Normalizing the mention score needs a defensible cutoff. Derive
+  it from the golden set rather than picking another magic number.
+- **What "subject vs software" looks like in rules.** If D5 slips, the gate needs some
+  non-LLM approximation of D1's distinction. Unsolved.
+- **Whether the offer line (D2) is model-written or templated.** Templated is predictable
+  and cheap; model-written fits the voice better but is another thing to test.
 
-- **Normalize the mention score.** Divide by message length or cap tag contribution, so long
-  pastes stop accumulating incidental points. Directly fixes case 1.
-- **Share the alias list.** Have `find_prominent_project()` use `mention_keywords` as well as
-  the title. Directly fixes case 2, small diff.
-- **Extract to one function.** `decide_diagram(message, response, walkthrough_project)` in
-  `featured_projects.py`, called by both apps. Prerequisite for testing anything.
-- **Golden-set tests.** The offline replay done for this doc is most of a test fixture already:
-  a JSONL of message → expected decision, asserted against the pure functions. Would have
-  caught cases 1 and 2.
-- **Tell the model.** Add diagram availability to `SYSTEM_PROMPT.md` and let the response
-  signal intent explicitly (a marker token, or a tool call). Largest change, addresses
-  cases 2 and 4 at the root.
-- **Offer instead of attach.** Render a caption or button rather than injecting the image
-  unconditionally. Changes the UX contract, so it's a product decision, not a tuning one.
+---
+
+## Plan
+
+Ordered by dependency, not by size. Steps 1–4 are agreed; step 5 is agreed in principle
+(D5) and unscheduled.
+
+### 1. Extract to one function — *agreed*
+
+`decide_diagram(message, response, walkthrough_project)` in `featured_projects.py`, called
+by both `app.py` and `app_admin.py`. Pure, no I/O, returns the chosen project (or `None`)
+plus a reason string for logging.
+
+Prerequisite for everything below: the logic currently cannot be tested without running a
+Gradio app, and the admin console — the tool used to *evaluate* changes to this logic — runs
+its own copy that can silently drift from production.
+
+### 2. Golden-set tests — *agreed*
+
+**What this needs from Barbara: labels, roughly 30 minutes.** Everything else is mechanical.
+
+1. Extract ~50 real messages from `query_log.jsonl`, weighted toward the ambiguous middle
+   (the 116 unique messages already replayed for this doc are the starting pool).
+2. Each row gets a proposed expected decision; Barbara corrects the wrong ones. That
+   correction pass *is* the specification — it's where D1 stops being a sentence and becomes
+   test cases.
+3. `tests/test_diagram_decisions.py` asserts `decide_diagram()` against the fixture.
+
+Per D3, assertions cover the gate and named-project selection only; the random fallback is
+asserted by set membership or under a fixed seed.
+
+This has to land before steps 3 and 5, because both need a way to prove they helped.
+
+### 3. Normalize the mention score — *agreed*
+
+Stop the score growing with input length (failure 1). Options: cap the tag contribution,
+divide by message length, or require at least one high-signal match (keyword or full title)
+before tags can count at all. The third is probably closest to intent — tags should *break
+ties*, not *create* matches, which is the same lesson as
+[Entry 001](LESSONS_LEARNED.md#entry-001--2026-05-17--graph-signal-bonuses-overrode-vector-similarity-causing-hallucination).
+
+Calibrate the cutoff against the golden set.
+
+### 4. Share the alias list — *agreed*
+
+Have `find_prominent_project()` match `mention_keywords` in addition to the exact title, so
+the two passes agree on what naming a project means (failure 2). Small diff, immediate win.
+
+An initial alias pass is also worth doing on the data itself — the current lists are uneven
+(`ChronoScope` has 7, `ConvoScope` has 3) and the highest-value additions are the names each
+project is called *in its own summary prose*, since that's the text the model is echoing when
+`find_prominent_project()` runs.
+
+### 5. Model suggests, rules dispose — *agreed in principle (D5), unscheduled*
+
+Add the diagram manifest to `SYSTEM_PROMPT.md`; let the response carry an explicit signal;
+validate it against the manifest; fall back to steps 3–4 when absent. Blocked on step 2.
+
+---
+
+## Related
+
+Visual quality, asset roles, and the multi-asset direction are tracked separately in
+[VISUAL_SYSTEM_ROADMAP.md](VISUAL_SYSTEM_ROADMAP.md). The two docs share a root: D1's
+"illustrate, don't invite" is what determines which asset belongs in chat at all.
 
 ---
 

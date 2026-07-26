@@ -226,3 +226,113 @@ Q034 ("What ML project did you build at Inflective?") retrieved Professional Pos
 Root cause: curated content uses dense, question-shaped vocabulary ("projects I'm proud of," "applied ML"). Narrative content uses chronological, engagement-shaped vocabulary. For any ML-shaped query, curated content wins on raw similarity even when narrative content is more topically specific.
 
 Implication: retrieval is biased toward whatever content was written to be retrievable. New content (whether sub-chapters, new entity types, or future writing) must either match the curated style or be surfaced through retrieval-scoring adjustments rather than pure vector similarity.
+
+---
+
+## Entry 004 — 2026-07-26 — Regenerating diagrams for accuracy silently traded away the visual system
+
+**Category:** UX
+**Severity:** Medium (no wrong answers; degraded presentation + an unreproducible asset pipeline)
+
+### What happened
+
+The July 2026 consolidation push regenerated 7 of 9 project diagrams from re-reviewed
+project summaries. The content genuinely improved — the twin's own diagram went from
+claiming "ChromaDB, GPT-4.1, HuggingFace Spaces" to correctly showing the
+`RETRIEVAL_BACKEND` branch, Neo4j in validation against ChromaDB in production, the HF Hub
+cold-start pull, and tier detection.
+
+Nobody noticed at the time that the regeneration also replaced a designed visual system with
+default-theme Mermaid output. The previous assets were 840×480 cards: title, subtitle with
+the live URL, four color-coded stages, an "Under the hood" detail row, tech-stack pills, and
+a byline. The replacements are uniform lavender with no title, no branding, and no shape
+discipline.
+
+Two things surfaced it. First, a separate bug fix (`e387b9c`) corrected an `<img>` style that
+was missing `height:auto`, which had been flattening every diagram into the same box — once
+the true aspect ratios rendered, they were visibly wrong. Second, a planning pass on the
+diagram *display* rules compared old and new assets side by side.
+
+### Root cause
+
+Three distinct causes that presented as one aesthetic complaint:
+
+1. **No theme was ever specified.** The old cards were hand-designed; the regeneration used
+   Mermaid defaults. Nothing in the repo recorded that a visual standard existed, so there
+   was nothing to regenerate *against*.
+2. **No shape constraint.** Rendered ratios now span 0.45 (twin, 1254×2764) to 6.15
+   (ChronoScope, 2732×444) against the old system's uniform 1.75. In a 740px chat column the
+   twin renders ~1,630px tall and ChronoScope ~120px tall — a scroll wall and an illegible
+   strip respectively.
+3. **The Mermaid source was never committed.** Only rendered PNGs live in the repo. So the
+   diagrams cannot be re-themed or regenerated at all without reconstructing their source
+   first — the aesthetic regression came bundled with a reproducibility loss, and the second
+   is the more serious one.
+
+A contributing factor: only 7 of 9 were regenerated, leaving two original cards in place. The
+portfolio has been running two visual systems simultaneously ever since, which reads as
+unfinished more than either style reads as bad.
+
+### Fix applied
+
+No code change yet — this entry documents the diagnosis. The plan is
+[VISUAL_SYSTEM_ROADMAP.md](VISUAL_SYSTEM_ROADMAP.md), whose Phase 0 (commit `.mmd` sources
+plus a render script) is a prerequisite for any visual change.
+
+The reframe that unblocked the plan: the regenerated diagrams aren't *worse*, they're
+**filed under the wrong job**. Their density is a virtue for a reference asset and a
+liability for a chat attachment. So the roadmap keeps them as an `architecture` asset role
+and reintroduces a `hero` card role for chat, rather than choosing between accuracy and
+aesthetics. Nothing from the July push is discarded.
+
+Recovery is cheap: three old cards survive on disk unreferenced
+(`digital_twin_diagram.png`, `concept_cartographer_diagram.png`,
+`weaving_memories_diagram.png`) and the six overwritten ones are in git history at `c03acf3`.
+
+### Lesson / takeaway
+
+**A regeneration pipeline inherits only the properties someone wrote down.** Accuracy was
+specified — the summaries were re-reviewed, and accuracy improved exactly as intended. Layout,
+palette, chrome, and aspect ratio were not specified anywhere, so they were silently replaced
+with library defaults. The pipeline did precisely what it was told; the omission was in the
+telling.
+
+The generalizable rule: **when automating the production of a designed artifact, the design
+itself has to become an input to the automation, or it will be quietly dropped on the first
+regeneration.** A theme file in version control is the cheap form of this.
+
+Second, narrower lesson: **committing rendered output without its source converts a
+reversible change into an irreversible one.** The aesthetic regression would have been a
+15-minute theme edit if the `.mmd` files had been committed alongside the PNGs.
+
+Third: this is a rhyme with [Entry 001](#entry-001--2026-05-17--graph-signal-bonuses-overrode-vector-similarity-causing-hallucination).
+There, graph bonuses were allowed to override a stronger vector signal; here, weak signals
+(generic tag words) can create a match rather than break a tie. **Secondary signals should
+break ties, not create matches** — a principle now applied in two unrelated subsystems of
+this codebase.
+
+### Blog post angle
+
+*"The pipeline did exactly what I asked. That was the problem."*
+
+A regeneration that measurably improved factual accuracy while silently deleting a visual
+identity — because accuracy was specified and design was not. The strong version of the
+argument: for AI-assisted content pipelines, every quality you care about must be
+representable as an input, or it decays to the library default on the next run. Aesthetics
+are the easiest quality to leave unwritten and the fastest to notice when lost.
+
+Good companion piece to the diagram-display-rules post, since both trace back to the same
+root: a design decision that lived in someone's head (or a code comment) rather than in a file.
+
+### Supporting data
+
+| | Old cards (pre-`c03acf3` style) | New Mermaid renders |
+|---|---|---|
+| Aspect ratio | 1.75 for all | 0.45 – 6.15 |
+| Title / subtitle | Yes | No |
+| Byline / branding | Yes | No |
+| Color coding | Per-stage palette | Uniform lavender |
+| Twin diagram accuracy | ChromaDB, GPT-4.1, HF Spaces (**stale**) | Dual-backend, Neo4j + ChromaDB, HF Hub pull (**correct**) |
+| Rendered height at 740px column | ~423px | up to ~1,630px |
+| Source committed | n/a (hand-designed) | **No** |
+| Coverage | 2 of 9 still live | 7 of 9 |
