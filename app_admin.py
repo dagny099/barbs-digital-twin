@@ -1261,7 +1261,7 @@ def respond_admin(message, history, top_k, temperature, model_name, system_promp
     # Saves ~82k tokens per diagram response
     if diagram_path:
         _href = f"/diagrams/{os.path.basename(diagram_path)}"
-        _style = "max-width:45vw;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
+        _style = "width:100%;max-width:45vw;height:auto !important;object-fit:contain;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
         # Use URL instead of base64 data URI - eliminates 82k tokens per response
         _img_tag = f'<img src="{_href}" style="{_style}" alt="Project diagram"/>'
         _tag = f'<a href="{_href}" target="_blank" rel="noopener noreferrer" style="display:block">{_img_tag}</a>'
