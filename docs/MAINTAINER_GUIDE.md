@@ -566,6 +566,7 @@ Future enhancements and features under consideration:
 - [ ] **Citation tracking**: Return source documents with responses
 - [ ] **Conversation memory**: Implement session-based memory across conversations
 - [ ] **Session-aware project diversity**: Track shown projects per session to avoid repetition in walkthrough mode (weighted random fallback that biases toward unseen projects)
+- [ ] **Diagram display rules**: Revisit when the twin attaches a project diagram and which one. Current behavior, reconstructed options, and reproduced failure cases are written up in [`DIAGRAM_DISPLAY_DESIGN.md`](DIAGRAM_DISPLAY_DESIGN.md) — no decision made yet
 - [ ] **Voice interface**: Add speech-to-text/text-to-speech capabilities
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [x] **Knowledge graph integration**: Neo4j hybrid vector + graph backend, selectable via `RETRIEVAL_BACKEND`. Live on the `graphy.twin.barbhs.com` preview; ChromaDB currently serves production while the graph backend is validated further.
