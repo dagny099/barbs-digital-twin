@@ -283,6 +283,50 @@ Every conversation turn and visitor vote (👍/👎) is logged to `query_log.jso
 
 **Learn more:** [`LOG_ANALYSIS_SCRIPTS.md`](LOG_ANALYSIS_SCRIPTS.md) | [`LOGGING_GUIDE.md`](LOGGING_GUIDE.md) | [`ADMIN_LOGGING_GUIDE.md`](ADMIN_LOGGING_GUIDE.md)
 
+### Getting the production log locally
+
+```bash
+./scripts/pull_latest_log.sh      # S3 -> ./latest.json
+./scripts/run_dashboard.sh        # pulls, then launches the Streamlit dashboard
+```
+
+`pull_latest_log.sh` copies `s3://sensemaking-ai/digital-twin-logs/latest.json` using the
+`sensemaking` AWS profile. Despite the `.json` extension the file is JSONL — the dashboard
+feeds it to the same `analytics/log_loader.py` parser as `query_log.jsonl`, and
+`dashboard/app.py` prefers `latest.json` when it exists. It is gitignored.
+
+**⚠️ Undocumented step: nothing in this repo puts the file in S3.** No workflow in
+`.github/workflows/` touches S3, and there's no uploader script. Whatever copies
+`query_log.jsonl` off the EC2 box and into that bucket — a cron job, a manual command, a
+systemd timer — lives outside version control and is currently known only to Barbara. If
+that box is ever rebuilt, the analytics pipeline breaks silently and the recovery steps
+exist nowhere.
+
+**To do:** capture the EC2 → S3 copy step in this guide, and commit the uploader (or its
+crontab line) to `scripts/`. This is the same failure mode as the missing Mermaid sources in
+[LESSONS_LEARNED.md](LESSONS_LEARNED.md) Entry 004 — a working pipeline whose definition
+isn't in the repo.
+
+**Portability note:** both `pull_latest_log.sh` and `run_dashboard.sh` hardcode
+`REPO_DIR="$HOME/PROJECTS/barbs-digital-twin"`, so they only run on the one machine where
+the repo lives at exactly that path — they fail on a rebuilt laptop, a CI runner, or a
+cloud session. The one-line fix is to derive the repo root from the script's own location
+instead of assuming a fixed path:
+
+```bash
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+```
+
+That resolves to wherever the script actually sits, whoever runs it.
+
+### Privacy
+
+The log contains raw visitor messages, including — verified in the 2026-07-26 export — at
+least one real name and one contact request with an email address. `query_log.jsonl`,
+`query_log_admin.jsonl`, and `latest.json` are all gitignored and **must stay that way**.
+Anything derived from the log that lands in the repo (test fixtures, doc examples) needs a
+PII screen first; see [`handoff/GOLDEN_SET_PROTOCOL.md`](handoff/GOLDEN_SET_PROTOCOL.md).
+
 ### Basic Analytics
 
 ```bash
@@ -566,6 +610,8 @@ Future enhancements and features under consideration:
 - [ ] **Citation tracking**: Return source documents with responses
 - [ ] **Conversation memory**: Implement session-based memory across conversations
 - [ ] **Session-aware project diversity**: Track shown projects per session to avoid repetition in walkthrough mode (weighted random fallback that biases toward unseen projects)
+- [ ] **Diagram display rules**: When the twin attaches a project diagram and which one. Design decisions recorded, 4-step plan agreed — see [`DIAGRAM_DISPLAY_DESIGN.md`](DIAGRAM_DISPLAY_DESIGN.md)
+- [ ] **Visual system**: Restore a consistent diagram aesthetic and move to multiple assets per project (hero card / architecture / screenshot). **Phase 0 is urgent and unrelated to taste — the Mermaid source for the current diagrams was never committed, so they cannot be regenerated from this repo.** See [`VISUAL_SYSTEM_ROADMAP.md`](VISUAL_SYSTEM_ROADMAP.md)
 - [ ] **Voice interface**: Add speech-to-text/text-to-speech capabilities
 - [ ] **Fine-tuning**: Train a custom model on Barbara's writing style
 - [x] **Knowledge graph integration**: Neo4j hybrid vector + graph backend, selectable via `RETRIEVAL_BACKEND`. Live on the `graphy.twin.barbhs.com` preview; ChromaDB currently serves production while the graph backend is validated further.

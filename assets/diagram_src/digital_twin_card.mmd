@@ -1,0 +1,43 @@
+flowchart TB
+    %% Worked example for VISUAL_SYSTEM_ROADMAP.md Phase 0/1.
+    %% Shows the pre-July card aesthetic (stage colors, bold titles, subtitles,
+    %% an 'under the hood' second row) carrying the *accurate* July content —
+    %% the dual-backend split the old hand-made card was missing.
+    %% Two stacked rows are what keep this inside the chat-safe aspect band;
+    %% a single left-to-right row renders at ~9:1 and is unreadable at column width.
+    %% NOTE: comments must follow the flowchart declaration, never precede it.
+    %% NOTE: `direction` inside a subgraph is ignored if the subgraph is itself
+    %% linked — so the two rows are laid out unlinked, with invisible ~~~ links
+    %% holding the second row horizontal.
+    subgraph flow [" "]
+        direction LR
+        A["<b>Your question</b><br/><span style='font-size:12px'>Gradio chat UI<br/>tier detection</span>"]
+        B["<b>Retrieve context</b><br/><span style='font-size:12px'>Neo4j graph or<br/>ChromaDB vectors</span>"]
+        C["<b>Generate answer</b><br/><span style='font-size:12px'>Multi-provider LLM<br/>grounded in my KB</span>"]
+        D["<b>Streamed reply</b><br/><span style='font-size:12px'>Cited, logged,<br/>cost-tracked</span>"]
+        A --> B --> C --> D
+    end
+
+    subgraph hood ["Under the hood"]
+        direction LR
+        E["<b>Knowledge base</b><br/><span style='font-size:12px'>Section-aware chunks<br/>3 sensitivity tiers</span>"]
+        F["<b>Two live backends</b><br/><span style='font-size:12px'>Neo4j hybrid or<br/>ChromaDB vectors</span>"]
+        G["<b>Multi-provider LLM</b><br/><span style='font-size:12px'>OpenAI · Anthropic<br/>Google · Ollama</span>"]
+        H["<b>Observability</b><br/><span style='font-size:12px'>JSONL query log<br/>latency · cost</span>"]
+        E ~~~ F ~~~ G ~~~ H
+    end
+
+
+    A ~~~ E
+
+    classDef s1 fill:#FFF8E7,stroke:#E0A526,stroke-width:2px,rx:8,ry:8
+    classDef s2 fill:#EAF7EE,stroke:#34A853,stroke-width:2px,rx:8,ry:8
+    classDef s3 fill:#FAEFFB,stroke:#B44FC4,stroke-width:2px,rx:8,ry:8
+    classDef s4 fill:#EAF3FE,stroke:#3B82D6,stroke-width:2px,rx:8,ry:8
+    classDef band fill:#ffffff,stroke:#d8dee9,stroke-width:1px
+
+    class A,E s1
+    class B,F s2
+    class C,G s3
+    class D,H s4
+    class flow,hood band
