@@ -379,14 +379,18 @@ other is an LLM with the conversation. Neither can see what the other concluded.
 
 ### Fix applied
 
-None yet — this entry is the diagnosis, found while gathering evidence for
-[DIAGRAM_DISPLAY_DESIGN.md](DIAGRAM_DISPLAY_DESIGN.md). It's what moved decision D5
-("tell the model diagrams exist") from a nice-to-have to the fix for a wrong answer, and
-what settled D1: a diagram illustrates an answer that was already given, so a story about
-bees in an owl box should never carry an architecture diagram.
+**Turn 1 — fixed 2026-07-26.** `SYSTEM_PROMPT.md` SECTION 11.5 now states that diagrams are
+sometimes attached automatically, and two rows were added to the SECTION 13 failure-mode
+table. The section is written defensively on purpose: it grants the *fact* of the capability
+while forbidding the model from pointing at it ("see the diagram below"), because the model
+does not control whether one is attached. Full rationale and the reversal procedure are
+recorded as **D6** in [DIAGRAM_DISPLAY_DESIGN.md](DIAGRAM_DISPLAY_DESIGN.md).
 
-Immediate low-cost fix available independent of the rest: state in `SYSTEM_PROMPT.md` that
-the twin can display project diagrams. That alone corrects turn 1.
+**Turn 3 — not fixed.** The gate still fires on keyword overlap. That's the implementation
+work in the same doc, steps 1–4, gated on the golden set.
+
+This entry is also what settled D1 — a diagram illustrates an answer already given, so a
+story about bees in an owl box should never carry an architecture diagram.
 
 ### Lesson / takeaway
 

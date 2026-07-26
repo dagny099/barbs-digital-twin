@@ -341,6 +341,85 @@ existing rules still run as the floor.
 **Sequencing:** do not build this until the golden set exists, or there is no way to measure
 whether it helped.
 
+### D6 — Tell the model diagrams exist, without letting it point at them *(shipped 2026-07-26)*
+
+**This is the only decision in this doc that changed production behavior. It is designed to
+be reversible, and this section is the record for reversing it.**
+
+#### What shipped
+
+`SYSTEM_PROMPT.md` SECTION 11.5, plus two rows in the SECTION 13 failure-mode table.
+
+#### Why
+
+A visitor was told *"I can't generate or send images directly in this chat — I'm text-only
+here"* and then, two turns later in the same session, shown an architecture diagram
+([failure case 4](#4-personal-questions-with-topical-overlap-still-pull-diagrams),
+[LESSONS_LEARNED Entry 005](LESSONS_LEARNED.md)). `SYSTEM_PROMPT.md` contained no mention of
+diagrams, so the model answered from an incorrect self-model. Retrieval could not have fixed
+it — the KB has no statement about this capability either. Section 8 makes the system prompt
+a primary factual source, so the omission *was* the bug.
+
+#### Why it is worded so defensively
+
+The model does not control diagrams. `decide_diagram()` selects one and `app.py:1514`
+appends the `<img>` after generation completes. A plain "you can show diagrams" would trade a
+rare, mild failure (denying a capability) for a more visible one: *"see the diagram below"*
+with nothing attached, on precisely the queries where diagrams get discussed. So the section
+grants the fact and withholds the deixis — state the capability, disclaim control, forbid
+pointing.
+
+Three risks were accepted rather than solved:
+
+1. **Induced demand the gate can't serve.** The model may now offer diagrams; a visitor
+   replying "yes" produces no project mention, so nothing is attached
+   ([failure case 5](#5-the-gate-never-sees-the-conversation)). This is the most likely
+   regression. It is not new behavior — it is an existing structural gap that this change
+   makes easier to reach.
+2. **Voice drift** toward feature-description register, against SECTION 9's tone rules.
+3. **Prompt-as-source-of-truth creep.** Mitigated by refusing to enumerate projects; if a
+   future edit adds a project list here, it will drift from `featured_projects.yaml`
+   (Entry 004's lesson).
+
+#### What would justify reversing it
+
+Reverse, or rewrite, if the golden set and real traffic show any of:
+
+- **Dangling references.** Responses containing "below," "above," "shown," or "here's the
+  diagram" on turns where `workflow` is `standard`. Cheap check against the log:
+
+  ```bash
+  python3 -c "
+  import json
+  for l in open('latest.json'):
+      r = json.loads(l)
+      t = (r.get('assistant_response') or '').lower()
+      if r.get('workflow') == 'standard' and 'diagram' in t and any(w in t for w in (' below', ' above', 'shown')):
+          print(r['ts'], r['message'][:70])
+  "
+  ```
+
+  Note `assistant_response` is only populated on newer rows, so this measures forward, not
+  historically.
+- **Offer spam** — the twin proposing diagrams on questions that aren't about projects.
+- **Voice complaints**, or responses that read like product documentation.
+
+#### How to reverse
+
+1. Delete SECTION 11.5 from `SYSTEM_PROMPT.md` and the two diagram rows from SECTION 13.
+2. That's the whole revert — no code depends on it. Redeploy both environments.
+3. Record what was observed here, so the next person doesn't re-derive it.
+
+**Reverting restores the original bug**: the twin will again tell visitors it cannot show
+images while showing them. If the wording is the problem rather than the disclosure, prefer
+rewriting SECTION 11.5 over deleting it.
+
+#### Relationship to D5
+
+D6 is *not* D5. D6 only tells the model diagrams exist. D5 — letting the model **choose**
+which diagram, validated against a manifest — remains unscheduled and still blocked on the
+golden set. D6 makes D5 cheaper if it happens, and is worth keeping even if D5 never does.
+
 ---
 
 ## Still open
