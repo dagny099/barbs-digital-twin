@@ -1513,7 +1513,7 @@ def respond_ai(message, history, top_k=None, temperature=None, model_name=None, 
     # Saves ~82k tokens per diagram response (99% reduction in diagram overhead)
     if diagram_path:
         _href = f"/diagrams/{os.path.basename(diagram_path)}"
-        _style = "max-width:100%;width:740px;!important;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
+        _style = "width:100%;max-width:740px;height:auto !important;object-fit:contain;display:block;margin:1.5rem auto 0;border-radius:8px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08)"
 
         # Use URL instead of base64 data URI - eliminates 82k tokens per response
         _img_tag = f'<img src="{_href}" style="{_style}" alt="Project diagram"/>'
