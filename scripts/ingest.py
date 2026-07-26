@@ -358,6 +358,28 @@ SOURCES = [
         "dry_run_arg":   "--dry-run",
         "source_prefix": "project-beehive:",
     },
+    {
+        "key":           "project-baba-transcription-service",
+        "label":         "Project: TranscriptWorkbench",
+        "description":   "inputs/project-summaries/baba-transcription-service.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/baba-transcription-service.md",
+                        "--source-type", "project-baba-transcription-service"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-baba-transcription-service:",
+    },
+    {
+        "key":           "project-biographical-graph",
+        "label":         "Project: biographical-graph",
+        "description":   "inputs/project-summaries/biographical-graph.md",
+        "script":        "scripts/embed_kb_doc.py",
+        "base_args":     ["--file", "inputs/project-summaries/biographical-graph.md",
+                        "--source-type", "project-biographical-graph"],
+        "force_arg":     "--force-reembed",
+        "dry_run_arg":   "--dry-run",
+        "source_prefix": "project-biographical-graph:",
+    },
     # ... same pattern for concept-cartographer, fitness-dashboard, etc.
     {
         "key":           "project-summaries",
