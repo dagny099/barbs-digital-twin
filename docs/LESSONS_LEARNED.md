@@ -336,3 +336,96 @@ root: a design decision that lived in someone's head (or a code comment) rather 
 | Rendered height at 740px column | ~423px | up to ~1,630px |
 | Source committed | n/a (hand-designed) | **No** |
 | Coverage | 2 of 9 still live | 7 of 9 |
+
+---
+
+## Entry 005 — 2026-07-26 — The twin told a visitor it couldn't show images, then showed one unprompted
+
+**Category:** LLM
+**Severity:** Critical (a factually wrong answer about the twin's own capabilities, shown to a visitor)
+
+### What happened
+
+One visitor session, `h5bfd6ktyjh`, 2026-07-13, confirmed non-owner traffic on the
+production ChromaDB backend:
+
+| Turn | Message | Result |
+|------|---------|--------|
+| 1 | "Can you give images?" | Twin: *"I can't generate or send images directly in this chat — I'm text-only here."* |
+| 2 | "Can you explain how RAG works in simple terms?" | Normal answer |
+| 3 | "How did you get into beekeeping, and does it influence your work?" | Beehive Monitor **architecture diagram attached** |
+
+The twin denied a capability it has, then two turns later exercised that capability
+unrequested — on a biographical question, in the same conversation, for the same visitor.
+
+### Root cause
+
+Two independent bugs that happen to be mirror images.
+
+**Turn 1** — `SYSTEM_PROMPT.md` contains no mention of diagrams. Not one. The diagram is
+appended to the response *after* generation, as an `<img>` tag in `app.py`, so the model has
+never been told this happens. It answered accurately from its own self-model; its self-model
+was just wrong. This is not hallucination in the usual sense — the KB genuinely contains no
+statement that the twin can display images, so retrieval could not have saved it.
+
+**Turn 3** — the intent gate in `app.py:1450` fires on any project keyword clearing a score
+of 5. "Beekeeping" is a `mention_keywords` entry for Beehive Monitor (+10), so a question
+about how Barbara got into a hobby is indistinguishable, to the gate, from a question about
+the software she built for it.
+
+The deeper cause is one thing, not two: **the component that decides to show a diagram and
+the component that writes the words share no state.** One is a regex over the message, the
+other is an LLM with the conversation. Neither can see what the other concluded.
+
+### Fix applied
+
+None yet — this entry is the diagnosis, found while gathering evidence for
+[DIAGRAM_DISPLAY_DESIGN.md](DIAGRAM_DISPLAY_DESIGN.md). It's what moved decision D5
+("tell the model diagrams exist") from a nice-to-have to the fix for a wrong answer, and
+what settled D1: a diagram illustrates an answer that was already given, so a story about
+bees in an owl box should never carry an architecture diagram.
+
+Immediate low-cost fix available independent of the rest: state in `SYSTEM_PROMPT.md` that
+the twin can display project diagrams. That alone corrects turn 1.
+
+### Lesson / takeaway
+
+**A capability the model isn't told about is a capability it will deny having.** Post-hoc
+augmentation — appending images, citations, buttons, anything added to a response after
+generation — creates a gap between what the system does and what the system believes about
+itself. The model is the one being asked "can you do X," and it answers from its prompt, not
+from the codebase.
+
+The generalizable rule: **if you bolt a capability onto the output, put it in the prompt
+too, even when the model doesn't drive it.** The prompt isn't only instructions for
+behavior; it's the model's self-description, and visitors ask about it directly.
+
+Second: this is the sharpest illustration yet of why the twin's whole premise —
+*"Not hallucinated — backed by my KB"* — is harder than it looks. The failure wasn't
+retrieval. Grounding protects answers about Barbara. Nothing was protecting answers about
+the twin itself.
+
+### Blog post angle
+
+*"My chatbot told a visitor it couldn't show images. It had just shown one."*
+
+Opens with the three-turn transcript, which needs no explanation. Then the reveal: both
+halves are correct behavior from components that can't see each other — a regex that knows
+about diagrams but not about meaning, and a language model that knows about meaning but not
+about diagrams. The fix isn't smarter matching, it's giving one component the other's
+information.
+
+Pairs naturally with Entry 004 (accuracy specified, design not) — both are failures of
+*what didn't get written down*, in a system whose entire purpose is representing knowledge
+faithfully.
+
+### Supporting data
+
+Source: `latest.json` export, 318 rows, 2026-04-02 → 2026-07-26 (gitignored; pull with
+`scripts/pull_latest_log.sh`).
+
+- Diagram-bearing responses: **26% before** the Option C intent gate shipped (58/220),
+  **26% after** (21/80). The gate changed which queries get diagrams, not how many.
+- `is_owner_traffic` exists only from 2026-04-23: 60 confirmed owner, 30 confirmed visitor,
+  210 unknown. Session `h5bfd6ktyjh` is in the confirmed-visitor set.
+- `grep -c diagram SYSTEM_PROMPT.md` → **0**.

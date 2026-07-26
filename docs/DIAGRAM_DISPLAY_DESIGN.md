@@ -1,7 +1,7 @@
 # Diagram Display — Design Doc
 
-**Status:** Planning — describes current behavior and open questions. No decision made yet.
-**Created:** 2026-07-26
+**Status:** Decisions recorded; implementation not started. Build order in [Plan](#plan).
+**Created:** 2026-07-26 · **Updated:** 2026-07-26 (production log evidence, decisions D1–D5)
 **Scope:** When the twin attaches a project diagram to a chat response, and which one.
 **Owner:** Barbara
 
@@ -15,8 +15,9 @@
 - [Empirical baseline](#empirical-baseline)
 - [Failure cases](#failure-cases)
 - [Structural issues](#structural-issues)
-- [Open questions](#open-questions)
-- [Candidate directions](#candidate-directions)
+- [Decisions](#decisions)
+- [Still open](#still-open)
+- [Plan](#plan)
 
 ---
 
@@ -126,33 +127,34 @@ The essential insight in C is that **the query decides *whether*, and the respon
 
 ## Empirical baseline
 
-**Data caveat:** the live `query_log.jsonl` is gitignored and not present in this checkout.
-The sample used here is [`scripts/query_log_ORIG.jsonl`](../scripts/query_log_ORIG.jsonl) —
-218 rows on an older schema (`project`, `walkthrough`, `workflow`; no `project_title`),
-**logged before Option C shipped**. So the `workflow` values in it reflect Option A behavior.
-To characterize Option C, the current `find_mentioned_project()` and
-`select_project_for_walkthrough()` were replayed offline against the same messages.
+Updated 2026-07-26 against a current production export (`latest.json`, 318 rows,
+2026-04-02 → 2026-07-26). The file is gitignored, so these numbers are recorded here rather
+than reproducible from the repo alone; pull a fresh copy with `./scripts/pull_latest_log.sh`.
 
-**Logged (pre-Option-C) distribution, 218 rows:**
+Composition: 300 query rows, 18 `event: vote` feedback rows. `is_owner_traffic` exists only
+from 2026-04-23 — **60 confirmed owner, 30 confirmed visitor, 210 unknown**. Only the 30 are
+safely representative of visitor behavior.
 
-| workflow | count |
-|----------|-------|
-| `standard` | 150 |
-| `diagram_only` | 27 |
-| `walkthrough` | 25 |
-| *(missing field)* | 16 |
+**Option C did not reduce how often diagrams appear.** Splitting on the 2026-05-05 cutover:
 
-Diagram-bearing paths were dominated by one project: **Digital Twin 26**, Beehive Monitor 7,
-Fitness Tracker 7, Concept Cartographer 4, ChronoScope 3, Resume Graph Explorer 2,
-ConvoScope 1, Poolula Platform 1, Academic Citation Platform 1.
+| Period | Query rows | Diagram-bearing | Rate |
+|--------|-----------|-----------------|------|
+| Before Option C | 220 | 58 | 26% |
+| After Option C | 80 | 21 | 26% |
 
-**Replaying current logic over the 116 unique messages:** 17 pass the intent gate, 99 are
-suppressed. Three of the pre-Option-C `diagram_only` responses now correctly go dark
+The populations aren't matched, so this isn't a controlled comparison — but it does rule out
+the comfortable assumption that the intent gate quietly fixed the over-firing. It changed
+*which* queries get diagrams, not *how many*. Failure 4 below is the proof that it still
+fires on the wrong ones.
+
+**Replaying current logic** over the 116 unique messages in the older
+[`scripts/query_log_ORIG.jsonl`](../scripts/query_log_ORIG.jsonl) sample: 17 pass the intent
+gate, 99 are suppressed. Three pre-Option-C `diagram_only` responses now correctly go dark
 (`What did you do at Inflective`, `What do you like to do for work and fun`,
-`Tell me a little about yorself`), which is Option C working as designed.
+`Tell me a little about yorself`) — Option C working as designed on the cases it was built for.
 
-All 9 featured projects have a diagram file present on disk, so a missing-asset path is not
-currently exercised.
+All 9 featured projects have a diagram file on disk, so a missing-asset path is not currently
+exercised.
 
 ---
 
@@ -198,13 +200,50 @@ it's the gap the roadmap's session-aware diversity item was meant to close.
 
 ### 4. Personal questions with topical overlap still pull diagrams
 
+**Confirmed in production, from a real visitor.** Session `h5bfd6ktyjh`, 2026-07-13,
+`is_owner_traffic: false`, ChromaDB backend, post-Option-C:
+
+| Turn | Message | Result |
+|------|---------|--------|
+| 1 | "Can you give images?" | `standard` — twin replies **"I can't generate or send images directly in this chat — I'm text-only here."** |
+| 2 | "Can you explain how RAG works in simple terms?" | `standard` |
+| 3 | "How did you get into beekeeping, and does it influence your work?" | `diagram_only` — **Beehive Monitor architecture diagram attached** |
+
+One visitor, one session. The twin denied having a capability it has, then two turns
+later exercised that capability unrequested on a biographical question. Both halves are
+failures, and they point in opposite directions — which is why D1 (what a diagram is
+*for*) had to be settled before any threshold tuning would mean anything.
+
+Turn 1 is also the clearest possible evidence for D5: `SYSTEM_PROMPT.md` never mentions
+diagrams, so the model doesn't know they exist and answered honestly from its own
+incorrect self-model. See [LESSONS_LEARNED.md](LESSONS_LEARNED.md) Entry 005.
+
+The generic form of the failure:
+
 `How did you get into beekeeping, and does it influence your work?` clears the gate via the
 `beekeeping` keyword and attaches the Beehive Monitor architecture diagram. The question is
 biographical; the answer is a story; the attachment is a system diagram. The intent gate
 can't separate "asking about the subject" from "asking about the software."
 
-Similarly, `Mitja Bosnic / Just testing your digital twin` attaches the twin's own
-architecture diagram to what is essentially a greeting.
+A greeting that happens to contain the words "digital twin" also attaches the twin's own
+architecture diagram.
+
+### 5. The gate never sees the conversation
+
+`decide_diagram()`'s inputs are the current message and the current response. Session
+`h5bfd6ktyjh` above shows why that's a limit: turn 1 established that this visitor
+wanted images, and turn 3 had no access to that fact.
+
+The same blindness runs the other way. Confirmed visitor sessions in the log contain
+follow-up turns like `"messy EHR data"`, `"missing or incomplete data"`,
+`"both structured fields and notes"`, and bare `"yes"` — each scored in isolation against
+project keywords, with no memory of what the conversation was about. A visitor who names
+a project in turn 1 and asks "how does the parser work?" in turn 2 gets no diagram,
+because turn 2 mentions no project.
+
+Not addressed by steps 1–4 below. Recorded here so it isn't rediscovered as a surprise;
+it interacts with the **Conversation memory** item on the
+[MAINTAINER_GUIDE roadmap](MAINTAINER_GUIDE.md#roadmap).
 
 ---
 
