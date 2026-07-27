@@ -226,3 +226,210 @@ Q034 ("What ML project did you build at Inflective?") retrieved Professional Pos
 Root cause: curated content uses dense, question-shaped vocabulary ("projects I'm proud of," "applied ML"). Narrative content uses chronological, engagement-shaped vocabulary. For any ML-shaped query, curated content wins on raw similarity even when narrative content is more topically specific.
 
 Implication: retrieval is biased toward whatever content was written to be retrievable. New content (whether sub-chapters, new entity types, or future writing) must either match the curated style or be surfaced through retrieval-scoring adjustments rather than pure vector similarity.
+
+---
+
+## Entry 004 — 2026-07-26 — Regenerating diagrams for accuracy silently traded away the visual system
+
+**Category:** UX
+**Severity:** Medium (no wrong answers; degraded presentation + an unreproducible asset pipeline)
+
+### What happened
+
+The July 2026 consolidation push regenerated 7 of 9 project diagrams from re-reviewed
+project summaries. The content genuinely improved — the twin's own diagram went from
+claiming "ChromaDB, GPT-4.1, HuggingFace Spaces" to correctly showing the
+`RETRIEVAL_BACKEND` branch, Neo4j in validation against ChromaDB in production, the HF Hub
+cold-start pull, and tier detection.
+
+Nobody noticed at the time that the regeneration also replaced a designed visual system with
+default-theme Mermaid output. The previous assets were 840×480 cards: title, subtitle with
+the live URL, four color-coded stages, an "Under the hood" detail row, tech-stack pills, and
+a byline. The replacements are uniform lavender with no title, no branding, and no shape
+discipline.
+
+Two things surfaced it. First, a separate bug fix (`e387b9c`) corrected an `<img>` style that
+was missing `height:auto`, which had been flattening every diagram into the same box — once
+the true aspect ratios rendered, they were visibly wrong. Second, a planning pass on the
+diagram *display* rules compared old and new assets side by side.
+
+### Root cause
+
+Three distinct causes that presented as one aesthetic complaint:
+
+1. **No theme was ever specified.** The old cards were hand-designed; the regeneration used
+   Mermaid defaults. Nothing in the repo recorded that a visual standard existed, so there
+   was nothing to regenerate *against*.
+2. **No shape constraint.** Rendered ratios now span 0.45 (twin, 1254×2764) to 6.15
+   (ChronoScope, 2732×444) against the old system's uniform 1.75. In a 740px chat column the
+   twin renders ~1,630px tall and ChronoScope ~120px tall — a scroll wall and an illegible
+   strip respectively.
+3. **The Mermaid source was never committed.** Only rendered PNGs live in the repo. So the
+   diagrams cannot be re-themed or regenerated at all without reconstructing their source
+   first — the aesthetic regression came bundled with a reproducibility loss, and the second
+   is the more serious one.
+
+A contributing factor: only 7 of 9 were regenerated, leaving two original cards in place. The
+portfolio has been running two visual systems simultaneously ever since, which reads as
+unfinished more than either style reads as bad.
+
+### Fix applied
+
+No code change yet — this entry documents the diagnosis. The plan is
+[VISUAL_SYSTEM_ROADMAP.md](VISUAL_SYSTEM_ROADMAP.md), whose Phase 0 (commit `.mmd` sources
+plus a render script) is a prerequisite for any visual change.
+
+The reframe that unblocked the plan: the regenerated diagrams aren't *worse*, they're
+**filed under the wrong job**. Their density is a virtue for a reference asset and a
+liability for a chat attachment. So the roadmap keeps them as an `architecture` asset role
+and reintroduces a `hero` card role for chat, rather than choosing between accuracy and
+aesthetics. Nothing from the July push is discarded.
+
+Recovery is cheap: three old cards survive on disk unreferenced
+(`digital_twin_diagram.png`, `concept_cartographer_diagram.png`,
+`weaving_memories_diagram.png`) and the six overwritten ones are in git history at `c03acf3`.
+
+### Lesson / takeaway
+
+**A regeneration pipeline inherits only the properties someone wrote down.** Accuracy was
+specified — the summaries were re-reviewed, and accuracy improved exactly as intended. Layout,
+palette, chrome, and aspect ratio were not specified anywhere, so they were silently replaced
+with library defaults. The pipeline did precisely what it was told; the omission was in the
+telling.
+
+The generalizable rule: **when automating the production of a designed artifact, the design
+itself has to become an input to the automation, or it will be quietly dropped on the first
+regeneration.** A theme file in version control is the cheap form of this.
+
+Second, narrower lesson: **committing rendered output without its source converts a
+reversible change into an irreversible one.** The aesthetic regression would have been a
+15-minute theme edit if the `.mmd` files had been committed alongside the PNGs.
+
+Third: this is a rhyme with [Entry 001](#entry-001--2026-05-17--graph-signal-bonuses-overrode-vector-similarity-causing-hallucination).
+There, graph bonuses were allowed to override a stronger vector signal; here, weak signals
+(generic tag words) can create a match rather than break a tie. **Secondary signals should
+break ties, not create matches** — a principle now applied in two unrelated subsystems of
+this codebase.
+
+### Blog post angle
+
+*"The pipeline did exactly what I asked. That was the problem."*
+
+A regeneration that measurably improved factual accuracy while silently deleting a visual
+identity — because accuracy was specified and design was not. The strong version of the
+argument: for AI-assisted content pipelines, every quality you care about must be
+representable as an input, or it decays to the library default on the next run. Aesthetics
+are the easiest quality to leave unwritten and the fastest to notice when lost.
+
+Good companion piece to the diagram-display-rules post, since both trace back to the same
+root: a design decision that lived in someone's head (or a code comment) rather than in a file.
+
+### Supporting data
+
+| | Old cards (pre-`c03acf3` style) | New Mermaid renders |
+|---|---|---|
+| Aspect ratio | 1.75 for all | 0.45 – 6.15 |
+| Title / subtitle | Yes | No |
+| Byline / branding | Yes | No |
+| Color coding | Per-stage palette | Uniform lavender |
+| Twin diagram accuracy | ChromaDB, GPT-4.1, HF Spaces (**stale**) | Dual-backend, Neo4j + ChromaDB, HF Hub pull (**correct**) |
+| Rendered height at 740px column | ~423px | up to ~1,630px |
+| Source committed | n/a (hand-designed) | **No** |
+| Coverage | 2 of 9 still live | 7 of 9 |
+
+---
+
+## Entry 005 — 2026-07-26 — The twin told a visitor it couldn't show images, then showed one unprompted
+
+**Category:** LLM
+**Severity:** Critical (a factually wrong answer about the twin's own capabilities, shown to a visitor)
+
+### What happened
+
+One visitor session, `h5bfd6ktyjh`, 2026-07-13, confirmed non-owner traffic on the
+production ChromaDB backend:
+
+| Turn | Message | Result |
+|------|---------|--------|
+| 1 | "Can you give images?" | Twin: *"I can't generate or send images directly in this chat — I'm text-only here."* |
+| 2 | "Can you explain how RAG works in simple terms?" | Normal answer |
+| 3 | "How did you get into beekeeping, and does it influence your work?" | Beehive Monitor **architecture diagram attached** |
+
+The twin denied a capability it has, then two turns later exercised that capability
+unrequested — on a biographical question, in the same conversation, for the same visitor.
+
+### Root cause
+
+Two independent bugs that happen to be mirror images.
+
+**Turn 1** — `SYSTEM_PROMPT.md` contains no mention of diagrams. Not one. The diagram is
+appended to the response *after* generation, as an `<img>` tag in `app.py`, so the model has
+never been told this happens. It answered accurately from its own self-model; its self-model
+was just wrong. This is not hallucination in the usual sense — the KB genuinely contains no
+statement that the twin can display images, so retrieval could not have saved it.
+
+**Turn 3** — the intent gate in `app.py:1450` fires on any project keyword clearing a score
+of 5. "Beekeeping" is a `mention_keywords` entry for Beehive Monitor (+10), so a question
+about how Barbara got into a hobby is indistinguishable, to the gate, from a question about
+the software she built for it.
+
+The deeper cause is one thing, not two: **the component that decides to show a diagram and
+the component that writes the words share no state.** One is a regex over the message, the
+other is an LLM with the conversation. Neither can see what the other concluded.
+
+### Fix applied
+
+**Turn 1 — fixed 2026-07-26.** `SYSTEM_PROMPT.md` SECTION 11.5 now states that diagrams are
+sometimes attached automatically, and two rows were added to the SECTION 13 failure-mode
+table. The section is written defensively on purpose: it grants the *fact* of the capability
+while forbidding the model from pointing at it ("see the diagram below"), because the model
+does not control whether one is attached. Full rationale and the reversal procedure are
+recorded as **D6** in [DIAGRAM_DISPLAY_DESIGN.md](DIAGRAM_DISPLAY_DESIGN.md).
+
+**Turn 3 — not fixed.** The gate still fires on keyword overlap. That's the implementation
+work in the same doc, steps 1–4, gated on the golden set.
+
+This entry is also what settled D1 — a diagram illustrates an answer already given, so a
+story about bees in an owl box should never carry an architecture diagram.
+
+### Lesson / takeaway
+
+**A capability the model isn't told about is a capability it will deny having.** Post-hoc
+augmentation — appending images, citations, buttons, anything added to a response after
+generation — creates a gap between what the system does and what the system believes about
+itself. The model is the one being asked "can you do X," and it answers from its prompt, not
+from the codebase.
+
+The generalizable rule: **if you bolt a capability onto the output, put it in the prompt
+too, even when the model doesn't drive it.** The prompt isn't only instructions for
+behavior; it's the model's self-description, and visitors ask about it directly.
+
+Second: this is the sharpest illustration yet of why the twin's whole premise —
+*"Not hallucinated — backed by my KB"* — is harder than it looks. The failure wasn't
+retrieval. Grounding protects answers about Barbara. Nothing was protecting answers about
+the twin itself.
+
+### Blog post angle
+
+*"My chatbot told a visitor it couldn't show images. It had just shown one."*
+
+Opens with the three-turn transcript, which needs no explanation. Then the reveal: both
+halves are correct behavior from components that can't see each other — a regex that knows
+about diagrams but not about meaning, and a language model that knows about meaning but not
+about diagrams. The fix isn't smarter matching, it's giving one component the other's
+information.
+
+Pairs naturally with Entry 004 (accuracy specified, design not) — both are failures of
+*what didn't get written down*, in a system whose entire purpose is representing knowledge
+faithfully.
+
+### Supporting data
+
+Source: `latest.json` export, 318 rows, 2026-04-02 → 2026-07-26 (gitignored; pull with
+`scripts/pull_latest_log.sh`).
+
+- Diagram-bearing responses: **26% before** the Option C intent gate shipped (58/220),
+  **26% after** (21/80). The gate changed which queries get diagrams, not how many.
+- `is_owner_traffic` exists only from 2026-04-23: 60 confirmed owner, 30 confirmed visitor,
+  210 unknown. Session `h5bfd6ktyjh` is in the confirmed-visitor set.
+- `grep -c diagram SYSTEM_PROMPT.md` → **0**.
